@@ -1,0 +1,37 @@
+<?php
+include_once("conn.php");
+include_once("func.php");
+
+
+
+//echo "<br>";
+$sql3="SELECT * from tbl_chat_msg";
+//echo "<br>".$sql3;
+$stmt5 = $PDO->prepare($sql3);
+$result5 = $stmt5->execute();
+$info5 = $stmt5->fetchAll( PDO::FETCH_ASSOC );
+//echo "<br>".count($info5);
+$sqlNew5='';
+$sqlNew5="REPLACE INTO tbl_chat_msg_secondary (id_msg, data_hora, chat_id, contrato_id, rem_id, dest_id, msg, flag) VALUES ";
+for($x=0;$x<count($info5);$x++){
+    $ls=$info5[$x];
+    $ls['id_msg'] = ($ls['id_msg'] =='') ? 'NULL' : "'".nomeCampo($ls['id_msg'])."'";
+    $ls['data_hora'] = ($ls['data_hora'] =='') ? 'NULL' : "'".nomeCampo($ls['data_hora'])."'";
+    $ls['chat_id'] = ($ls['chat_id'] =='') ? 'NULL' : "'".nomeCampo($ls['chat_id'])."'";
+    $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+    $ls['rem_id'] = ($ls['rem_id'] =='') ? 'NULL' : "'".nomeCampo($ls['rem_id'])."'";
+    $ls['dest_id'] = ($ls['dest_id'] =='') ? 'NULL' : "'".nomeCampo($ls['dest_id'])."'";
+    $ls['msg'] = ($ls['msg'] =='') ? 'NULL' : "'".nomeCampo($ls['msg'])."'";
+    $ls['flag'] = ($ls['flag'] =='') ? 'NULL' : "'".nomeCampo($ls['flag'])."'";
+
+    $sqlNew5 .= "(".$ls['id_msg'].",".$ls['data_hora'].", ".$ls['chat_id'].",".$ls['contrato_id'].",".$ls['rem_id'].",".$ls['dest_id'].",".$ls['msg'].",".$ls['flag'].")";
+
+    if($x!=(count($info5)-1)){$sqlNew5.=',';}
+
+}
+//echo "<br>".$sqlNew5;
+$stmt6 = $PDO->prepare($sqlNew5);
+$result6 = $stmt6->execute();
+
+
+?>

@@ -1,0 +1,43 @@
+# Time: 260408 16:35:02
+# User@Host: acesso.sistemas[acesso.sistemas] @ localhost []
+# Thread_id: 764899  Schema: web_chatlogos_enelce  QC_hit: No
+# Query_time: 6.331718  Lock_time: 0.000353  Rows_sent: 27  Rows_examined: 10078567
+# Rows_affected: 0  Bytes_sent: 8631
+SET timestamp=1775676902;
+SELECT f.id_pend, a.id_fila_chat, e.id_chat, a.protocolo, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as hora_registro, a.fila_id, d.nome_fila, b.titulo_assunto, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=f.ate_resp) as nome_ate, f.situacao_id, f.chat_id as chat_pend, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=f.bko_resp) as nome_bko, c.nome_situacao, a.status_fila, e.status_chat, date_format(a.hora_inicio, '%H:%i:%s') as hora_inicio, date_format(a.hora_fim, '%H:%i:%s') as hora_fim, a.ta, a.te, f.motivo, f.info_fim, f.data_hora_fim, f.data_hora_visualizacao from tbl_chat_fila_secondary a, tbl_assunto b, tbl_situacao_chat c, tbl_config_fila d, tbl_chat_info_secondary e, tbl_pend_info f where a.assunto_id=b.id_assunto and a.status_fila=c.id_situacao and (f.situacao_id=3 or f.situacao_id=4) and a.id_fila_chat=f.chat_id and a.fila_id=d.id_fila and a.id_fila_chat=e.fila_chat_id and date_format(a.data_hora, '%Y-%m-%d') BETWEEN '2026-04-08' AND  '2026-04-08' order by a.data_hora asc;
+# Time: 260408 16:35:13
+# User@Host: acesso.sistemas[acesso.sistemas] @ localhost []
+# Thread_id: 765637  Schema: web_chatlogos_enelce  QC_hit: No
+# Query_time: 3.884289  Lock_time: 0.000532  Rows_sent: 1  Rows_examined: 2342502
+# Rows_affected: 0  Bytes_sent: 346
+SET timestamp=1775676913;
+SELECT count(*) as qtd_entradas, date_format(data_hora, '%Y-%m-%d') AS dia,
+        (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as qtd_atendido,
+        (SELECT sec_to_time(avg(time_to_sec(ta))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as tma_atend,
+        (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as tme_atend,
+        (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as qtd_abandono,
+        (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as tme_aband
+        from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')='2026-04-08';
+# Time: 260408 16:42:29
+# User@Host: acesso.sistemas[acesso.sistemas] @ localhost []
+# Thread_id: 806162  Schema: web_chatlogos_enelce  QC_hit: No
+# Query_time: 6.137399  Lock_time: 0.000337  Rows_sent: 24  Rows_examined: 10430058
+# Rows_affected: 0  Bytes_sent: 7893
+SET timestamp=1775677349;
+SELECT f.id_pend, a.id_fila_chat, e.id_chat, a.protocolo, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as hora_registro, a.fila_id, d.nome_fila, b.titulo_assunto, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=f.ate_resp) as nome_ate, f.situacao_id, f.chat_id as chat_pend, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=f.bko_resp) as nome_bko, c.nome_situacao, a.status_fila, e.status_chat, date_format(a.hora_inicio, '%H:%i:%s') as hora_inicio, date_format(a.hora_fim, '%H:%i:%s') as hora_fim, a.ta, a.te, f.motivo, f.info_fim, f.data_hora_fim, f.data_hora_visualizacao from tbl_chat_fila_secondary a, tbl_assunto b, tbl_situacao_chat c, tbl_config_fila d, tbl_chat_info_secondary e, tbl_pend_info f where a.assunto_id=b.id_assunto and a.status_fila=c.id_situacao and (f.situacao_id=3 or f.situacao_id=4) and a.id_fila_chat=f.chat_id and a.fila_id=d.id_fila and a.id_fila_chat=e.fila_chat_id and date_format(a.data_hora, '%Y-%m-%d') BETWEEN '2026-04-08' AND  '2026-04-08' and a.contrato_id=19 and f.bko_resp=2015 and a.fila_id=20 order by a.data_hora asc;
+# Time: 260408 18:16:00
+# User@Host: acesso.sistemas[acesso.sistemas] @ localhost []
+# Thread_id: 924169  Schema: web_chatlogos_enelce  QC_hit: No
+# Query_time: 59.004710  Lock_time: 0.004600  Rows_sent: 0  Rows_examined: 4712385
+# Rows_affected: 1639  Bytes_sent: 58
+SET timestamp=1775682960;
+INSERT INTO tbl_chat_msg_secondary
+        SELECT * FROM tbl_chat_msg
+        ON DUPLICATE KEY UPDATE
+            data_hora = VALUES(data_hora),
+            chat_id = VALUES(chat_id),
+            contrato_id = VALUES(contrato_id),
+            rem_id = VALUES(rem_id),
+            dest_id = VALUES(dest_id),
+            msg = VALUES(msg),
+            flag = VALUES(flag);

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solvetask</title>
+    <link rel="shortcut icon" href="../imagem/favicon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="http://localhost/solvetask/css/bootstrap-5/css/bootstrap.min.css?v=1624386336" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <script src="http://localhost/solvetask/js/fontawesome/js/all.js?v=1751883795" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/jquery.js?v=1751883642"></script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/jquery.titlealert.js?v=1751883641"></script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/jquery.form.js?v=1751883641"></script>
+    <script src="js/action.js?v=1781696890"></script>
+    <script src="js/st-bko-distrib.js?v=1781613584"></script>
+    <script src="js/minus.js?v=1781269348"></script>
+
+    <script src="http://localhost/solvetask/css/bootstrap-5/js/popper.min.js?v=1727724095"></script>
+    <script src="http://localhost/solvetask/css/bootstrap-5/js/bootstrap.min.js?v=1624386336"></script>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script src="http://localhost/solvetask/js/sweetalert2/dist/sweetalert2.all.js?v=1751883672"></script>
+
+    <script src="js/st-tinymce-loader.js?v=1781696890"></script>
+
+    <link href="css/style.css?v=1781696889" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="css/style-materialize.css?v=1781524474">

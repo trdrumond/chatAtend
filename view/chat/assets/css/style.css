@@ -1,0 +1,429 @@
+
+.chat-div {
+    width: 95%;
+    margin-top: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #FFFFFF;
+}
+
+.chat-content {
+    margin: auto;
+    width: 100%;
+    background: #FFFFFF;
+    overflow: auto;
+}
+
+.form-chat {
+
+    margin: auto;
+    width: 95%;
+}
+
+.form {
+    margin: auto;
+    width: 80%;
+    float: left;
+}
+
+/*
+.btn-chat {
+    color: #FFF;
+    background-color: #C2433F;
+    border: none;
+    height: 40px;
+    line-height: 30px;
+    padding: 0 15px;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 100px;
+    -webkit-border-radius: 100px;
+    -moz-border-radius: 100px;
+    -ms-border-radius: 100px;
+    -o-border-radius: 100px;
+}
+*/
+
+.btn-chat, .btn-finalizar, .btn-bko {
+    color: #ffffff;
+    background-color: #252159;
+    border: none;
+    width: 98%;
+    height: 25px;
+    margin-left: 2px;
+    margin-right: 2px;
+    line-height: 30px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    -ms-border-radius: 5px;
+    -o-border-radius: 5px;
+}
+
+.btn-send-chat {
+    margin-top: 2px;
+    color: #ffffff !important;
+    background-color: #51b151 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+}
+
+.btn-atent-chat {
+    margin-top: 2px;
+    color: #ffffff !important;
+    background-color: #FF7F00 !important;
+}
+
+.btn-send-file {
+    margin-top: 2px;
+    color: #ffffff !important;
+    background-color: #516fb1 !important;
+}
+
+.btn-finalizar {
+    margin-top: 2px;
+    color: #ffffff !important;
+    background-color: #ce4a4a !important;
+}
+
+.dig {
+    width: 50%;
+    float: left;
+    height: 25px;
+    color: #CCCCCC;
+    font-size: 10px;
+}
+
+#btn-bko {
+    width: 18%;
+    float: left;
+    height: 25px;
+    color: #FFFFFF;
+    font-size: 10px;
+    text-align: right;
+}
+
+/*
+.btn-bko {
+    color: #FFF;
+    background-color: #017BF8;
+    border: none;
+    height: 23px;
+    line-height: 30px;
+    padding: 0 15px;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    -ms-border-radius: 20px;
+    -o-border-radius: 20px;
+}
+*/
+
+.motivo {
+    text-align: left;
+    margin-left: 40px;
+    margin-right: 40px;
+    margin-bottom: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #ffe9d2;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -o-border-radius: 10px;
+    -webkit-border-radius: 10px;
+}
+
+
+.other {
+    display: flex;
+    /* align-items: center; */
+    text-align: left;
+    /*justify-content: flex-start; */
+    margin-left: 0px;
+    margin-right: auto;
+    min-width: 10%;
+    max-width: 75%;
+    margin-bottom: 5px;
+    border-radius: 20px;
+    /* background: #7E57C2; */
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    -ms-border-radius: 20px;
+    -o-border-radius: 20px;
+}
+
+
+
+.other > img {
+    z-index: 99;
+    width: 40px;
+    height: 40px;
+    margin-top: 0px;
+    padding-top: 0px;
+    margin-left: 20px;
+    margin-right: 0px;
+    border-radius: 150px;
+}
+
+.other > .text > h5{
+    font-size: 10px;
+    padding-bottom: 0px;
+    padding-top: 10px;
+    margin-left: 5px;
+    height: 20px;
+    color: #717377;
+    opacity: .40;
+    /*font-weight: bold;*/
+}
+
+.other > .text > .paragrafo{
+    font-size: 14px;
+    color: #232F48;
+    background: #f5f5f5;
+    text-align: left;
+    margin-bottom: 1px;
+    margin-left: -10px;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 5px;
+}
+
+.other > .text > .dataHora{
+    font-size: 7px;
+    color: #717377;
+    opacity: .40;
+    padding: 0;
+    margin: 0;
+}
+
+
+
+.me {
+    display: flex;
+    /* align-items: center; */
+    text-align: right;
+    flex-direction: row-reverse;
+    margin-left: 75px;
+    margin-right: 0px;
+    margin-bottom: 5px;
+    border-radius: 20px;
+    /*background: #D1E7DD;*/
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 20px;
+    -ms-border-radius: 20px;
+    -o-border-radius: 20px;
+    -webkit-border-radius: 20px;
+}
+
+.me > .text > h5{
+    font-size: 10px;
+    padding-bottom: 0px;
+    padding-top: 10px;
+    margin-right: 5px;
+    height: 20px;
+    color: #717377;
+    opacity: .40;
+    /*font-weight: bold;*/
+}
+
+.me > .text > .paragrafo{
+    font-size: 14px;
+    color: #000000;
+    background: #e0e0e0;
+    text-align: left;
+    margin-bottom: 1px;
+    margin-right: -10px;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 5px;
+}
+
+
+.me > .text > .dataHora{
+    font-size: 7px;
+    color: #717377;
+    opacity: .40;
+    padding: 0;
+    margin: 0;
+}
+
+
+.me > img {
+    z-index: 99;
+    width: 40px;
+    height: 40px;
+    margin-top: 0px;
+    padding-top: 0px;
+    margin-left: 0px;
+    margin-right: 20px;
+    border-radius: 150px;
+}
+
+
+.sys {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 2px;
+    border-radius: 20px;
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 20px;
+    -ms-border-radius: 20px;
+    -o-border-radius: 20px;
+    -webkit-border-radius: 20px;
+}
+
+.sys > .text {
+    margin: auto !important;
+
+}
+
+.sys > .text > h5{
+    font-size: 14px;
+    color: #717377;
+    font-weight: bold;
+    text-align: center;
+}
+
+.sys > .text > .paragrafo{
+    float: left;
+    font-size: 10px;
+    text-align: center;
+    margin-bottom: 0px;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    color: #717377;
+    background: #FFFFFF;
+    border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    -ms-border-radius: 20px;
+    -o-border-radius: 20px;
+}
+
+.sys > .text > .dataHora{
+    font-size: 8px;
+    color: #717377;
+    opacity: .40;
+    padding: 0;
+    margin: 0;
+}
+
+
+.me > .text > .paragrafo > p > img {
+    max-width: 100%;
+}
+
+.other > .text > .paragrafo > p > img {
+    max-width: 100%;
+}
+
+.me > .text > .paragrafo > p, .other > .text > .paragrafo > p  {
+    font-size: 14px;
+}
+
+#btn-bko-980 {
+    display: none;
+}
+
+#btns-bko-2 {
+    display: none;
+}
+
+@media only screen and (max-width: 980px) {
+
+    #btn-bko-980 {
+        display: flex;
+    }
+
+    #btns-bko-2 {
+        display: flex;
+    }
+
+    #btns-bko-1 {
+        display: none;
+    }
+
+    .msg_textarea {
+        width: 100%;
+    }
+    .btn-finalizar, .btn-bko, .btn-atent-chat {
+        width: 33%;
+        float: left;
+    }
+    .text-msg-area {
+        width: 100% !important;
+    }
+}
+
+/* Layout moderno (st-chat-workspace) — carrega após regras legadas acima */
+.st-chat-workspace .chat-div {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    float: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.st-chat-workspace .chat-content {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    float: none !important;
+}
+
+.st-chat-workspace--sol .chat-div,
+.st-chat-workspace--sol .chat-content {
+    min-height: 0 !important;
+}
+
+.st-chat-workspace .form-chat {
+    width: 100% !important;
+    margin: 0 !important;
+    float: none !important;
+}
+
+.st-chat-workspace .form {
+    float: none !important;
+    width: auto !important;
+    margin: 0 !important;
+}
+
+.st-chat-workspace #btn-bko {
+    width: auto !important;
+    float: none !important;
+    height: auto !important;
+}
+
+.st-chat-workspace .dig {
+    float: none !important;
+    width: 100%;
+    height: auto;
+}

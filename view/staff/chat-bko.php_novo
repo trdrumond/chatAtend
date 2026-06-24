@@ -1,0 +1,538 @@
+<?php
+include("../cnf/session.php");
+
+$indDiv=$_POST['indice'];
+
+if (!empty($_POST['protocolo'])) {
+    $sql = "SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp,
+            hora_inicio, fila_id, assunto_id, contrato_id,
+            TIMEDIFF(NOW(), data_hora) as te_diff,
+            COALESCE(te, TIMEDIFF(NOW(), data_hora)) as te,
+            hora_inicio
+            FROM tbl_chat_fila
+            WHERE status_fila = 2 AND protocolo = ?";
+    $st = $PDO->prepare($sql);
+    $st->execute([$_POST['protocolo']]);
+    $infFila = $st->fetch(PDO::FETCH_ASSOC);
+
+    if (!$infFila) {
+        $baseQuery = "SELECT id_fila_chat, protocolo, status_fila, ate_resp,
+                    bko_resp, hora_inicio, fila_id, assunto_id, contrato_id,
+                    TIMEDIFF(NOW(), data_hora) as te_diff,
+                    COALESCE(te, TIMEDIFF(NOW(), data_hora)) as te
+                    FROM tbl_chat_fila
+                    WHERE status_fila = 1 AND bko_resp IS NULL";
+
+        // Primeira tentativa com fila_id do usuário
+        $sql = $baseQuery . " AND fila_id = ? ORDER BY id_fila_chat ASC LIMIT 1";
+        $stmt = $PDO->prepare($sql);
+        $stmt->execute([$infoUser['fila_id']]);
+        $infFila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Se não encontrou, tenta com as filas do usuário
+        if (!$infFila) {
+            $stmt = $PDO->prepare("SELECT filas FROM tbl_user_filas WHERE user_id = ?");
+            $stmt->execute([$_SESSION['dados']['id_user']]);
+            $cnfFilas = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!empty($cnfFilas['filas'])) {
+                $sql = $baseQuery . " AND fila_id IN (" . $cnfFilas['filas'] . ")
+                        ORDER BY id_fila_chat ASC LIMIT 1";
+                $stmt = $PDO->prepare($sql);
+                $stmt->execute();
+                $infFila = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
+        }
+    }
+}
+
+if($infFila['id_fila_chat']==''){
+    echo "<script>console.log('Vazio');</script>";
+    //echo "<script>setTimeout(function(){ actionPage('dash-ate', 'idx'); }, 500);</script>";
+} else {
+    if($infFila['bko_resp']==''){
+
+        $sql="UPDATE tbl_chat_fila SET status_fila=2, bko_resp=".$infoUser['id_user'].", hora_inicio=now(), te='".$infFila['te']."' where id_fila_chat=".$infFila['id_fila_chat'];
+        //echo "<br>".$sql;
+        $stmt = $PDO->prepare( $sql );
+        $result = $stmt->execute();
+        logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Tratamento');
+
+    }
+
+}
+
+$infFila['hora_inicio'] = ($infFila['hora_inicio']!='') ? $infFila['hora_inicio'] : date('Y-m-d H:i:s');
+
+?>
+
+
+
+<style>
+/* Reset básico */
+p { font-size: 12px; margin: 0; padding: 0; }
+
+/* Classes utilitárias */
+.left { float: left; }
+.text-center { text-align: center; }
+.bg-light { background-color: #FCFCFC; }
+.text-gray { color: #717377; }
+.border-radius { border-radius: 10px; }
+
+/* Layout principal */
+#div_ope, #div_info {
+    border-radius: 10px;
+    margin: 2px 0 0 2px;
+    height: 390px;
+    float: left;
+}
+
+#div_ope {
+    width: 58%;
+    min-width: 300px;
+}
+
+#div_info {
+    width: 38%;
+    min-height: 150px;
+    padding: 10px;
+    color: #717377;
+    background-color: #FCFCFC;
+}
+
+/* Arquivos */
+#files_deposit { height: 370px; width: 98%; }
+.file_chat {
+    margin: 10px;
+    color: #717377;
+    text-align: center;
+    float: left;
+}
+.file_chat > a { color: #717377; }
+
+/* Perfil */
+.label-perfil {
+    font-size: 10px;
+    color: #B7202F;
+}
+.info-perfil {
+    font-size: 12px;
+    padding-left: 10px;
+}
+
+/* Topo */
+#topo_dash {
+    border-radius: 10px;
+    margin: 5px 0 0 5px;
+    width: 99%;
+    height: 60px;
+    float: left;
+}
+
+/* Imagem e info do perfil */
+#img_perfil_bko, #info_perfil_bko { float: left; }
+#img_perfil_bko {
+    width: 17%;
+    height: 59px;
+}
+.img {
+    height: 47px;
+    width: 47px;
+}
+#info_perfil_bko {
+    width: 80%;
+}
+#info_perfil_bko > .info-pad {
+    width: 100%;
+    font-size: 12px;
+    float: left;
+}
+#info_perfil_bko > .nome-ate { font-size: 14px !important; }
+#info_perfil_bko > .email-ate { font-size: 10px !important; }
+
+/* Bloco central */
+#bloco_central {
+    margin: 20px auto 0;
+    width: 30%;
+    height: 200px;
+    border: solid 1px #B7202F;
+    border-radius: 10px;
+}
+
+/* Procedimento */
+#proced {
+    width: 97%;
+    height: 300px;
+    overflow: auto;
+}
+
+/* Info e tempo */
+#info { width: 89%; float: left; }
+.div_tempo { width: 10%; float: left; }
+.div_te {
+    width: 98%;
+    font-size: 12px;
+    margin: 1px;
+    padding-top: 2px;
+    height: 25px;
+    float: left;
+    text-align: center;
+    color: #717377;
+    background-color: #FCFCFC;
+    border-radius: 5px;
+}
+
+/* Informações */
+.info, #prot {
+    float: left;
+    color: #717377;
+    background-color: #FCFCFC;
+}
+.info { width: 33%; }
+#prot {
+    font-size: 18px;
+    width: 66.5%;
+}
+
+/* Blocos */
+.bloco_procedimento { width: 60%; float: left; }
+.bloco_atualizacao { width: 40%; float: left; }
+
+.info > .info-pad {
+    width: 100%;
+    font-size: 12px;
+    float: left;
+}
+.info-pad > .pad {
+    width: 20px;
+    font-size: 12px;
+    float: left;
+}
+</style>
+
+<script>
+(function() {
+    // Variáveis
+    const loadChatIn = typeof loadChatIn !== 'undefined' ? loadChatIn : '';
+    const indice = '<?=$_POST['indice']?>';
+    const userRem = <?=$infoUser['id_user']?>;
+    const nivel = <?=$infoUser['nivel_id']?>;
+
+    // Elementos DOM
+    const spans = $('.tab');
+    const qtd_span = spans.length;
+
+    // Ocultar elementos
+    ['#menu_bko', '#sair'].forEach(el => $(el).hide());
+
+    // Verificar quantidade de spans
+    if (qtd_span < qtdMax) {
+        $("#btn-add-tab").prop('disabled', false);
+    }
+
+    // Iniciar atendimento
+    sendAtend();
+})();
+</script>
+
+<?php
+
+    // Consulta otimizada para dados do usuário
+    $sql = "SELECT a.id_user, a.nome_usuario, a.nome, a.sobrenome,
+            CONCAT(a.nome, ' ', a.sobrenome) as nome_completo,
+            a.email, a.agencia_id, d.nome_agencia, a.empresa_id,
+            e.nome_empresa, b.img
+            FROM tbl_user a
+            INNER JOIN tbl_user_img_perfil b ON a.id_user = b.user_id
+            INNER JOIN tbl_agencia d ON a.agencia_id = d.id_agencia
+            LEFT JOIN tbl_empresa e ON a.empresa_id = e.id_empresa
+            WHERE a.id_user = ?";
+
+    $stmt = $PDO->prepare($sql);
+    $stmt->execute([$infFila['ate_resp']]);
+    $dados_ate = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $userDestinatario = $infFila['ate_resp'];
+
+    // Busca informações do chat em uma única consulta
+    $sql = "SELECT id_chat, token_chat, status_chat, fila_chat_id
+            FROM tbl_chat_info
+            WHERE (status_chat = 1
+            AND contrato_id = ?
+            AND rem_chat = ?
+            AND dest_chat = ?)
+            OR fila_chat_id = ?
+            LIMIT 1";
+
+    $stmt = $PDO->prepare($sql);
+    $stmt->execute([
+        $infoUser['contrato_id'],
+        $infoUser['id_user'],
+        $userDestinatario,
+        $infFila['id_fila_chat']
+    ]);
+    $infoChat = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Se não existe chat, cria um novo
+    if (!$infoChat) {
+        $tokenChat = md5($userDestinatario . date('YmdHis'));
+
+        if ($infoUser['nivel_id'] == 4) {
+            $sql = "INSERT INTO tbl_chat_info (
+                contrato_id, token_chat, assunto_id, fila_id,
+                rem_chat, dest_chat, status_chat, fila_chat_id, indice
+            ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)";
+
+            $stmt = $PDO->prepare($sql);
+            $stmt->execute([
+                $infFila['contrato_id'],
+                $tokenChat,
+                $infFila['assunto_id'],
+                $infFila['fila_id'],
+                $infoUser['id_user'],
+                $userDestinatario,
+                $infFila['id_fila_chat'],
+                $indDiv
+            ]);
+
+            // Busca o ID do chat recém-criado
+            $sql = "SELECT id_chat, token_chat, status_chat, fila_chat_id
+                    FROM tbl_chat_info
+                    WHERE token_chat = ?";
+            $stmt = $PDO->prepare($sql);
+            $stmt->execute([$tokenChat]);
+            $infoChat = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+    }
+
+    // Atualiza informações do atendimento
+    $sql = "SELECT id FROM tbl_tma_atend
+            WHERE fila_chat_id IS NULL AND resp_id = ?";
+    $stmt = $PDO->prepare($sql);
+    $stmt->execute([$infoUser['id_user']]);
+    $infoAtend = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!empty($infoAtend['id'])) {
+        $sql = "UPDATE tbl_tma_atend
+                SET fila_chat_id = ?,
+                    chat_id = ?,
+                    fila_id = ?,
+                    date_in = NOW()
+                WHERE id = ?";
+        $stmt = $PDO->prepare($sql);
+        $stmt->execute([
+            $infFila['id_fila_chat'],
+            $infoChat['id_chat'],
+            $infFila['fila_id'],
+            $infoAtend['id']
+        ]);
+    }
+
+    // Busca FAQs relacionadas
+    $sql = "SELECT id_faq, titulo_faq, txt
+            FROM tbl_faq
+            WHERE fila_id = ?
+            AND (assunto_id = 0 OR assunto_id = ?)";
+    $stmt = $PDO->prepare($sql);
+    $stmt->execute([$infFila['fila_id'], $infFila['assunto_id']]);
+    $infoFaq = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $chatId = $infoChat['id_chat'];
+?>
+
+<script>
+$('#title-' + indice).html(
+    '<?= ucwords((strtolower($dados_ate['nome'])).' '.(strtolower($dados_ate['sobrenome'][0])))."."; ?>');
+</script>
+
+<div id="dashboard">
+    <!-- <div id="teste"></div> -->
+    <div id="topo_dash">
+        <div id="info">
+            <div id="prot">
+                <img src="img/chat.png" title="Solvetask" width="50">
+                <strong>PROTOCOLO:</strong> <?= $infFila['protocolo']; ?>
+            </div>
+            <div class="info">
+                <div id="img_perfil_bko">
+                    <img src="<?= $dados_ate['img']; ?>" alt="Foto Perfil Bko" class="img rounded-circle">
+                </div>
+                <div id="info_perfil_bko">
+                    <div class="nome-ate info-pad">
+                        <div class="pad"><i class="far fa-user"></i> </div><?= $dados_ate['nome_completo']; ?>
+                    </div>
+                    <div class="email-ate info-pad">
+                        <div class="pad"><i class="far fa-envelope"></i> </div> <a
+                            href="mailto:<?= $dados_ate['email']; ?>?subject=Solvetask <?= $infFila['protocolo']; ?>"><?= $dados_ate['email']; ?></a>
+                    </div>
+                    <div class="email-ate info-pad">
+                        <div class="pad"><i class="far fa-building"></i> </div><?= $dados_ate['nome_empresa']; ?> -
+                        <?= $dados_ate['nome_agencia']; ?>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <div id="div_tempo_<?=$chatId;?>" class="div_tempo">
+            <div id="div_te_<?=$_POST['indice'];?>" class="div_te"><i class="fas fa-history"></i> TE:
+                <?= $infFila['te']; ?></div>
+            <div id="div_ta_<?=$infoChat['id_chat'];?>" class="div_te"></div>
+        </div>
+        <?php
+
+        ?>
+
+    </div>
+
+
+
+    <div id="div_ope">
+
+        <?php include("../chat/chat_ind.php"); ?>
+
+    </div>
+    <div id="div_info">
+        <ul class="nav nav-tabs" id="tabChat" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="proc-tab_<?=$chatId;?>" data-bs-toggle="tab"
+                    data-bs-target="#proc_<?=$chatId;?>" type="button" role="tab" aria-controls="proc_<?=$chatId;?>"
+                    aria-selected="true"><i class="fas fa-bars"></i> Procedimento</button>
+            </li>
+            <?php if(count($infoFaq)>0){ ?>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="faq-tab_<?=$chatId;?>" data-bs-toggle="tab"
+                    data-bs-target="#tab_faq_<?=$chatId;?>" type="button" role="tab"
+                    aria-controls="tab_faq_<?=$chatId;?>" aria-selected="false"><i class="fas fa-question-circle"></i>
+                    FAQ</button>
+            </li>
+            <?php } ?>
+            <?php if($infoUser['env_file']==1){ ?>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="file-tab_<?=$chatId;?>" data-bs-toggle="tab"
+                    data-bs-target="#tab_file_<?=$chatId;?>" type="button" role="tab"
+                    aria-controls="tab_file_<?=$chatId;?>" aria-selected="false"><i class="fas fa-folder-open"></i>
+                    Depósito de arquivos</button>
+            </li>
+            <?php } ?>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fila_atual-tab_<?=$chatId;?>" data-bs-toggle="tab"
+                    data-bs-target="#fila_atual_<?=$chatId;?>" type="button" role="tab"
+                    aria-controls="fila_atual_<?=$chatId;?>" aria-selected="true"><i class="fas fa-bars"></i>
+                    Fila</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="proc_<?=$chatId;?>" role="tabpanel"
+                aria-labelledby="proc-tab_<?=$chatId;?>">
+                <?php
+                        $sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=".$infFila['assunto_id'];
+                        //echo "<br>".$sql;
+                        $stmt = $PDO->prepare($sql);
+                        $result = $stmt->execute();
+                        $infoAssunto = $stmt->fetch( PDO::FETCH_ASSOC );
+                        if($infoAssunto['procedimento']==''){$infoAssunto['procedimento'] = '<br><br><center><h6>Sem informações de procedimento no sistema.<h6></center>';}
+
+                    ?>
+                <h4><i class="fas fa-book-open"></i> <?php echo $infoAssunto['titulo_assunto']; ?></h4>
+                <?php
+                            $data_ver = date('Y-m-d', strtotime("+5 days",strtotime($infoAssunto['data_ver'])));
+                            if(date('Y-m-d') > $data_ver){
+                                $badge = 'secondary';
+                            } else {
+                                $badge = 'danger';
+                            }
+
+                        ?>
+                <strong>PROCEDIMENTO</strong> <span class="badge bg-<?=$badge; ?>">Última Atualização:
+                    <?=$infoAssunto['data_alt']; ?></span>
+                <div id="proced"><?=$infoAssunto['procedimento']; ?></div>
+                <!-- <button type="button" class="btn btn-danger" id="btn_call_ate">Chamar</button> -->
+
+
+            </div>
+            <?php if(count($infoFaq)>0){ ?>
+            <div class="tab-pane fade" id="tab_faq_<?=$chatId;?>" role="tabpanel"
+                aria-labelledby="file-faq_<?=$chatId;?>">
+                <div class="accordion accordion-flush" id="faq_accordion">
+                    <?php for($x=0;$x<count($infoFaq);$x++){ ?>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="flush-headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#flush-<?=$infoFaq[$x]['id_faq']?>" aria-expanded="false"
+                                aria-controls="flush-<?=$infoFaq[$x]['id_faq']?>">
+                                <?=$infoFaq[$x]['titulo_faq']?>
+                            </button>
+                        </h2>
+                        <div id="flush-<?=$infoFaq[$x]['id_faq']?>" class="accordion-collapse collapse"
+                            aria-labelledby="flush-headingOne" data-bs-parent="#faq_accordion">
+                            <div class="accordion-body"><?=$infoFaq[$x]['txt']?></div>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                </div>
+            </div>
+            <?php } ?>
+            <?php if($infoUser['env_file']==1){ ?>
+            <div class="tab-pane fade" id="tab_file_<?=$chatId;?>" role="tabpanel"
+                aria-labelledby="file-tab_<?=$chatId;?>">
+                <div id="files_deposit_<?=$chatId;?>"></div>
+            </div>
+            <?php } ?>
+
+            <div class="tab-pane fade" id="fila_atual_<?=$chatId;?>" role="tabpanel"
+                aria-labelledby="fila_atual-tab_<?=$chatId;?>">
+                <div id="fila_ativa_<?=$chatId;?>" class="fila_ativa"></div>
+            </div>
+        </div>
+
+
+
+
+    </div>
+</div>
+
+<script>
+var time_<?=$chatId;?> = setInterval(function() {
+    loadTa_<?=$chatId;?>('<?= $infFila['hora_inicio']; ?>');
+}, 500);
+
+loadTa_<?=$chatId;?>('<?= $infFila['hora_inicio']; ?>');
+load();
+setInterval(function() {
+    loadFilaAtiva('<?= $infoUser['fila_id']; ?>');
+}, 30000);
+//setInterval(function(){ load(); }, 10000);
+
+function load() {
+    // loadFilaAtiva('<?= $infoUser['fila_id']; ?>');
+}
+
+
+$('#btn_call_ate').click(function() {
+    sendAtend();
+});
+
+function loadTa_<?=$infoChat['id_chat'];?>(tempo) {
+    var div = '#div_ta_<?=$infoChat['id_chat'];?>';
+    $.post("staff/load_ta.php", {
+            tempo
+        },
+        function(valor) {
+            $(div).html(valor);
+        });
+}
+
+function loadFilaAtiva(fila) {
+    var div = '.fila_ativa';
+    $.post("staff/load_fila_ativa.php", {
+            fila
+        },
+        function(valor) {
+            $(div).html(valor);
+        });
+}
+</script>

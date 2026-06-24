@@ -1,0 +1,15 @@
+<?php
+    include_once("config.php");
+
+var_dump($_SESSION['dados']);
+
+
+    if($_SESSION['dados']['nivel_id'] > 3){
+        include_once("conexao.php");
+    } else {
+        include_once("conexao_cnf.php");
+    }
+
+    include_once("func.php");
+
+?>

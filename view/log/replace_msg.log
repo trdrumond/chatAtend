@@ -1,0 +1,6 @@
+{"timestamp":"2026-04-08 15:18:34","status":"BOOT","message":"Arquivo iniciado","user_id":null,"ip":null,"sapi":"cli","php_binary":"/opt/lampp/bin/php-7.4.29","php_ini":"/opt/lampp/etc/php.ini"}
+{"timestamp":"2026-04-08 15:18:34","status":"START","message":"Inicio da rotina replace_msg","user_id":null,"ip":null}
+{"timestamp":"2026-04-08 15:20:21","status":"END","message":"Rotina finalizada com sucesso","user_id":null,"ip":null,"result":"success","rows_affected":122}
+{"timestamp":"2026-04-08 18:15:01","status":"BOOT","message":"Arquivo iniciado","user_id":null,"ip":null,"sapi":"cli","php_binary":"/opt/lampp/bin/php-7.4.29","php_ini":"/opt/lampp/etc/php.ini"}
+{"timestamp":"2026-04-08 18:15:01","status":"START","message":"Inicio da rotina replace_msg","user_id":null,"ip":null}
+{"timestamp":"2026-04-08 18:16:00","status":"END","message":"Rotina finalizada com sucesso","user_id":null,"ip":null,"result":"success","rows_affected":1639}

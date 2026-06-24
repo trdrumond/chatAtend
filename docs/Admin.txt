@@ -1,0 +1,22 @@
+Admin
+Usuário: admin
+Senha: logos@1
+
+Yan Backoffice
+Usuário: 01
+Senha: 01@logos
+
+Yan Solicitante
+Usuário: 02
+Senha: 02@logos
+
+Vitor Backoffice
+Usuário: 03
+Senha: 03@logos
+
+Vitor Solicitante
+Usuário: 04
+Senha: 04@logos
+
+https://191.252.182.186/
+https://chat.logos-ma.com.br

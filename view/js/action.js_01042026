@@ -1,0 +1,119 @@
+$(document).ready(function () {
+
+    //IDX - DEMANDAS
+    $("#dash-idx").click(function(){actionPage('dash-idx', 'idx');});
+    //$("#dash-fila").click(function(){actionPage('dash-fila', 'idx');});
+    $("#dash-fila").click(function(){location.reload();});
+    $("#rel-dash").click(function(){actionPage('rel-dash', 'idx');});
+    $("#rel-ind").click(function(){actionPage('rel-ind', 'idx');});
+    $("#rel-fila").click(function(){actionPage('rel-fila', 'idx');});
+    $("#hist-dash").click(function(){actionPage('hist-dash', 'idx');});
+    $("#hist-pend").click(function(){actionPage('hist-pend', 'idx');});
+    $("#com-idx").click(function(){actionPage('com-idx', 'idx');});
+
+    $("#dash-ate").click(function(){location.reload();});
+    $("#dash-cha").click(function(){location.reload();});
+
+
+    //location.reload();
+    //USU - USUARIOS
+    //$("#dash-usu").click(function(){actionPage('dash', 'usu');});
+    //$("#cad-usu").click(function(){actionPage('cad-usu', 'usu');});
+    $("#pass").click(function(){actionPage('pass', 'usu');});
+
+
+
+    //CNF - CONTRATOS
+    $("#dash-cnf").click(function(){actionPage('dash', 'cnf');});
+    $("#cad-ctt-cnf").click(function(){actionPage('cad-ctt', 'cnf');});
+    $("#cad-reg-cnf").click(function(){actionPage('cad-reg', 'cnf');});
+    $("#cad-emp-cnf").click(function(){actionPage('cad-emp', 'cnf');});
+    $("#cad-age-cnf").click(function(){actionPage('cad-age', 'cnf');});
+    $("#cad-ass-cnf").click(function(){actionPage('cad-ass', 'cnf');});
+    $("#cad-pri-cnf").click(function(){actionPage('cad-pri', 'cnf');});
+    $("#cad-fil-cnf").click(function(){actionPage('cad-fil', 'cnf');});
+    $("#cad-men-cnf").click(function(){actionPage('cad-men', 'cnf');});
+    $("#cad-usu-cnf").click(function(){actionPage('cad-usu', 'cnf');});
+    $("#cad-faq-cnf").click(function(){actionPage('cad-faq', 'cnf');});
+    $("#log-acess-cnf").click(function(){actionPage('log-acess-cnf', 'cnf');});
+    $("#res-base").click(function(){actionPage('res-base', 'cnf');});
+
+
+
+
+
+    $("#sair").click(function(){
+        Swal.fire({
+            title: 'Sair',
+            text: "Tem certeza que deseja realizar o logout do sistema?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#489100',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, realizar logout!',
+            cancelButtonText: 'Não!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+                logout('sair');
+            }
+          })
+
+    });
+
+    function logout(action){
+        $.post("logout.php",
+          {
+            action: action
+          },
+          function (valor) {
+            $("#logout").html(valor);
+          });
+    }
+
+
+    function actionPage(action, sec){
+
+        $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
+        //console.log('A ação é: ' + action);
+
+        $.post("action.php",
+          {
+            action: action, sec: sec
+          },
+          function (valor) {
+            $("#action-page").html(valor);
+            if(action == 'dash-idx'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Chat</h3>'); }
+            if(action == 'dash-fila'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Dashboard</h3>'); }
+            if(action == 'rel-dash'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Relatórios</h3>'); }
+            if(action == 'rel-fila'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Fila</h3>'); }
+            if(action == 'hist-dash'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Histórico</h3>'); }
+            if(action == 'hist-pend'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Pendências</h3>'); }
+            if(action == 'com-idx'){ $("#indice-idx-men").html('<h3><i class="fas fa-arrow-right"></i> Comunicação</h3>'); }
+
+            if(action == 'dash-fila'){
+                var refreshDash = setInterval(function () {LoadIdxContent()}, 300000);
+            } else {
+                clearInterval(refreshDash);
+            }
+
+
+          });
+
+    }
+
+    // Disponibiliza globalmente para loadChatIn (dash-cha, script.js websocket) e outros
+    window.actionPage = actionPage;
+
+});
+
+function actionPageScore(action, sec, user){
+    $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
+    //console.log('clicou no score');
+    $.post("action.php",
+    {
+        action, sec, user
+    },
+    function (valor) {
+        $("#action-page").html(valor);
+    });
+}

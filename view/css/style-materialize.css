@@ -1,0 +1,591 @@
+/* =========================================================
+   SOLVETASK 2.0 — COMPONENTES DE FORMULÁRIO v2
+   ========================================================= */
+
+/* ---- Tokens locais ---- */
+:root {
+    --f-border: #dde3ed;
+    --f-border-focus: #D6336C;
+    --f-bg: #ffffff;
+    --f-bg-focus: #ffffff;
+    --f-text: #1e293b;
+    --f-label: #475569;
+    --f-muted: #94a3b8;
+    --f-radius: 8px;
+    --f-height: 36px;
+    --f-multiselect-min-h: 280px;
+    --f-multiselect-row-h: 28px;
+    --f-ring: rgba(238, 63, 96, .13);
+    --f-error: #dc2626;
+    --f-error-bg: #fef2f2;
+    --f-error-ring: rgba(220, 38, 38, .13);
+    --f-ok: #16a34a;
+    --f-ok-bg: #f0fdf4;
+    --f-ok-ring: rgba(22, 163, 74, .13);
+}
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+.container {
+    margin-top: 10px;
+}
+
+.input-container,
+.input-file,
+.st-field {
+    position: relative;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+}
+
+/* =========================================================
+   LABEL (sempre acima do campo — padrão Solvetask)
+   ========================================================= */
+.st-label,
+.input-container>label {
+    order: -1;
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--f-label) !important;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    pointer-events: auto;
+    cursor: default !important;
+    transition: color .15s !important;
+}
+
+.st-label .st-required,
+.input-container>label .st-required {
+    color: var(--f-border-focus);
+    font-weight: 700;
+}
+
+/* Label muda de cor no foco (via :focus-within) */
+.st-field:focus-within>.st-label,
+.input-container:focus-within>label {
+    color: var(--f-border-focus) !important;
+}
+
+/* Cancelar animação de subida herdada do materialize */
+.input-container>input:valid+label,
+.input-container>input:focus+label,
+.input-container>input:disabled+label,
+.input-container>select:valid+label,
+.input-container>select:focus+label,
+.input-container>select:disabled+label,
+.input-container>textarea:valid+label,
+.input-container>textarea:focus+label,
+.input-container>textarea:disabled+label {
+    position: static !important;
+    top: auto !important;
+    font-size: 11px !important;
+    color: var(--f-label) !important;
+    pointer-events: none;
+}
+
+/* =========================================================
+   CAMPO BASE (input / select / textarea)
+   ========================================================= */
+.st-field>input,
+.st-field>input.form-control,
+.st-field>select:not([multiple]),
+.st-field>select:not([multiple]).form-control,
+.st-field>textarea,
+.st-field>textarea.form-control,
+.input-container>input,
+.input-container>select:not([multiple]),
+.input-container>textarea,
+select.form-control:not([multiple]) {
+    width: 100% !important;
+    height: var(--f-height) !important;
+    font-size: 13px !important;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: var(--f-text);
+    background: var(--f-bg) !important;
+    border: 1.5px solid var(--f-border) !important;
+    border-radius: var(--f-radius) !important;
+    padding: 0 12px !important;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+    line-height: 1;
+}
+
+.st-field>input[type="file"],
+.st-field>.form-control[type="file"] {
+    height: auto !important;
+    min-height: var(--f-height) !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+    line-height: 1.4;
+}
+
+/* Placeholder */
+.st-field>input::placeholder,
+.st-field>textarea::placeholder,
+.input-container>input::placeholder,
+.input-container>textarea::placeholder {
+    color: var(--f-muted);
+    font-size: 12px;
+}
+
+/* Textarea */
+.input-container>textarea {
+    height: 80px !important;
+    padding: 9px 12px !important;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* Select simples — seta customizada */
+.st-field>select:not([multiple]),
+.input-container>select:not([multiple]),
+select.form-control:not([multiple]) {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    padding-right: 30px !important;
+}
+
+/* =========================================================
+   SELECT MULTIPLA SELEÇÃO (padrão global)
+   ========================================================= */
+.st-field>select[multiple],
+.input-container>select[multiple],
+select.form-control[multiple],
+select[multiple].form-control,
+.st-form select[multiple],
+.switch select[multiple] {
+    width: 100% !important;
+    height: auto !important;
+    min-height: var(--f-multiselect-min-h) !important;
+    max-height: 420px;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    overflow-y: auto;
+    appearance: auto !important;
+    -webkit-appearance: listbox !important;
+    background-image: none !important;
+    background-color: var(--f-bg) !important;
+    border: 1.5px solid var(--f-border) !important;
+    border-radius: var(--f-radius) !important;
+    box-sizing: border-box;
+}
+
+.st-field>select[multiple] option,
+.input-container>select[multiple] option,
+select.form-control[multiple] option,
+.switch select[multiple] option {
+    padding: 6px 8px;
+    line-height: 1.4;
+}
+
+.st-field>select[multiple]:focus,
+.input-container>select[multiple]:focus,
+select.form-control[multiple]:focus,
+.switch select[multiple]:focus {
+    border-color: var(--f-border-focus) !important;
+    box-shadow: 0 0 0 3px var(--f-ring) !important;
+    outline: none;
+}
+
+/* Altura proporcional ao atributo size (quando definido) */
+select[multiple][size="5"]  { min-height: calc(var(--f-multiselect-row-h) * 5 + 16px) !important; }
+select[multiple][size="6"]  { min-height: calc(var(--f-multiselect-row-h) * 6 + 16px) !important; }
+select[multiple][size="8"]  { min-height: calc(var(--f-multiselect-row-h) * 8 + 16px) !important; }
+select[multiple][size="10"] { min-height: calc(var(--f-multiselect-row-h) * 10 + 16px) !important; }
+select[multiple][size="12"] { min-height: calc(var(--f-multiselect-row-h) * 12 + 16px) !important; }
+select[multiple][size="15"] { min-height: calc(var(--f-multiselect-row-h) * 15 + 16px) !important; }
+
+/* ---- FOCUS ---- */
+.input-container>input:focus,
+.input-container>select:focus,
+.input-container>textarea:focus {
+    border-color: var(--f-border-focus) !important;
+    background: var(--f-bg-focus) !important;
+    box-shadow: 0 0 0 3px var(--f-ring) !important;
+}
+
+/* ---- VALID sem foco (não mudar cor para evitar spam de verde) ---- */
+.input-container>input:valid,
+.input-container>select:valid,
+.input-container>textarea:valid {
+    border-color: var(--f-border) !important;
+    box-shadow: none !important;
+}
+
+/* ---- DISABLED ---- */
+.input-container>input:disabled,
+.input-container>select:disabled,
+.input-container>textarea:disabled {
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: var(--f-muted) !important;
+    cursor: not-allowed;
+    opacity: .75;
+}
+
+/* =========================================================
+   ESTADOS DE VALIDAÇÃO
+   ========================================================= */
+
+/* Erro */
+.input-container.is-error>input,
+.input-container.is-error>select,
+.input-container.is-error>textarea {
+    border-color: var(--f-error) !important;
+    background: var(--f-error-bg) !important;
+}
+
+.input-container.is-error>input:focus,
+.input-container.is-error>select:focus,
+.input-container.is-error>textarea:focus {
+    box-shadow: 0 0 0 3px var(--f-error-ring) !important;
+}
+
+.input-container.is-error>label {
+    color: var(--f-error) !important;
+}
+
+.input-container.is-error .field-hint {
+    color: var(--f-error);
+}
+
+/* Sucesso */
+.input-container.is-ok>input,
+.input-container.is-ok>select,
+.input-container.is-ok>textarea {
+    border-color: var(--f-ok) !important;
+    background: var(--f-ok-bg) !important;
+}
+
+.input-container.is-ok>input:focus,
+.input-container.is-ok>select:focus,
+.input-container.is-ok>textarea:focus {
+    box-shadow: 0 0 0 3px var(--f-ok-ring) !important;
+}
+
+.input-container.is-ok>label {
+    color: var(--f-ok) !important;
+}
+
+/* =========================================================
+   HINT / DESCRIÇÃO DO CAMPO
+   ========================================================= */
+.field-hint {
+    font-size: 11px;
+    color: var(--f-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   CAMPO COM ÍCONE (prefixo)
+   ========================================================= */
+.input-icon {
+    position: relative;
+}
+
+.input-icon>i,
+.input-icon>.icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--f-muted);
+    font-size: 13px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-icon>input {
+    padding-left: 32px !important;
+}
+
+/* =========================================================
+   VARIANTES DE TAMANHO
+   ========================================================= */
+.input-container.input-sm>input,
+.input-container.input-sm>select {
+    height: 30px !important;
+    font-size: 12px !important;
+    padding: 0 9px !important;
+    border-radius: 6px !important;
+}
+
+.input-container.input-sm>label {
+    font-size: 10px !important;
+}
+
+.input-container.input-lg>input,
+.input-container.input-lg>select {
+    height: 44px !important;
+    font-size: 14px !important;
+    padding: 0 14px !important;
+    border-radius: 10px !important;
+}
+
+.input-container.input-lg>label {
+    font-size: 12px !important;
+}
+
+/* =========================================================
+   UPLOAD DE ARQUIVO
+   ========================================================= */
+.input-file>.file {
+    display: none;
+}
+
+.input-file>.lbl-file,
+.input-file>.lbl-file-load {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    height: 38px;
+    border-radius: var(--f-radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter .15s;
+    padding: 0 14px;
+    border: none;
+    letter-spacing: .01em;
+}
+
+.input-file>.lbl-file {
+    background: #475569;
+    color: #fff;
+}
+
+.input-file>.lbl-file-load {
+    background: #252159;
+    color: #fff;
+}
+
+.input-file>.lbl-file:hover,
+.input-file>.lbl-file-load:hover {
+    filter: brightness(.9);
+}
+
+/* =========================================================
+   CHECKBOX ESTILIZADO
+   ========================================================= */
+input[type="checkbox"] {
+    display: none;
+}
+
+input[type="checkbox"]+label.chk-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--f-text);
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.4;
+}
+
+input[type="checkbox"]+label.chk-label::before {
+    content: '';
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--f-border);
+    border-radius: 5px;
+    background: var(--f-bg);
+    transition: background .15s, border-color .15s;
+}
+
+input[type="checkbox"]:checked+label.chk-label::before {
+    background: #EE3F60;
+    border-color: #EE3F60;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+input[type="checkbox"]:disabled+label.chk-label {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   SWITCH
+   ========================================================= */
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.switch>input {
+    display: none;
+}
+
+.switch>label {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    background: #cbd5e1;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background .2s;
+    flex-shrink: 0;
+}
+
+.switch>label::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+    transition: left .2s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.switch>label:active::after {
+    width: 20px;
+}
+
+.switch>input:checked~label {
+    background: #EE3F60;
+}
+
+.switch>input:checked~label::after {
+    left: 19px;
+}
+
+.switch>input:disabled~label {
+    background: #e2e8f0;
+    cursor: not-allowed;
+}
+
+.switch>input:disabled~label::after {
+    background: #f1f5f9;
+}
+
+/* Texto ao lado do switch */
+.switch-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--f-text);
+}
+
+/* =========================================================
+   RADIO BUTTON COMO TOGGLE VISUAL
+   ========================================================= */
+input[type="radio"] {
+    display: none;
+}
+
+.radio-btn-default+label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 98%;
+    min-height: 34px;
+    padding: 6px 8px;
+    margin: 2px 1px;
+    text-align: center;
+    border-radius: var(--f-radius);
+    border: 1.5px solid var(--f-border);
+    background: var(--f-bg);
+    color: #475569;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+}
+
+.radio-btn-default+label:hover {
+    background: #fdf2f4;
+    border-color: #f9a8b4;
+    color: #9f1239;
+}
+
+.radio-btn-default:checked+label {
+    background: #EE3F60;
+    border-color: #EE3F60;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* =========================================================
+   OPÇÕES / CHECKBOX DUPLO (legado)
+   ========================================================= */
+.option {
+    margin-top: 0;
+}
+
+.opcao {
+    width: 49%;
+    min-height: 15px;
+    float: left;
+    font-size: 12px;
+    margin-top: -1px;
+}
+
+.label_option,
+.label_input,
+.label_input_cnf {
+    color: #EE3F60;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0;
+}
+
+.label_input_cnf {
+    color: #475569 !important;
+}
+
+/* =========================================================
+   BOTÃO LOGIN
+   ========================================================= */
+.btn-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: var(--f-radius);
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: #EE3F60;
+    cursor: pointer;
+    letter-spacing: .03em;
+    transition: background .15s, box-shadow .15s;
+}
+
+.btn-login:hover {
+    background: #D6336C;
+    box-shadow: 0 3px 10px rgba(238, 63, 96, .28);
+}
+
+.btn-login:active {
+    background: #BE2C5A;
+}

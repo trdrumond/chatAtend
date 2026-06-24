@@ -1,0 +1,117 @@
+/* SOLVETASK — Formulários de login e telas públicas */
+
+.container {
+    margin-top: 10px;
+}
+
+.input-container,
+.input-file {
+    position: relative;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.input-container > label {
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    pointer-events: none;
+    cursor: default !important;
+}
+
+.input-container > input,
+.input-container > select,
+.input-container > textarea {
+    width: 100% !important;
+    height: 42px !important;
+    font-size: 14px !important;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: #1e293b;
+    background: #ffffff !important;
+    border: 1.5px solid #dde3ed !important;
+    border-radius: 8px !important;
+    padding: 0 14px !important;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.input-container > textarea {
+    height: 80px !important;
+    padding: 10px 14px !important;
+    resize: vertical;
+}
+
+.input-container > select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+}
+
+.input-container > input:focus,
+.input-container > select:focus,
+.input-container > textarea:focus {
+    border-color: #EE3F60 !important;
+    box-shadow: 0 0 0 3px rgba(238, 63, 96, .13) !important;
+}
+
+.input-container:focus-within > label {
+    color: #EE3F60 !important;
+}
+
+.input-container > input:valid + label,
+.input-container > input:focus + label,
+.input-container > select:valid + label,
+.input-container > select:focus + label,
+.input-container > textarea:valid + label,
+.input-container > textarea:focus + label {
+    position: static !important;
+    top: auto !important;
+    font-size: 11px !important;
+}
+
+.input-file > .file { display: none; }
+
+.input-file > .lbl-file,
+.input-file > .lbl-file-load {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    border: none;
+}
+
+.input-file > .lbl-file { background: #475569; }
+.input-file > .lbl-file-load { background: #252159; }
+
+.btn-login {
+    width: 100%;
+    height: 42px;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    background: linear-gradient(135deg, #EE3F60, #D6336C);
+    cursor: pointer;
+    transition: opacity .15s;
+}
+
+.btn-login:hover { opacity: .9; }

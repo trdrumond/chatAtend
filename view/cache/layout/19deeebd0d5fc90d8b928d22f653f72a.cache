@@ -1,0 +1,32 @@
+    <link rel="stylesheet" type="text/css" href="http://localhost/solvetask/js/datatable-complete/datatables.css?v=1751883729">
+
+    <link rel="stylesheet" type="text/css"
+        href="http://localhost/solvetask/js/datatable-complete/select-1.3.3/css/select.dataTables.min.css?v=1751883747">
+
+    <link rel="stylesheet" type="text/css"
+        href="http://localhost/solvetask/js/datatable-complete/buttons-2.0.1/css/buttons.dataTables.min.css?v=1751883749">
+    <link rel="stylesheet" type="text/css"
+        href="http://localhost/solvetask/js/datatable-complete/datetime-1.1.1/css/dataTables.dateTime.min.css?v=1751883729">
+    <link rel="stylesheet" type="text/css"
+        href="http://localhost/solvetask/js/datatable-complete/colreorder-1.5.4/css/colReorder.dataTables.min.css?v=1751883752">
+
+    <script type="text/javascript" charset="utf8"
+        src="http://localhost/solvetask/js/datatable-complete/jquery-1.10.25/jquery.dataTables.min.js?v=1751883755"></script>
+
+    <script type="text/javascript"
+        src="http://localhost/solvetask/js/datatable-complete/select-1.3.3/js/datatables.select.min.js?v=1751883746"></script>
+    <script type="text/javascript"
+        src="http://localhost/solvetask/js/datatable-complete/datetime-1.1.1/js/dataTables.dateTime.min.js?v=1751883729"></script>
+    <script type="text/javascript"
+        src="http://localhost/solvetask/js/datatable-complete/colreorder-1.5.4/js/dataTables.colReorder.min.js?v=1751883752"></script>
+    <script type="text/javascript"
+        src="http://localhost/solvetask/js/datatable-complete/buttons-1.7.1/datatables.buttons.min.js?v=1751883751"></script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/datatable-complete/jszip-2.5.0/jszip.min.js?v=1781270145">
+    </script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/datatable-complete/pdfmake-0.1.36/pdfmake.min.js?v=1781270146">
+    </script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/datatable-complete/buttons-1.7.1/buttons.html5.min.js?v=1751883751"></script>
+    <script type="text/javascript" src="http://localhost/solvetask/js/datatable-complete/pdfmake-0.1.36/vfs_fonts.js?v=1781270192"></script>
+    <script type="text/javascript"
+        src="http://localhost/solvetask/js/datatable-complete/buttons-2.0.1/js/buttons.print.min.js?v=1751883748"></script>
+    

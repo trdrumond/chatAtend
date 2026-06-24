@@ -1,0 +1,306 @@
+<?php
+include("../cnf/session.php");
+include_once("config.php");
+
+//APAGA TUDO DA PASTA TEMP
+function apagarTudo ($dir) {
+
+    if (is_dir($dir)) {
+
+        $iterator = new \FilesystemIterator($dir);
+
+        if ($iterator->valid()) {
+
+            $di = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
+            $ri = new RecursiveIteratorIterator($di, RecursiveIteratorIterator::CHILD_FIRST);
+
+            foreach ( $ri as $file ) {
+
+                $file->isDir() ?  rmdir($file) : unlink($file);
+            }
+        }
+    }
+}
+
+//depurador($_POST);
+
+//depurador($_SERVER);
+
+
+
+foreach ($_FILES as $value):
+    $ext = explode(".", $value['name']);
+    $ext=end($ext);
+    $nameFile = $_POST['token']. "." . $ext;
+    $pat = 'temp/';
+    move_uploaded_file($value['tmp_name'], $pat . $nameFile);
+ endforeach;
+
+ //echo "<div id='feedback'></div>";
+ //echo "<br>Teste 1";
+
+include '../staff/SimpleXLSX.php'; // include the class
+
+//echo "<br>Teste 2";
+
+
+ if ( $xlsx = SimpleXLSX::parse($pat.$nameFile) ) {
+	$dados = $xlsx->rows();
+    //depurador($dados);
+
+    $table = "<table border=1>";
+        $table .= "<tr>";
+                for($x=0;$x < count($dados[0]);$x++){
+                    $th=$dados[0];
+                    $table .= "<th>".$th[$x]." - ".$x."</th>";
+                }
+            $table .= "</tr>";
+        $table .= "</thead>";
+        $table .= "<tbody>";
+            for($x=1;$x < count($dados);$x++){
+                $tr=$dados[$x];
+                $table .= "<tr>";
+                    for($y=0;$y < count($tr);$y++){
+                        $table .= "<td>";
+                            if($y==0){
+                                $table .=  $nome = trim($tr[$y]);
+                            } else
+                            if($y==1){
+                                $table .=  $sobrenome = trim($tr[$y]);
+                            } else
+                            if($y==2){
+                                $table .=  $email = trim($tr[$y]);
+                            } else
+                            if($y==3){
+                                $table .=  $login = trim($tr[$y]);
+                            } else
+                            if($y==4){
+                                $table .=  $perfil = 5;
+                            } else
+                            if($y==5){
+                                $sql="SELECT id_municipio, uf from tbl_municipio where nome_municipio = '".trim($tr[$y])."' and uf='".$_POST['uf']."'";
+                                //echo "<br>".$sql;
+                                $stmt = $PDO->prepare( $sql );
+                                $result = $stmt->execute();
+                                $mun = $stmt->fetch( PDO::FETCH_ASSOC );
+                                //echo "<br>".var_dump($mun);
+                                $table .=  $municipio = $mun['id_municipio'];
+                                $uf = $mun['uf'];
+                            } else
+                            if($y==6){
+                                $table .= $empresa = $_POST['empresa'];
+                            } else
+                            if($y==7){
+                                $sql="SELECT id_regional from tbl_regional where nome_regional = '".trim($tr[$y])."'";
+                                $stmt = $PDO->prepare( $sql );
+                                $result = $stmt->execute();
+                                $reg = $stmt->fetch( PDO::FETCH_ASSOC );
+                                if($reg['id_regional']==''){
+                                    $sqlInsert="INSERT INTO tbl_regional (nome_regional, contrato_id) VALUES ('".trim($tr[$y])."', '".$_POST['contrato']."')";
+                                    $stmt = $PDO->prepare( $sqlInsert );
+                                    $result = $stmt->execute();
+                                    if($result){
+                                        $sql="SELECT id_regional from tbl_regional where nome_regional = '".trim($tr[$y])."'";
+                                        $stmt = $PDO->prepare( $sql );
+                                        $result = $stmt->execute();
+                                        $reg = $stmt->fetch( PDO::FETCH_ASSOC );
+                                    }
+                                }
+                                $table .=  $regional = $reg['id_regional'];
+                            } else
+                            if($y==8){
+                                $sql="SELECT id_agencia from tbl_agencia where nome_agencia = '".trim($tr[$y])."'";
+                                $stmt = $PDO->prepare( $sql );
+                                $result = $stmt->execute();
+                                $age = $stmt->fetch( PDO::FETCH_ASSOC );
+                                if($age['id_agencia']==''){
+                                    $sqlInsert="INSERT INTO tbl_agencia (nome_agencia, contrato_id, regional_id) VALUES ('".trim($tr[$y])."', '".$_POST['contrato']."', '".$regional."')";
+                                    $stmt = $PDO->prepare( $sqlInsert );
+                                    $result = $stmt->execute();
+                                    if($result){
+                                        $sql="SELECT id_agencia from tbl_agencia where nome_agencia = '".trim($tr[$y])."'";
+                                        $stmt = $PDO->prepare( $sql );
+                                        $result = $stmt->execute();
+                                        $age = $stmt->fetch( PDO::FETCH_ASSOC );
+                                    }
+                                }
+                                $table .=  $agencia = $age['id_agencia'];
+                            } else
+                            if($y==9){
+                                $table .=  $fila = $tr[$y];
+                            }
+
+
+                        $table .=  "</td>";
+                    }
+                    //echo "<br> Texte 0 ";
+                    $sql="SELECT id_user from tbl_user where nome_usuario = '".$login."'";
+                        //echo "<br teste>";
+                    $stmt = $PDO->prepare( $sql );
+                    $result = $stmt->execute();
+                    $ver = $stmt->fetch( PDO::FETCH_ASSOC );
+
+
+                    $sqlUf="SELECT id_estado from tbl_estado where uf='".$uf."'";
+                        //echo "<br teste>";
+                    $stmt = $PDO->prepare( $sqlUf );
+                    $result = $stmt->execute();
+                    $dd = $stmt->fetch( PDO::FETCH_ASSOC );
+
+
+                    if($ver['id_user']==''){
+                        $pass = newPass();
+                        $senha = generateHash($pass);
+
+                        $sqlInsertUser = "INSERT INTO tbl_user (nome_usuario, senha_usuario, nome, sobrenome, email, contrato_id, empresa_id, municipio_id, regional_id, agencia_id, fila_id, uf_id, nivel_id, token, data_update) VALUE ('".$login."','".$senha."','".$nome."','".$sobrenome."','".$email."', '".$_POST['contrato']."','".$empresa."','".$municipio."','".$regional."','".$agencia."', 0, '".$dd['id_estado']."','".$perfil."', '".geraToken(trim($login))."', now())";
+                        //echo "<br>".$sqlInsertUser;
+                        $stmt = $PDO->prepare( $sqlInsertUser );
+                        $result = $stmt->execute();
+                        if($result){
+                            $sql="SELECT id_user, contrato_id, (SELECT nome_contrato from tbl_contrato where id_contrato=contrato_id) as contrato,  municipio_id, (SELECT nome_municipio from tbl_municipio where id_municipio=municipio_id) as municipio, regional_id, (SELECT nome_regional from tbl_regional where id_regional=regional_id) as regional, agencia_id, (SELECT nome_agencia from tbl_agencia where id_agencia=agencia_id) as agencia from tbl_user where nome_usuario = '".$login."'";
+                            //echo "<br teste>";
+                            $stmt = $PDO->prepare( $sql );
+                            $result = $stmt->execute();
+                            $user = $stmt->fetch( PDO::FETCH_ASSOC );
+                            //var_dump($user);
+                            if($user['id_user']!=''){
+                                $sqlInsertUser = "INSERT INTO tbl_user_img_perfil (user_id, img) VALUE ('".$user['id_user']."', 'data:image/jpeg;base64,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')";
+                                $stmt = $PDO->prepare( $sqlInsertUser );
+                                $result = $stmt->execute();
+                            }
+
+                            if($user['id_user']!=''){
+                                $sqlInsert="INSERT INTO tbl_user_pass (user_id, date_refresh, pass) VALUES ('".$user['id_user']."', curdate(), '".$senha."')";
+                                //echo "<br>".$sqlInsert;
+                                $stmt = $PDO->prepare( $sqlInsert );
+                                $result = $stmt->execute();
+
+                                if($result){
+                                    if($_SERVER['SSL_SERVER_S_DN_CN']!='localhost'){
+                                        $nome = trim($nome). " ".trim($sobrenome);
+                                        $email = trim($email);
+                                        $login = trim($login);
+                                        $contrato = $user['contrato'];
+                                        $municipio = $user['municipio'];
+                                        $regional = $user['regional'];
+                                        $agencia = $user['agencia'];
+
+                                        $destinatarioNome = 'SOLVETASK';
+                                        $caixaPostalServidorNome = 'Solvetask';
+                                        $caixaPostalServidorEmail = 'naoresponda@logos-ma.com.br';
+                                        $caixaPostalServidorUser = 'maillogos';
+                                        $caixaPostalServidorSenha = 'YhXYiPVX4160';
+                                        $host = "smtplw.com.br";
+                                        $port = 587;
+
+
+                                        //echo "<BR>tESTE 3";
+
+
+                                        $assunto ='SOLVETASK '.$config_sis['titulo_sistema'].' - CADASTRO';
+
+                                        $conteudo ='Olá <b>'.$nome.'</b>,<br><br>
+                                            Seguem suas informações de acesso ao sistema Solvetask:<br><br>
+                                            Nome: <b>'.$nome.'</b><br>
+                                            Contrato: <b>'.$contrato.'</b><br>
+                                            Município: <b>'.$municipio.'</b><br>
+                                            Regional: <b>'.$regional.'</b><br>
+                                            Agência: <b>'.$agencia.'</b><br>
+                                            Login: <b>'.$login.'</b><br>
+                                            Senha Inicial: <b>'.$pass.'</b> (será necessário modificar esta senha em seu primeiro acesso)<br>
+                                            E-mail: <b>'.$email.'</b><br>
+                                            <br><br>
+                                            Para acessar o sistema entre no endereço: <br>
+                                            https://solvetask.logos-ma.com.br
+
+
+
+                                            <br><br><br><br><br><br><center>********** Não responda este e-mail **********</center>
+                                            ';
+                                            //echo "<BR>tESTE 4";
+
+
+
+                                            include_once("../staff/phpmailer/class.phpmailer.php");
+                                            //echo "<BR>tESTE 5";
+                                            //echo "<br>".$conteudo;
+
+                                            $mail = new PHPMailer();
+                                            $mail->Charset   = 'ISO-8859-1';
+                                            $mail->IsSMTP(); // Define que a mensagem será SMTP
+                                            $mail->SMTPDebug = 1;
+                                            $mail->Port = 587; //Indica a porta de conexão
+                                                //$mail->Host = "smtplw.com.br"; // Endereço do servidor SMTP
+                                            $mail->Host = $host; // Endereço do servidor SMTP
+                                            $mail->SMTPAuth = true; // Usa autenticação SMTP? (opcional)
+                                            $mail->Username = $caixaPostalServidorUser; // Usuário do servidor SMTP
+                                            $mail->Password = $caixaPostalServidorSenha; // Senha do servidor SMTP
+                                            $mail->From = $caixaPostalServidorEmail; // Seu e-mail
+                                            $mail->FromName = "SOLVETASK - CADASTRO"; // Seu nome
+                                            $mail->IsHTML(true);
+                                            $mail->Subject  = utf8_decode($assunto);
+                                            $mail->Body  = utf8_decode($conteudo);
+                                            $mail->AddAddress($email);
+                                            //echo "<BR>tESTE 6";
+                                            //print_r($mail->Subject);
+                                            //print_r($mail->Body);
+                                            //$mail->send();
+
+
+                                            if($mail->send()){
+                                                //echo '<br>Erro ao enviar E-mail: '. print_r($mail->ErrorInfo); exit;
+                                                $sqlmAIL="UPDATE tbl_user SET flag_mail=1 where id_user=".$user['id_user'];
+                                                //echo "<br>".$sqlmAIL;
+                                                $stmt = $PDO->prepare( $sqlmAIL );
+                                                $result = $stmt->execute();
+                                            }
+                                            /*    else {
+                                                echo "<br>Mensagem enviada com sucesso!";
+                                            }
+                                            */
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                $table .=  "</tr>";
+            }
+        $table .=  "</tbody>";
+    $table .=  "</table>";
+}
+
+//echo  "<br>".$table;
+
+//apagarTudo("temp");
+
+//echo "<h1>Usuários cadastrados com sucesso!</h1>";
+
+?>
+
+<script>
+Swal.fire({
+    position: 'bottom-start',
+    icon: 'success',
+    title: 'Usuários cadastrados com sucesso!',
+    showConfirmButton: false,
+    timer: 1500
+});
+$("#new_import").modal('hide');
+actionPage('cad-usu', 'cnf');
+
+
+
+function actionPage(action, sec) {
+    $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
+    //console.log('A ação é: ' + action);
+    $.post("action.php", {
+            action: action,
+            sec: sec
+        },
+        function(valor) {
+            $("#action-page").html(valor);
+        });
+}
+</script>
+

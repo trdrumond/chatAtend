@@ -1,0 +1,231 @@
+<?php
+include_once("conn.php");
+include_once("func.php");
+//echo "<br>Replace Inicio";
+
+function getDiv($count){
+    $div = $count / 100;
+    $param = round($div) + 1;
+    $div = number_format($div, 0, '.', '');
+    return $div;
+}
+
+//if(date('H:i:s') < '09:00:00'){
+
+//echo "<br>";
+$sql1="SELECT * from tbl_chat_fila order by data_hora desc";
+$stmt1 = $PDO->prepare($sql1);
+$result1 = $stmt1->execute();
+$info1 = $stmt1->fetchAll( PDO::FETCH_ASSOC );
+//echo "<br>".count($info1);
+//echo "<br>Divisao: ".getDiv(count($info1));
+$param = getDiv(count($info1));
+//echo "<br>Parametro: ".$param;
+for($i = 0; $i < $param; $i++){
+    $start = $i * 100;
+    $end = ($i + 1) * 100;
+
+    $sqlNew1='';
+    $sqlNew1="REPLACE INTO tbl_chat_fila_secondary (id_fila_chat,protocolo,data_hora,contrato_id,fila_id,assunto_id,ate_resp,bko_resp,status_fila,hora_inicio,hora_fim,ta,te,motivo_cancela,motivo) VALUES ";
+
+    //for($x=0;$x<count($info1);$x++){
+    for($x=$start;$x<$end;$x++){
+        if($x < count($info1)){
+            $ls=$info1[$x];
+            $ls['id_fila_chat'] = ($ls['id_fila_chat'] =='') ? 'NULL' : "'".nomeCampo($ls['id_fila_chat'])."'";
+            $ls['protocolo'] = ($ls['protocolo'] =='') ? 'NULL' : "'".nomeCampo($ls['protocolo'])."'";
+            $ls['data_hora'] = ($ls['data_hora'] =='') ? 'NULL' : "'".nomeCampo($ls['data_hora'])."'";
+            $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+            $ls['fila_id'] = ($ls['fila_id'] =='') ? 'NULL' : "'".nomeCampo($ls['fila_id'])."'";
+            $ls['assunto_id'] = ($ls['assunto_id'] =='') ? 'NULL' : "'".nomeCampo($ls['assunto_id'])."'";
+            $ls['ate_resp'] = ($ls['ate_resp'] =='') ? 'NULL' : "'".nomeCampo($ls['ate_resp'])."'";
+            $ls['bko_resp'] = ($ls['bko_resp'] =='') ? 'NULL' : "'".nomeCampo($ls['bko_resp'])."'";
+            $ls['status_fila'] = ($ls['status_fila'] =='') ? 'NULL' : "'".nomeCampo($ls['status_fila'])."'";
+            $ls['hora_inicio'] = ($ls['hora_inicio'] =='') ? 'NULL' : "'".nomeCampo($ls['hora_inicio'])."'";
+            $ls['hora_fim'] = ($ls['hora_fim'] =='') ? 'NULL' : "'".nomeCampo($ls['hora_fim'])."'";
+            $ls['ta'] = ($ls['ta'] =='') ? 'NULL' : "'".nomeCampo($ls['ta'])."'";
+            $ls['te'] = ($ls['te'] =='') ? 'NULL' : "'".nomeCampo($ls['te'])."'";
+            $ls['motivo_cancela'] = ($ls['motivo_cancela'] =='') ? 'NULL' : "'".nomeCampo($ls['motivo_cancela'])."'";
+            $ls['motivo'] = ($ls['motivo'] =='') ? 'NULL' : "'".nomeCampo($ls['motivo'])."'";
+
+            $sqlNew1 .= "(".$ls['id_fila_chat'].",".$ls['protocolo'].", ".$ls['data_hora'].",".$ls['contrato_id'].",".$ls['fila_id'].",".$ls['assunto_id'].",".$ls['ate_resp'].",".$ls['bko_resp'].",".$ls['status_fila'].",".$ls['hora_inicio'].",".$ls['hora_fim'].",".$ls['ta'].",".$ls['te'].",".$ls['motivo_cancela'].",".$ls['motivo'].")";
+
+            if(($x!=$end-1) && ($x!=(count($info1)-1))){$sqlNew1.=',';}
+        }
+
+    }
+
+    if($infoUser['id_user']==1){
+        //echo "<br>".$sqlNew1;
+    }
+    $stmt2 = $PDO->prepare($sqlNew1);
+    $result2 = $stmt2->execute();
+
+    //var_dump($result2);
+    //var_dump($infoUser);
+
+    if($result2){
+            //echo "[".date('d/m/Y H:i:s')."] ->  OK - tbl_chat_fila_secondary $end /n";
+    }else{
+            //echo "[".date('d/m/Y H:i:s')."] ->  Erro - tbl_chat_fila_secondary $end /n";
+    }
+}
+//echo "<br>Fim Bloco 1";
+
+
+$sql2="SELECT * from tbl_chat_info order by data_hora desc";
+$stmt3 = $PDO->prepare($sql2);
+$result3 = $stmt3->execute();
+$info2 = $stmt3->fetchAll( PDO::FETCH_ASSOC );
+//echo "<br>".count($info2);
+$param = getDiv(count($info2));
+for($i = 0; $i < $param; $i++){
+    $start = $i * 100;
+    $end = ($i + 1) * 100;
+
+    $sqlNew2='';
+    $sqlNew2="REPLACE INTO tbl_chat_info_secondary (id_chat, contrato_id, assunto_id, fila_id, token_chat, data_hora, rem_chat, dest_chat, fila_chat_id, indice) VALUES ";
+    for($x=$start;$x<$end;$x++){
+        if($x < count($info2)){
+            $ls=$info2[$x];
+            $ls['id_chat'] = ($ls['id_chat'] =='') ? 'NULL' : "'".nomeCampo($ls['id_chat'])."'";
+            $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+            $ls['assunto_id'] = ($ls['assunto_id'] =='') ? 'NULL' : "'".nomeCampo($ls['assunto_id'])."'";
+            $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+            $ls['token_chat'] = ($ls['token_chat'] =='') ? 'NULL' : "'".nomeCampo($ls['token_chat'])."'";
+            $ls['assunto_id'] = ($ls['assunto_id'] =='') ? 'NULL' : "'".nomeCampo($ls['assunto_id'])."'";
+            $ls['data_hora'] = ($ls['data_hora'] =='') ? 'NULL' : "'".nomeCampo($ls['data_hora'])."'";
+            $ls['rem_chat'] = ($ls['rem_chat'] =='') ? 'NULL' : "'".nomeCampo($ls['rem_chat'])."'";
+            $ls['dest_chat'] = ($ls['dest_chat'] =='') ? 'NULL' : "'".nomeCampo($ls['dest_chat'])."'";
+            $ls['fila_chat_id'] = ($ls['fila_chat_id'] =='') ? 'NULL' : "'".nomeCampo($ls['fila_chat_id'])."'";
+            $ls['indice'] = ($ls['indice'] =='') ? 'NULL' : "'".nomeCampo($ls['indice'])."'";
+
+            $sqlNew2 .= "(".$ls['id_chat'].",".$ls['contrato_id'].", ".$ls['assunto_id'].",".$ls['fila_id'].",".$ls['token_chat'].",".$ls['data_hora'].",".$ls['rem_chat'].",".$ls['dest_chat'].",".$ls['fila_chat_id'].",".$ls['indice'].")";
+
+            if(($x!=$end-1) && ($x!=(count($info2)-1))){$sqlNew2.=',';}
+        }
+
+    }
+    $stmt4 = $PDO->prepare($sqlNew2);
+    $result4 = $stmt4->execute();
+
+    if($result4){
+            //echo "[".date('d/m/Y H:i:s')."] ->  OK - tbl_chat_info_secondary $end /n";
+    }else{
+            //echo "[".date('d/m/Y H:i:s')."] ->  Erro - tbl_chat_info_secondary $end /n";
+    }
+
+}
+
+//echo "<br>Fim Bloco 2";
+
+
+//echo "<br>";
+$sql7="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl_log_atendimento order by data_hora desc";
+//echo "<br>".$sql7;
+$stmt7 = $PDO->prepare($sql7);
+$result7 = $stmt7->execute();
+$info7 = $stmt7->fetchAll( PDO::FETCH_ASSOC );
+
+$param = getDiv(count($info1));
+for($i = 0; $i < $param; $i++){
+    $start = $i * 100;
+    $end = ($i + 1) * 100;
+
+    $sqlNew7='';
+    $sqlNew7="REPLACE INTO tbl_log_atendimento_secondary (user_id, contrato_id, agencia_id, fila_id, data_hora, acao) VALUES ";
+    for($x=$start;$x<$end;$x++){
+        if($x < count($info7)){
+            $ls=$info7[$x];
+            $ls['user_id'] = ($ls['user_id'] =='') ? 'NULL' : "'".nomeCampo($ls['user_id'])."'";
+            $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+            $ls['agencia_id'] = ($ls['agencia_id'] =='') ? 'NULL' : "'".nomeCampo($ls['agencia_id'])."'";
+            $ls['fila_id'] = ($ls['fila_id'] =='') ? 'NULL' : "'".nomeCampo($ls['fila_id'])."'";
+            $ls['data_hora'] = ($ls['data_hora'] =='') ? 'NULL' : "'".nomeCampo($ls['data_hora'])."'";
+            $ls['acao'] = ($ls['acao'] =='') ? 'NULL' : "'".nomeCampo($ls['acao'])."'";
+
+            $sqlNew7 .= "(".$ls['user_id'].",".$ls['contrato_id'].", ".$ls['agencia_id'].",".$ls['fila_id'].",".$ls['data_hora'].",".$ls['acao'].")";
+
+            if(($x!=$end-1) && ($x!=(count($info7)-1))){$sqlNew7.=',';}
+        }
+
+    }
+
+    $stmt8 = $PDO->prepare($sqlNew7);
+    $result8 = $stmt8->execute();
+
+    if($result8){
+            //echo "[".date('d/m/Y H:i:s')."] ->  OK - tbl_log_atendimento_secondary $end /n";
+    }else{
+            //echo "[".date('d/m/Y H:i:s')."] ->  Erro - tbl_log_atendimento_secondary $end /n";
+    }
+
+}
+
+//echo "<br>Fim Bloco 3";
+
+
+//echo "<br>";
+$sqlTma="SELECT id, resp_id, contrato_id, date_disp, fila_id, fila_chat_id, chat_id, date_in, date_out, sla from tbl_tma_atend  order by date_disp desc";
+//echo "<br>".$sqlTma;
+$stmt = $PDO->prepare($sqlTma);
+$result = $stmt->execute();
+$infoTma = $stmt->fetchAll( PDO::FETCH_ASSOC );
+
+$param = getDiv(count($infoTma));
+
+//echo "<br>".$param;
+//echo "<br>".count($infoTma);
+
+for($i = 0; $i < $param; $i++){
+    //echo "<br>".$i;
+    $start = $i * 100;
+    $end = ($i + 1) * 100;
+    //echo "<br>Inicio: ".$start." Fim: ".$end;
+
+    $sqlNew='';
+    $sqlNew="REPLACE INTO tbl_tma_atend_secondary (id, resp_id, contrato_id, date_disp, fila_id, fila_chat_id, chat_id, date_in, date_out, sla) VALUES ";
+
+    for($x=$start;$x<$end;$x++){
+
+        if($x < count($infoTma)){
+            //echo "<br>".$x;
+            //echo " - ".count($infoTma);
+            $ls=$infoTma[$x];
+            $ls['id'] = ($ls['id'] =='') ? 'NULL' : "'".nomeCampo($ls['id'])."'";
+            $ls['resp_id'] = ($ls['resp_id'] =='') ? 'NULL' : "'".nomeCampo($ls['resp_id'])."'";
+            $ls['contrato_id'] = ($ls['contrato_id'] =='') ? 'NULL' : "'".nomeCampo($ls['contrato_id'])."'";
+            $ls['date_disp'] = ($ls['date_disp'] =='') ? 'NULL' : "'".nomeCampo($ls['date_disp'])."'";
+            $ls['fila_id'] = ($ls['fila_id'] =='') ? 'NULL' : "'".nomeCampo($ls['fila_id'])."'";
+            $ls['fila_chat_id'] = ($ls['fila_chat_id'] =='') ? 'NULL' : "'".nomeCampo($ls['fila_chat_id'])."'";
+            $ls['chat_id'] = ($ls['chat_id'] =='') ? 'NULL' : "'".nomeCampo($ls['chat_id'])."'";
+            $ls['date_in'] = ($ls['date_in'] =='') ? 'NULL' : "'".nomeCampo($ls['date_in'])."'";
+            $ls['date_out'] = ($ls['date_out'] =='') ? 'NULL' : "'".nomeCampo($ls['date_out'])."'";
+            $ls['sla'] = ($ls['sla'] =='') ? 'NULL' : "'".nomeCampo($ls['sla'])."'";
+
+
+            $sqlNew .= "(".$ls['id'].",".$ls['resp_id'].", ".$ls['contrato_id'].",".$ls['date_disp'].",".$ls['fila_id'].",".$ls['fila_chat_id'].",".$ls['chat_id'].",".$ls['date_in'].",".$ls['date_out'].",".$ls['sla'].")";
+
+            if(($x!=$end-1) && ($x!=(count($infoTma)-1))){$sqlNew.=',';}
+        }
+
+    }
+
+    //echo "<br>".$sqlNew;
+    $stmt = $PDO->prepare($sqlNew);
+    $result = $stmt->execute();
+
+    if($result){
+            //echo "[".date('d/m/Y H:i:s')."] ->  OK - tbl_tma_atend_secondary $end /n";
+    }else{
+            //echo "[".date('d/m/Y H:i:s')."] ->  Erro - tbl_tma_atend_secondary $end /n";
+    }
+
+}
+
+//}
+
+//include_once("replace_msg.php");
+
+//echo "<br>Fim de replace";
+?>

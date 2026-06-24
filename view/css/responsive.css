@@ -1,0 +1,64 @@
+
+@media screen and (max-width: 1125px) {
+	body {
+        background-color: #FFFFFF;
+        font-family: 'neosans', 'Open Sans', sans-serif;
+    }
+    #perfil {
+        display: none;
+    }
+
+    #perfil-nav {
+        display: block;
+        background: #252159;
+        width: 48%;
+        height: 40px;
+        font-size: 26px;
+        float: left;
+      }
+
+
+    #img-perfil {
+        display: none;
+    }
+
+
+
+    #page {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    #suspended {
+        width: 50%;
+        float: right;
+        background-color: chartreuse;
+    }
+
+    #alert {
+        display: none;
+    }
+
+    .col-5 {
+        width: 100%;
+      }
+
+      #content {
+        width: 100%;
+      }
+
+    .bloco_info {
+        max-width: 16%;
+    }
+    #indice-idx {
+        max-width: 100%;
+        float: left;
+        padding-top: 0px;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    #indice-idx-men {
+        display: none;
+    }
+}

@@ -1,0 +1,40 @@
+
+<div id="img-perfil">
+    <div id="user_img_perfil">
+        <img src="<?php echo $infoUser['img_perfil']; ?>" class="rounded-circle" alt="perfil" height="80"  width="80" style="margin: auto;">
+    </div>
+    <div id="InfoPerfil">
+        <?=ucwords(strtolower($infoUser['nome_completo']))?><br>
+        <?=$infoUser['icon']?><br>
+        <?=$infoUser['nivel']?><br>
+        <?php if($_GET['sec']=='idx') { ?>
+        <div class="bloco_status_server">
+            <div id="statusServer"><div id="sinal_server" class="signal status_neutro"></div></div>
+        </div>
+
+            <?php if($infoUser['id_user']==1){ ?>
+                <div id="dadosLogados">---</div>
+            <?php } ?>
+        <?php } ?>
+        <?php if($infoUser['nivel_id']==4){ ?>
+            <div id="star"> -- </div>
+        <?php } ?>
+    </div>
+
+
+
+</div>
+
+
+<div id="menu">
+    <?php include("content/menu/menu-".$_GET['sec'].".php"); ?>
+</div>
+<footer class="grupo_logos">
+    V.: 2.2<br>
+    <img src="img/brand1.png" alt="Grupo Logos" class="img_footer">
+
+</footer>
+
+
+
+
