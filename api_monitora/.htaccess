@@ -1,21 +1,41 @@
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-
-    # Apache/XAMPP frequentemente não repassa Authorization ao PHP — necessário para Bearer.
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-    RewriteCond %{HTTP:X-Api-Key} .
-    RewriteRule .* - [E=HTTP_X_API_KEY:%{HTTP:X-Api-Key}]
-
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^ index.php [QSA,L]
-</IfModule>
-
-# Fallback CGI/FastCGI
-<IfModule mod_setenvif.c>
-    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-    SetEnvIf X-Api-Key "(.*)" HTTP_X_API_KEY=$1
-</IfModule>
-
+<IfModule mod_rewrite.c>
+
+    RewriteEngine On
+
+
+
+    # Apache/XAMPP frequentemente não repassa Authorization ao PHP — necessário para Bearer.
+
+    RewriteCond %{HTTP:Authorization} .
+
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+
+
+    RewriteCond %{HTTP:X-Api-Key} .
+
+    RewriteRule .* - [E=HTTP_X_API_KEY:%{HTTP:X-Api-Key}]
+
+
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    RewriteRule ^ index.php [QSA,L]
+
+</IfModule>
+
+
+
+# Fallback CGI/FastCGI
+
+<IfModule mod_setenvif.c>
+
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+    SetEnvIf X-Api-Key "(.*)" HTTP_X_API_KEY=$1
+
+</IfModule>
+
+

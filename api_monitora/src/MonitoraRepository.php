@@ -104,36 +104,10 @@ final class MonitoraRepository
         int $pagina,
         int $porPagina
     ): array {
-        $contratoId = $this->parseContratoCodigo($codigoContrato);
-        if ($contratoId === null || !$this->contratoExiste($codigoContrato)) {
-            MonitoraResponse::erro(404, 'NAO_ENCONTRADO', 'Contrato ' . $codigoContrato . ' não encontrado ou inativo.');
-        }
-
-        $filaId = null;
-        if ($codigoFila !== null && $codigoFila !== '') {
-            if (!ctype_digit($codigoFila)) {
-                MonitoraResponse::erro(400, 'PARAMETROS_INVALIDOS', 'Código de fila inválido.');
-            }
-            $filaId = (int) $codigoFila;
-            if (!$this->filaPertenceContrato($filaId, $contratoId)) {
-                MonitoraResponse::erro(403, 'SEM_PERMISSAO', 'Fila ' . $codigoFila . ' não pertence ao contrato informado.');
-            }
-        }
-
+        $filtros = $this->resolverFiltrosAtendimentos($dataInicio, $dataFim, $codigoContrato, $codigoFila);
         $tabela = $this->tabelaFila();
-        $where = 'f.contrato_id = :contrato_id
-                  AND f.hora_fim IS NOT NULL
-                  AND DATE(f.hora_fim) BETWEEN :data_inicio AND :data_fim';
-        $params = [
-            ':contrato_id' => $contratoId,
-            ':data_inicio' => $dataInicio,
-            ':data_fim' => $dataFim,
-        ];
-
-        if ($filaId !== null) {
-            $where .= ' AND f.fila_id = :fila_id';
-            $params[':fila_id'] = $filaId;
-        }
+        $where = $filtros['where'];
+        $params = $filtros['params'];
 
         $sqlCount = "SELECT COUNT(*) AS total FROM {$tabela} f WHERE {$where}";
         $stmtCount = $this->pdo->prepare($sqlCount);
@@ -172,6 +146,109 @@ final class MonitoraRepository
         $atendimentos = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $atendimentos[] = $this->montarResumoAtendimento($row);
+        }
+
+        return [
+            'total' => $total,
+            'pagina' => $pagina,
+            'por_pagina' => $porPagina,
+            'total_paginas' => $totalPaginas,
+            'atendimentos' => $atendimentos,
+        ];
+    }
+
+    /**
+     * Lista atendimentos com detalhe completo (mensagens, cliente, métricas) em lote.
+     * Uma requisição substitui N chamadas individuais por protocolo.
+     *
+     * @return array{
+     *   total: int,
+     *   pagina: int,
+     *   por_pagina: int,
+     *   total_paginas: int,
+     *   atendimentos: list<array<string, mixed>>
+     * }
+     */
+    public function listarAtendimentosCompletos(
+        string $dataInicio,
+        string $dataFim,
+        string $codigoContrato,
+        ?string $codigoFila,
+        int $pagina,
+        int $porPagina
+    ): array {
+        $filtros = $this->resolverFiltrosAtendimentos($dataInicio, $dataFim, $codigoContrato, $codigoFila);
+        $tabela = $this->tabelaFila();
+        $where = $filtros['where'];
+        $params = $filtros['params'];
+
+        $sqlCount = "SELECT COUNT(*) AS total FROM {$tabela} f WHERE {$where}";
+        $stmtCount = $this->pdo->prepare($sqlCount);
+        $stmtCount->execute($params);
+        $total = (int) ($stmtCount->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+
+        $totalPaginas = max(1, (int) ceil($total / $porPagina));
+        $offset = ($pagina - 1) * $porPagina;
+
+        $sql = "SELECT
+                    f.id_fila_chat,
+                    f.protocolo,
+                    f.contrato_id,
+                    f.fila_id,
+                    f.status_fila,
+                    f.data_hora,
+                    f.hora_inicio,
+                    f.hora_fim,
+                    f.ta,
+                    f.te,
+                    f.motivo,
+                    f.motivo_cancela,
+                    cf.nome_fila,
+                    ass.titulo_assunto,
+                    CONCAT(bko.nome, ' ', bko.sobrenome) AS operador_nome,
+                    bko.nome_usuario AS operador_login,
+                    CONCAT(sol.nome, ' ', sol.sobrenome) AS cliente_nome,
+                    sol.email AS cliente_email,
+                    sol.nome_usuario AS cliente_login,
+                    f.ate_resp,
+                    f.bko_resp,
+                    cl.star AS csat
+                FROM {$tabela} f
+                INNER JOIN tbl_config_fila cf ON cf.id_fila = f.fila_id
+                INNER JOIN tbl_assunto ass ON ass.id_assunto = f.assunto_id
+                LEFT JOIN tbl_user bko ON bko.id_user = f.bko_resp
+                LEFT JOIN tbl_user sol ON sol.id_user = f.ate_resp
+                LEFT JOIN tbl_classificacao cl ON cl.chat_fila_id = f.id_fila_chat
+                WHERE {$where}
+                ORDER BY f.hora_fim ASC, f.protocolo ASC
+                LIMIT {$offset}, {$porPagina}";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $contextos = [];
+        $filaChatIds = [];
+        foreach ($rows as $row) {
+            $filaChatId = (int) $row['id_fila_chat'];
+            $filaChatIds[] = $filaChatId;
+            $contextos[$filaChatId] = [
+                'ate_resp' => (int) ($row['ate_resp'] ?? 0),
+                'bko_resp' => (int) ($row['bko_resp'] ?? 0),
+                'nome_cliente' => trim((string) ($row['cliente_nome'] ?? '')),
+                'nome_operador' => trim((string) ($row['operador_nome'] ?? '')),
+            ];
+        }
+
+        $mensagensPorFila = $this->buscarMensagensEmLote($filaChatIds, $contextos);
+
+        $atendimentos = [];
+        foreach ($rows as $row) {
+            $filaChatId = (int) $row['id_fila_chat'];
+            $atendimentos[] = $this->montarDetalheCompleto(
+                $row,
+                $mensagensPorFila[$filaChatId] ?? []
+            );
         }
 
         return [
@@ -227,6 +304,66 @@ final class MonitoraRepository
             MonitoraResponse::erro(404, 'NAO_ENCONTRADO', 'Protocolo ' . $protocolo . ' não encontrado.');
         }
 
+        $mensagens = $this->buscarMensagens(
+            (int) $row['id_fila_chat'],
+            (int) ($row['ate_resp'] ?? 0),
+            (int) ($row['bko_resp'] ?? 0),
+            trim((string) ($row['cliente_nome'] ?? '')),
+            trim((string) ($row['operador_nome'] ?? ''))
+        );
+
+        return $this->montarDetalheCompleto($row, $mensagens);
+    }
+
+    /**
+     * @return array{where: string, params: array<string, int|string>}
+     */
+    private function resolverFiltrosAtendimentos(
+        string $dataInicio,
+        string $dataFim,
+        string $codigoContrato,
+        ?string $codigoFila
+    ): array {
+        $contratoId = $this->parseContratoCodigo($codigoContrato);
+        if ($contratoId === null || !$this->contratoExiste($codigoContrato)) {
+            MonitoraResponse::erro(404, 'NAO_ENCONTRADO', 'Contrato ' . $codigoContrato . ' não encontrado ou inativo.');
+        }
+
+        $filaId = null;
+        if ($codigoFila !== null && $codigoFila !== '') {
+            if (!ctype_digit($codigoFila)) {
+                MonitoraResponse::erro(400, 'PARAMETROS_INVALIDOS', 'Código de fila inválido.');
+            }
+            $filaId = (int) $codigoFila;
+            if (!$this->filaPertenceContrato($filaId, $contratoId)) {
+                MonitoraResponse::erro(403, 'SEM_PERMISSAO', 'Fila ' . $codigoFila . ' não pertence ao contrato informado.');
+            }
+        }
+
+        $where = 'f.contrato_id = :contrato_id
+                  AND f.hora_fim IS NOT NULL
+                  AND DATE(f.hora_fim) BETWEEN :data_inicio AND :data_fim';
+        $params = [
+            ':contrato_id' => $contratoId,
+            ':data_inicio' => $dataInicio,
+            ':data_fim' => $dataFim,
+        ];
+
+        if ($filaId !== null) {
+            $where .= ' AND f.fila_id = :fila_id';
+            $params[':fila_id'] = $filaId;
+        }
+
+        return ['where' => $where, 'params' => $params];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @param list<array{autor: string, nome: string, texto: string, timestamp: string, tipo?: string}> $mensagens
+     * @return array<string, mixed>
+     */
+    private function montarDetalheCompleto(array $row, array $mensagens): array
+    {
         $detalhe = $this->montarResumoAtendimento($row);
         $detalhe['operador_login'] = (string) ($row['operador_login'] ?? '');
         $detalhe['cliente'] = [
@@ -242,13 +379,7 @@ final class MonitoraRepository
             'tempo_resolucao_min' => $this->tempoMinutos($row['ta'] ?? null),
         ];
         $detalhe['tags'] = $this->montarTags($row);
-        $detalhe['mensagens'] = $this->buscarMensagens(
-            (int) $row['id_fila_chat'],
-            (int) ($row['ate_resp'] ?? 0),
-            (int) ($row['bko_resp'] ?? 0),
-            trim((string) ($row['cliente_nome'] ?? '')),
-            trim((string) ($row['operador_nome'] ?? ''))
-        );
+        $detalhe['mensagens'] = $mensagens;
 
         unset($detalhe['nps'], $detalhe['csat'], $detalhe['fcr'], $detalhe['tempo_resolucao_min']);
 
@@ -368,6 +499,79 @@ final class MonitoraRepository
             if ($rows !== []) {
                 return $this->formatarMensagens($rows, $ateResp, $bkoResp, $nomeCliente, $nomeOperador);
             }
+        }
+
+        return [];
+    }
+
+    /**
+     * Busca mensagens de vários atendimentos em uma única consulta (evita N+1).
+     *
+     * @param list<int> $filaChatIds
+     * @param array<int, array{ate_resp: int, bko_resp: int, nome_cliente: string, nome_operador: string}> $contextos
+     * @return array<int, list<array{autor: string, nome: string, texto: string, timestamp: string, tipo: string}>>
+     */
+    private function buscarMensagensEmLote(array $filaChatIds, array $contextos): array
+    {
+        $filaChatIds = array_values(array_unique(array_filter($filaChatIds, function ($id) {
+            return $id > 0;
+        })));
+
+        if ($filaChatIds === []) {
+            return [];
+        }
+
+        $pares = [
+            ['info' => 'tbl_chat_info_secondary', 'msg' => 'tbl_chat_msg_secondary'],
+            ['info' => 'tbl_chat_info', 'msg' => 'tbl_chat_msg'],
+        ];
+
+        foreach ($pares as $par) {
+            if (!$this->tabelaExiste($par['info']) || !$this->tabelaExiste($par['msg'])) {
+                continue;
+            }
+
+            $placeholders = implode(',', array_fill(0, count($filaChatIds), '?'));
+            $sql = "SELECT i.fila_chat_id, m.rem_id, m.msg, m.data_hora, m.id_msg,
+                           u.nome, u.sobrenome, u.nivel_id
+                    FROM {$par['info']} i
+                    INNER JOIN {$par['msg']} m ON m.chat_id = i.id_chat
+                    LEFT JOIN tbl_user u ON u.id_user = m.rem_id AND m.rem_id <> 0
+                    WHERE i.fila_chat_id IN ({$placeholders})
+                    ORDER BY i.fila_chat_id ASC, m.data_hora ASC, m.id_msg ASC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($filaChatIds);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($rows === []) {
+                continue;
+            }
+
+            $agrupadas = [];
+            foreach ($rows as $row) {
+                $filaChatId = (int) $row['fila_chat_id'];
+                $agrupadas[$filaChatId][] = $row;
+            }
+
+            $resultado = [];
+            foreach ($agrupadas as $filaChatId => $msgsRows) {
+                $ctx = $contextos[$filaChatId] ?? [
+                    'ate_resp' => 0,
+                    'bko_resp' => 0,
+                    'nome_cliente' => '',
+                    'nome_operador' => '',
+                ];
+                $resultado[$filaChatId] = $this->formatarMensagens(
+                    $msgsRows,
+                    $ctx['ate_resp'],
+                    $ctx['bko_resp'],
+                    $ctx['nome_cliente'],
+                    $ctx['nome_operador']
+                );
+            }
+
+            return $resultado;
         }
 
         return [];

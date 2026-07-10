@@ -1,9 +1,6 @@
 <?php
 include("../cnf/session.php");
 
-/** @var array<string, mixed> $infoUser */
-/** @var PDO $PDO */
-
 //depurador($_SESSION);
 //depurador($infoUser);
 //depurador($_POST);
@@ -33,7 +30,17 @@ $tp = $stm->fetch(PDO::FETCH_ASSOC);
 if($_POST['situacao_dem']==3 || $_POST['situacao_dem']==7){
 
     $infoChat['fila_chat_id'];
-    $sql="UPDATE tbl_chat_fila SET status_fila=".$_POST['situacao_dem']." where id_fila_chat=".$infoChat['fila_chat_id'];
+    $bkoId = (int) $_SESSION['dados']['id_user'];
+    $motivoSit = addslashes((string) $_POST['motivo_situacao']);
+    $sql = 'UPDATE tbl_chat_fila SET'
+        .' status_fila='.(int) $_POST['situacao_dem'].','
+        .' hora_fim = IF(hora_fim IS NULL OR hora_fim = \'\' OR hora_fim = \'0000-00-00 00:00:00\', NOW(), hora_fim),'
+        .' hora_inicio = IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio),'
+        .' ta = IF(ta IS NULL OR ta = \'\' OR ta = \'00:00:00\', TIMEDIFF(NOW(), IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio)), ta),'
+        .' te = IF(te IS NULL OR te = \'\' OR te = \'00:00:00\', TIMEDIFF(IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio), data_hora), te),'
+        .' bko_resp = IF(bko_resp IS NULL OR bko_resp = 0 OR bko_resp = \'\', '.$bkoId.', bko_resp),'
+        .' motivo = \''.$motivoSit.'\''
+        .' WHERE id_fila_chat='.(int) $infoChat['fila_chat_id'];
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
     $result = $stmt->execute();
@@ -61,13 +68,6 @@ if($_POST['situacao_dem']==3){
         $resultPend = $stmt->execute();
     }
 
-if($_POST['situacao_dem']!=3 && $_POST['situacao_dem']!=7){
-    $stmt = $PDO->prepare('UPDATE tbl_chat_fila SET status_fila=? WHERE id_fila_chat=? AND '.stFilaSqlNaoEncerrado('status_fila'));
-    $stmt->execute([ST_FILA_CONCLUIDO, (int)$infoChat['fila_chat_id']]);
-    $stmt = $PDO->prepare('UPDATE tbl_chat_info SET status_chat=?, indice=0 WHERE fila_chat_id=? AND status_chat=1');
-    $stmt->execute([ST_FILA_CONCLUIDO, (int)$infoChat['fila_chat_id']]);
-}
-
 $stm = $PDO->query("SELECT count(*) as qtd from tbl_forms_pos_input_campo where fila_id=".$_POST['fila_id']);
 $fila = $stm->fetch(PDO::FETCH_ASSOC);
 if($fila['qtd']<1){
@@ -91,29 +91,13 @@ if($fila['qtd']<1){
     if($resultDados){
         ?>
 <script>
-if (typeof stBkoStopTa === 'function') {
-    stBkoStopTa(<?= (int)$infoChat['id_chat'] ?>);
-} else if (typeof window['time_<?= (int)$infoChat['id_chat'] ?>'] !== 'undefined') {
-    clearInterval(window['time_<?= (int)$infoChat['id_chat'] ?>']);
-}
-var indiceAba = <?=(int)$_POST['indice']?>;
-if (typeof stChatMarkEnded === 'function') {
-    stChatMarkEnded(<?= (int)$infoChat['id_chat'] ?>, <?= json_encode((string)($_POST['tokenChat'] ?? ''), JSON_UNESCAPED_UNICODE) ?>);
-}
-$("#div-" + indiceAba).html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="200"><br>ORGANIZANDO FILA PARA UM NOVO ATENDIMENTO...</div>');
+clearInterval(time_<?=$infoChat['id_chat']?>);
+//$('#close').click();
+//location.reload();
+//console.log('save pos');
 setTimeout(function() {
-    var qtdTabs = $('.tab').length;
-    if (qtdTabs <= 1 && typeof window.stBkoReturnToQueue === 'function') {
-        if (typeof window.stBkoCloseTab === 'function') {
-            window.stBkoCloseTab(indiceAba);
-        }
-        $('#title-' + indiceAba).remove();
-        $('#div-' + indiceAba).remove();
-        window.stBkoReturnToQueue(1);
-        return;
-    }
-    fechaAba(indiceAba);
-}, 600);
+    fechaAba(<?=$_POST['indice']?>);
+}, 100);
 </script>
 <?php
     }
@@ -154,29 +138,13 @@ setTimeout(function() {
     if($resultDados==1){
         ?>
 <script>
-if (typeof stBkoStopTa === 'function') {
-    stBkoStopTa(<?= (int)$infoChat['id_chat'] ?>);
-} else if (typeof window['time_<?= (int)$infoChat['id_chat'] ?>'] !== 'undefined') {
-    clearInterval(window['time_<?= (int)$infoChat['id_chat'] ?>']);
-}
-var indiceAba = <?=(int)$_POST['indice']?>;
-if (typeof stChatMarkEnded === 'function') {
-    stChatMarkEnded(<?= (int)$infoChat['id_chat'] ?>, <?= json_encode((string)($_POST['tokenChat'] ?? ''), JSON_UNESCAPED_UNICODE) ?>);
-}
-$("#div-" + indiceAba).html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="200"><br>ORGANIZANDO FILA PARA UM NOVO ATENDIMENTO...</div>');
+clearInterval(time_<?=$infoChat['id_chat']?>);
+//$('#close').click();
+//location.reload();
+//console.log('save pos');
 setTimeout(function() {
-    var qtdTabs = $('.tab').length;
-    if (qtdTabs <= 1 && typeof window.stBkoReturnToQueue === 'function') {
-        if (typeof window.stBkoCloseTab === 'function') {
-            window.stBkoCloseTab(indiceAba);
-        }
-        $('#title-' + indiceAba).remove();
-        $('#div-' + indiceAba).remove();
-        window.stBkoReturnToQueue(1);
-        return;
-    }
-    fechaAba(indiceAba);
-}, 600);
+    fechaAba(<?=$_POST['indice']?>);
+}, 100);
 </script>
 <?php
 

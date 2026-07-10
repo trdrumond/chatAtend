@@ -17,6 +17,9 @@ $config = [
     'contrato_prefixo' => 'ST',
     'por_pagina_padrao' => 500,
     'por_pagina_maximo' => 1000,
+    'lote_por_pagina_padrao' => 500,
+    'lote_por_pagina_maximo' => 1000,
+    'lote_periodo_maximo_dias' => 31,
 ];
 
 $local = __DIR__ . '/config.local.php';

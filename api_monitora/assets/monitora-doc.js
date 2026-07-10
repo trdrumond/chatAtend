@@ -74,6 +74,9 @@
         if (endpoint.indexOf('atendimentos/') === 0) {
             return 'monitora/atendimentos/' + encodeURIComponent(getField('param-protocolo'));
         }
+        if (endpoint === 'lote') {
+            return 'monitora/atendimentos/lote';
+        }
         return 'monitora/' + endpoint;
     }
 
@@ -92,6 +95,16 @@
             if (fila) query.fila = fila;
             query.pagina = getField('param-pagina') || '1';
             query.por_pagina = getField('param-por-pagina') || '10';
+        }
+
+        if (endpoint === 'lote') {
+            query.data_inicio = getField('param-lote-data-inicio');
+            query.data_fim = getField('param-lote-data-fim');
+            query.contrato = getField('param-lote-contrato');
+            var filaLote = getField('param-lote-fila');
+            if (filaLote) query.fila = filaLote;
+            query.pagina = getField('param-lote-pagina') || '1';
+            query.por_pagina = getField('param-lote-por-pagina') || '100';
         }
 
         return query;
@@ -148,13 +161,22 @@
         });
 
         if (elEndpointLabel) {
-            elEndpointLabel.textContent = 'GET /monitora/' + (endpoint === 'detalhe' ? 'atendimentos/{protocolo}' : endpoint);
+            var label = 'GET /monitora/' + endpoint;
+            if (endpoint === 'detalhe') {
+                label = 'GET /monitora/atendimentos/{protocolo}';
+            } else if (endpoint === 'lote') {
+                label = 'GET /monitora/atendimentos/lote';
+            }
+            elEndpointLabel.textContent = label;
         }
 
         if (elCurl) {
-            var curlEndpoint = endpoint === 'detalhe'
-                ? 'atendimentos/' + encodeURIComponent(getField('param-protocolo') || '{protocolo}')
-                : endpoint;
+            var curlEndpoint = endpoint;
+            if (endpoint === 'detalhe') {
+                curlEndpoint = 'atendimentos/' + encodeURIComponent(getField('param-protocolo') || '{protocolo}');
+            } else if (endpoint === 'lote') {
+                curlEndpoint = 'lote';
+            }
             elCurl.textContent = buildCurl(buildApiUrl(curlEndpoint));
         }
     }
@@ -295,9 +317,12 @@
     nodeListEach(document.querySelectorAll('[data-sync-curl]'), function (input) {
         input.addEventListener('input', function () {
             if (!elCurl) return;
-            var ep = currentEndpoint === 'detalhe'
-                ? 'atendimentos/' + encodeURIComponent(getField('param-protocolo') || '{protocolo}')
-                : currentEndpoint;
+            var ep = currentEndpoint;
+            if (currentEndpoint === 'detalhe') {
+                ep = 'atendimentos/' + encodeURIComponent(getField('param-protocolo') || '{protocolo}');
+            } else if (currentEndpoint === 'lote') {
+                ep = 'lote';
+            }
             elCurl.textContent = buildCurl(buildApiUrl(ep));
         });
     });

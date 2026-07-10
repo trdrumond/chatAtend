@@ -248,6 +248,11 @@ Accept: application/json</pre>
                 </tr>
                 <tr>
                     <td><span class="method">GET</span></td>
+                    <td><code>/monitora/atendimentos/lote?...</code></td>
+                    <td><strong>Lote completo</strong> — mesmos filtros da listagem, mas cada item já inclui <code>mensagens[]</code>, <code>cliente</code> e <code>metricas</code> (1 req. por página em vez de N por protocolo)</td>
+                </tr>
+                <tr>
+                    <td><span class="method">GET</span></td>
                     <td><code>/monitora/atendimentos/{protocolo}</code></td>
                     <td>Detalhe completo com <code>mensagens[]</code> (log de chat)</td>
                 </tr>
@@ -270,6 +275,7 @@ Accept: application/json</pre>
                 <button type="button" class="tab" data-endpoint="contratos">Contratos</button>
                 <button type="button" class="tab" data-endpoint="filas">Filas</button>
                 <button type="button" class="tab" data-endpoint="atendimentos">Atendimentos</button>
+                <button type="button" class="tab" data-endpoint="lote">Lote completo</button>
                 <button type="button" class="tab" data-endpoint="detalhe">Detalhe</button>
             </div>
 
@@ -321,6 +327,43 @@ Accept: application/json</pre>
                     <div class="field">
                         <label for="param-por-pagina">por_pagina</label>
                         <input type="number" id="param-por-pagina" data-sync-curl value="10" min="1" max="500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint-panel" data-endpoint="lote" style="display:none;">
+                <div class="alert alert-info" style="margin-bottom:14px;">
+                    Retorna atendimentos com histórico completo em lote. Para um dia inteiro, use <code>data_inicio</code> = <code>data_fim</code>.
+                    Período máximo: <?= (int) ($config['lote_periodo_maximo_dias'] ?? 31) ?> dias.
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="param-lote-data-inicio">data_inicio *</label>
+                        <input type="date" id="param-lote-data-inicio" data-sync-curl value="<?= h($hoje) ?>">
+                    </div>
+                    <div class="field">
+                        <label for="param-lote-data-fim">data_fim *</label>
+                        <input type="date" id="param-lote-data-fim" data-sync-curl value="<?= h($hoje) ?>">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="param-lote-contrato">contrato *</label>
+                        <input type="text" id="param-lote-contrato" data-sync-curl placeholder="Ex.: ST-3" value="ST-3">
+                    </div>
+                    <div class="field">
+                        <label for="param-lote-fila">fila (opcional)</label>
+                        <input type="text" id="param-lote-fila" data-sync-curl placeholder="Ex.: 5">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="param-lote-pagina">pagina</label>
+                        <input type="number" id="param-lote-pagina" data-sync-curl value="1" min="1">
+                    </div>
+                    <div class="field">
+                        <label for="param-lote-por-pagina">por_pagina</label>
+                        <input type="number" id="param-lote-por-pagina" data-sync-curl value="100" min="1" max="<?= (int) ($config['lote_por_pagina_maximo'] ?? 1000) ?>">
                     </div>
                 </div>
             </div>

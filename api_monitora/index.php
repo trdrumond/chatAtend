@@ -10,6 +10,7 @@ declare(strict_types=1);
  *   GET /monitora/contratos
  *   GET /monitora/filas?contrato=ST-{id}
  *   GET /monitora/atendimentos?data_inicio=&data_fim=&contrato=&fila=&pagina=&por_pagina=
+ *   GET /monitora/atendimentos/lote?data_inicio=&data_fim=&contrato=&fila=&pagina=&por_pagina=
  *   GET /monitora/atendimentos/{protocolo}
  */
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
