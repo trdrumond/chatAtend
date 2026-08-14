@@ -1,14 +1,16 @@
 <?php
-//include("../cnf/session.php");
+include("../cnf/session.php");
 
-//depurador($_POST);
-//remetente, destinatario, contrato, tokenChat, mensagem
+$chatId = (int) ($_POST['chatId'] ?? 0);
+$dest = (int) ($_POST['destinatario'] ?? 0);
+$contrato = (int) ($_POST['contrato'] ?? 0);
+$tokenChat = preg_replace('/[^a-zA-Z0-9]/', '', (string) ($_POST['tokenChat'] ?? ''));
+$mensagem = substr((string) ($_POST['mensagem'] ?? ''), 0, 500);
 
-$txt = '-'.$_POST['chatId'].
-$txt .= ' - '.$_POST['destinatario'];
-$txt .= ' - '.$_POST['contrato'];
-$txt .= ' - '.$_POST['tokenChat'];
-$txt .= ' - '.$_POST['mensagem'];
+$txt = '-' . $chatId;
+$txt .= ' - ' . $dest;
+$txt .= ' - ' . $contrato;
+$txt .= ' - ' . $tokenChat;
+$txt .= ' - ' . $mensagem;
 
-
-file_put_contents("outChat.txt", $txt);
+file_put_contents(__DIR__ . '/outChat.txt', $txt);

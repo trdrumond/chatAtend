@@ -1,39 +1,36 @@
 <?php
 include("../cnf/session.php");
-//id_fila, inicio_hr, fim_hr
 
+$idHr = (int) ($_POST['id'] ?? 0);
+$filaId = (int) ($_POST['id_fila'] ?? 0);
 
+if ($idHr < 1) {
+    return;
+}
 
-    $sql="DELETE FROM tbl_fila_horario WHERE id_hr=".$_POST['id'];
-    echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+$sql = "DELETE FROM tbl_fila_horario WHERE id_hr=?";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$idHr]);
 
-    if($result==1){
+if ($result == 1) {
+    echo '<br><i class="fas fa-check-circle" style="color: green"></i>';
+    ?>
+         <script>
+            load(<?php echo $filaId; ?>);
 
-        echo '<br><i class="fas fa-check-circle" style="color: green"></i>';
-        ?>
-             <script>
-                load(<?php echo $_POST['id_fila']; ?>);
-
-                function load(id_filas){
-
-                    $("#tbl_hr_<?php echo $_POST['id_fila']; ?>").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-                        $.post("staff/hr_tbl_config_form.php",
-                    {
-                        id_filas: id_filas
-                    },
-                    function (valor) {
-                        $("#tbl_hr_<?php echo $_POST['id_fila']; ?>").html(valor);
-                    });
-
-                }
-             </script>
-        <?php
-    }
-
-
-
-
+            function load(id_filas){
+                $("#tbl_hr_<?php echo $filaId; ?>").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
+                    $.post("staff/hr_tbl_config_form.php",
+                {
+                    id_filas: id_filas
+                },
+                function (valor) {
+                    $("#tbl_hr_<?php echo $filaId; ?>").html(valor);
+                });
+            }
+         </script>
+    <?php
+}
 
 ?>
+

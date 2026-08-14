@@ -2,14 +2,17 @@
 require_once __DIR__ . '/../../../cnf/session.php';
 require_once __DIR__ . '/_cnf_ui.php';
 
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$listParams = [];
 if ($infoUser['nivel_id'] > 2) {
-    $qry = ' and id_contrato in (' . $infoUserConfig['contrato_id'] . ')';
+    $qry = ' and id_contrato in (' . $cttIn['ph'] . ')';
+    $listParams = $cttIn['ids'];
 } else {
     $qry = '';
 }
 $sql = "SELECT id_regional, nome_regional, contrato_id, (SELECT concat(nome_contrato, ' - ', uf) from tbl_contrato where id_contrato=contrato_id) as nome_contrato, (SELECT count(*) from tbl_user where regional_id=id_regional and ativo=1) as qtdUser, ativo from tbl_regional where id_regional<>'' $qry" . cnf_sql_order_ativo_nome('nome_regional');
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($listParams);
 $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $count = count($dados);
 
@@ -49,9 +52,9 @@ echo cnf_datatable_init('tabela', [
 <?php for ($x = 0; $x < $count; $x++) {
     $id = $dados[$x]['id_regional'];
     $agOpts = '';
-    $sqlAg = 'SELECT id_agencia, nome_agencia, regional_id from tbl_agencia where ativo=1 and contrato_id=' . (int) $dados[$x]['contrato_id'];
+    $sqlAg = 'SELECT id_agencia, nome_agencia, regional_id from tbl_agencia where ativo=1 and contrato_id=?';
     $stmt = $PDO->prepare($sqlAg);
-    $stmt->execute();
+    $stmt->execute([(int) $dados[$x]['contrato_id']]);
     $info = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($info as $row) {
         $sel = ($row['regional_id'] == $id) ? ' selected' : '';
@@ -90,9 +93,9 @@ $(document).ready(function() {
 
 <?php
 $cttOpts = '<option value="">Selecione...</option>';
-$sql = 'SELECT id_contrato, nome_contrato, uf from tbl_contrato where ativo=1 and id_contrato in (' . $infoUserConfig['contrato_id'] . ') order by nome_contrato';
+$sql = 'SELECT id_contrato, nome_contrato, uf from tbl_contrato where ativo=1 and id_contrato in (' . $cttIn['ph'] . ') order by nome_contrato';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($cttIn['ids']);
 $ctts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($ctts as $row) {
     $cttOpts .= '<option value="' . $row['id_contrato'] . '">' . htmlspecialchars($row['nome_contrato'] . ' - ' . $row['uf']) . '</option>';

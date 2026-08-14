@@ -34,18 +34,17 @@ include("../cnf/session.php");
 //depurador($_POST);
 
 
-$sql="SELECT id_com, contrato_id, data_hora, rem_chat, dest_chat, grupo_com, grupo_nome from tbl_com_info where id_com=".$_POST['id_com'];
-//echo "<br>".$sql;
+$sql="SELECT id_com, contrato_id, data_hora, rem_chat, dest_chat, grupo_com, grupo_nome from tbl_com_info where id_com=?";
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([(int) ($_POST['id_com'] ?? 0)]);
 $info = $stmt->fetch( PDO::FETCH_ASSOC );
 
 $type="";
 
 if($info['grupo_com']!=''){
-        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=".$info['id_com'];
+        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=?";
         $stmt = $PDO->prepare($sqlGroupConfig);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $info['id_com']]);
         $infoConfigGrupo = $stmt->fetch( PDO::FETCH_ASSOC );
        // var_dump($infoConfigGrupo);
         if($infoConfigGrupo['cols']==''){
@@ -79,16 +78,15 @@ if($info['grupo_com']!=''){
         }
     $type="0";
 } else {
-    if($info['rem_chat']==$infoUser['id_user']){
-        $sql="SELECT id_user, nome, sobrenome, (concat(nome, ' ', sobrenome)) as nome_completo, (SELECT img from tbl_user_img_perfil where user_id=id_user) as img_perfil, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user=".$info['dest_chat'];
-    }
-    if($info['dest_chat']==$infoUser['id_user']){
-        $sql="SELECT id_user, nome, sobrenome, (concat(nome, ' ', sobrenome)) as nome_completo, (SELECT img from tbl_user_img_perfil where user_id=id_user) as img_perfil, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user=".$info['rem_chat'];
-    }
-
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+        $peerId = $info['dest_chat'];
+        if ($info['dest_chat']==$infoUser['id_user']) {
+            $peerId = $info['rem_chat'];
+        } else if ($info['rem_chat']==$infoUser['id_user']) {
+            $peerId = $info['dest_chat'];
+        }
+        $sql="SELECT id_user, nome, sobrenome, (concat(nome, ' ', sobrenome)) as nome_completo, (SELECT img from tbl_user_img_perfil where user_id=id_user) as img_perfil, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user=?";
+        $stmt = $PDO->prepare($sql);
+        $result = $stmt->execute([(int) $peerId]);
     $info = $stmt->fetch( PDO::FETCH_ASSOC );
     $type="1";
     //var_dump($info);

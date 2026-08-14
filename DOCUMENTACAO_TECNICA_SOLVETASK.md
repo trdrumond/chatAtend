@@ -53,7 +53,7 @@ Host: localhost
 Porta: 3306
 Database: web_chatlogos_piloto
 Usuario: acesso.sistemas
-Senha: tDHMpeXVTzQAZsGD
+Senha: <SENHA_DB_LOCAL>
 Charset: utf8
 ```
 
@@ -62,7 +62,7 @@ Charset: utf8
 ```php
 $host = 'localhost';
 $usuario = 'acesso.sistemas';
-$senha = 'tDHMpeXVTzQAZsGD';
+$senha = '<SENHA_DB_LOCAL>';
 $banco = 'web_chatlogos_piloto';
 $dsn = "mysql:host={$host};port=3306;dbname={$banco};charset=utf8";
 ```

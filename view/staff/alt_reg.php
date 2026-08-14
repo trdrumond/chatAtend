@@ -1,45 +1,42 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$id = (int) ($_POST['id'] ?? 0);
+if ($id < 1) {
+    return;
+}
+$stmtCtt = $PDO->prepare("SELECT contrato_id from tbl_regional where id_regional=?");
+$stmtCtt->execute([$id]);
+$rowCtt = $stmtCtt->fetch(PDO::FETCH_ASSOC);
+if (!is_array($rowCtt) || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], (int) ($rowCtt['contrato_id'] ?? 0))) {
+    return;
+}
+$status = (($_POST['status'] ?? '') !== '') ? 1 : 0;
 
-if($_POST['status']!=''){
-    $status=1;
-} else {
-    $status=0;
+$stmt = $PDO->prepare("UPDATE tbl_regional SET ativo=? where id_regional=?");
+$result = $stmt->execute([$status, $id]);
+
+$agencias = $_POST['agencias'] ?? [];
+if (!is_array($agencias)) {
+    $agencias = [];
+}
+foreach ($agencias as $agenciaId) {
+    $stmt = $PDO->prepare("UPDATE tbl_agencia SET regional_id=? where id_agencia=?");
+    $stmt->execute([$id, (int) $agenciaId]);
 }
 
-//echo "<br>".$status;
-
-$sql="UPDATE tbl_regional SET ativo=$status where id_regional=".$_POST['id'];
-
-//echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-if($_POST['agencias']!=''){
-    //echo count($_POST['agencias']);
-    for($x=0;$x<count($_POST['agencias']);$x++){
-        //echo "<br>".$_POST['agencias'][$x];
-        $sql="UPDATE tbl_agencia SET regional_id=".$_POST['id']." where id_agencia=".$_POST['agencias'][$x];
-        //echo "<br>".$sql;
-        $stmt = $PDO->prepare( $sql );
-        $res = $stmt->execute();
-    }
-}
-
-if($result==1){
+if ($result == 1) {
+    $modalId = json_encode((string) $id);
 ?>
 <script>
 
-    $("#modal_alt_<?php echo $_POST['id']; ?>").modal('hide');
+    $("#modal_alt_" + <?= $modalId ?>).modal('hide');
     actionPage('cad-reg', 'cnf');
 
 
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

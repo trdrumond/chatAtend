@@ -3,27 +3,33 @@ include("../cnf/session.php");
 
 //var_dump($_POST);
 
+$idPri = (int) ($_POST['id'] ?? 0);
+if ($idPri < 1) {
+    return;
+}
+if ((int) ($infoUser['nivel_id'] ?? 99) !== 0) {
+    return;
+}
 
 //echo "<br>".$status;
 
-$sql="UPDATE tbl_prioridade SET ativo=0, del=1 where id_prioridade=".$_POST['id'];
+$sql="UPDATE tbl_prioridade SET ativo=0, del=1 where id_prioridade=?";
 //echo $sql;
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$idPri]);
 
 if($result==1){
-    if($status==0){
-        $sql="UPDATE tbl_assunto SET prioridade_id=-1 where prioridade_id=".$_POST['id'];
-        //echo $sql;
-        $stmt = $PDO->prepare( $sql );
-        $result = $stmt->execute();
-    }
+    $sql="UPDATE tbl_assunto SET prioridade_id=-1 where prioridade_id=?";
+    //echo $sql;
+    $stmt = $PDO->prepare( $sql );
+    $result = $stmt->execute([$idPri]);
 
+    $modalId = json_encode((string) $idPri);
 ?>
 
 <script>
 
-    $("#modal_alt_<?php echo $_POST['id']; ?>").modal('hide');
+    $("#modal_alt_" + <?= $modalId ?>).modal('hide');
     actionPage('cad-pri', 'cnf');
 
 

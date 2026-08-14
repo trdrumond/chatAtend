@@ -1,8 +1,9 @@
 <?php
 include("../cnf/session.php");
 
-
-$stm = $PDO->query("SELECT nome_fila from tbl_config_fila where id_fila=".$_POST['fila']);
+$filaId = (int) ($_POST['fila'] ?? 0);
+$stm = $PDO->prepare("SELECT nome_fila from tbl_config_fila where id_fila=?");
+$stm->execute([$filaId]);
 $fila = $stm->fetch(PDO::FETCH_ASSOC);
-echo $fila['nome_fila']
+echo htmlspecialchars((string) ($fila['nome_fila'] ?? ''), ENT_QUOTES, 'UTF-8');
 ?>

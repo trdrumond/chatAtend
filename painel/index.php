@@ -1,6 +1,14 @@
 <?php
 $patch_local = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
 $patch = 'https://solvetask.logos-ma.com.br';
+require_once __DIR__ . '/../view/cnf/session_config.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['st_csrf'])) {
+    $_SESSION['st_csrf'] = bin2hex(random_bytes(16));
+}
+$stCsrf = (string) $_SESSION['st_csrf'];
 //var_dump($_GET);
 ?>
 <!DOCTYPE html
@@ -24,6 +32,7 @@ $patch = 'https://solvetask.logos-ma.com.br';
     <script type="text/javascript" src="<?=$patch?>/js/jquery.titlealert.js?<?= time() ?>"></script>
     <script type="text/javascript" src="<?=$patch?>/js/jquery.form.js?<?= time() ?>"></script>
     <script src="../view/js/action.js?<?= time() ?>"></script>
+    <script>window.ST_CSRF = <?= json_encode($stCsrf, JSON_UNESCAPED_SLASHES) ?>;</script>
     <script src="../view/js/minus.js?<?= time() ?>"></script>
 
     <script src="<?=$patch?>/css/bootstrap-5.0.2/js/popper.min.js?<?= time() ?>"></script>

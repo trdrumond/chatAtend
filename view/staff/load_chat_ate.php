@@ -27,7 +27,8 @@ $retorno = [
 
 $filaAtual = [];
 if ($idFila > 0) {
-    $stm = $PDO->query("SELECT id_fila_chat, fila_id, status_fila, bko_resp from tbl_chat_fila where id_fila_chat=".$idFila." and ate_resp=".$userId." limit 1");
+    $stm = $PDO->prepare("SELECT id_fila_chat, fila_id, status_fila, bko_resp from tbl_chat_fila where id_fila_chat=? and ate_resp=? limit 1");
+    $stm->execute([$idFila, $userId]);
     $filaAtual = $stm->fetch(PDO::FETCH_ASSOC);
 }
 
@@ -43,14 +44,16 @@ if (!empty($filaAtual['id_fila_chat'])) {
             $filaRef = $filaId;
         }
 
-        $stm = $PDO->query("SELECT count(id_fila_chat) as qtd from tbl_chat_fila where fila_id=".$filaRef." and id_fila_chat < '".$idFila."' and status_fila=".ST_FILA_NA_FILA);
+        $stm = $PDO->prepare("SELECT count(id_fila_chat) as qtd from tbl_chat_fila where fila_id=? and id_fila_chat < ? and status_fila=".ST_FILA_NA_FILA);
+        $stm->execute([$filaRef, $idFila]);
         $qtdFila = $stm->fetch(PDO::FETCH_ASSOC);
         $qtdAntes = isset($qtdFila['qtd']) ? (int)$qtdFila['qtd'] : 0;
 
         $retorno['posicao'] = $qtdAntes + 1;
         $retorno['aFrente'] = $qtdAntes;
 
-        $stmTotal = $PDO->query("SELECT count(id_fila_chat) as qtd from tbl_chat_fila where fila_id=".$filaRef." and status_fila=".ST_FILA_NA_FILA);
+        $stmTotal = $PDO->prepare("SELECT count(id_fila_chat) as qtd from tbl_chat_fila where fila_id=? and status_fila=".ST_FILA_NA_FILA);
+        $stmTotal->execute([$filaRef]);
         $totalFila = $stmTotal->fetch(PDO::FETCH_ASSOC);
         $retorno['totalFila'] = isset($totalFila['qtd']) ? (int)$totalFila['qtd'] : $retorno['posicao'];
 
@@ -62,7 +65,8 @@ if (!empty($filaAtual['id_fila_chat'])) {
     }
 } else {
     // Fallback: verifica se ainda existe fila para este atendente.
-    $stm = $PDO->query("SELECT id_fila_chat from tbl_chat_fila where ate_resp=".$userId." and status_fila=".ST_FILA_NA_FILA." order by id_fila_chat asc limit 1");
+    $stm = $PDO->prepare("SELECT id_fila_chat from tbl_chat_fila where ate_resp=? and status_fila=".ST_FILA_NA_FILA." order by id_fila_chat asc limit 1");
+    $stm->execute([$userId]);
     $aindaEmFila = $stm->fetch(PDO::FETCH_ASSOC);
     if (!empty($aindaEmFila['id_fila_chat'])) {
         // Evita ciclo dash-cha <-> chat-fila quando houver troca de id_fila_chat.
@@ -72,10 +76,11 @@ if (!empty($filaAtual['id_fila_chat'])) {
     }
 
     // Pode já ter sido direcionado para atendimento por outro fluxo.
-    $stm = $PDO->query(
-        'SELECT id_fila_chat from tbl_chat_fila where ate_resp='.$userId
+    $stm = $PDO->prepare(
+        'SELECT id_fila_chat from tbl_chat_fila where ate_resp=?'
         .' and '.stFilaSqlSolicitantePodeEntrar().' order by id_fila_chat desc limit 1'
     );
+    $stm->execute([$userId]);
     $emAtendimento = $stm->fetch(PDO::FETCH_ASSOC);
 
     if (!empty($emAtendimento['id_fila_chat'])) {

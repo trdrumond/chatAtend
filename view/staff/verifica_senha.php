@@ -1,6 +1,4 @@
 <?php
-include("../cnf/conn.php");
+require_once __DIR__ . '/../cnf/session.php';
 
-echo senhaValida($_POST['senha']);
-
-?>
+echo senhaValida((string) ($_POST['senha'] ?? ''));

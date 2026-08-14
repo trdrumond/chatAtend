@@ -25,11 +25,21 @@
 </style>
 <?php
     include("../cnf/session.php");
-    //include("../cnf/replace.php");
 
-
-    //depurador($_POST);
-    //depurador($_SESSION["dados"]);
+    $de = preg_replace('/[^0-9\-]/', '', (string) ($_POST['de'] ?? ''));
+    $ate = preg_replace('/[^0-9\-]/', '', (string) ($_POST['ate'] ?? ''));
+    $contratoId = (int) ($_POST['contrato'] ?? 0);
+    $filaId = (int) ($_POST['fila'] ?? 0);
+    $nivelId = (int) ($_SESSION['dados']['nivel_id'] ?? 0);
+    $userId = (int) ($_SESSION['dados']['id_user'] ?? 0);
+    if ($de === '' || $ate === '') {
+        $de = date('Y-m-d');
+        $ate = date('Y-m-d');
+    }
+    if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+        echo '<p class="text-danger">Contrato não autorizado.</p>';
+        return;
+    }
 
     $sql="SELECT f.id_pend, a.id_fila_chat, e.id_chat, a.protocolo, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as hora_registro, a.fila_id, d.nome_fila, b.titulo_assunto"
     .", (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=f.ate_resp) as nome_ate, f.situacao_id, f.chat_id as chat_pend"
@@ -39,34 +49,38 @@
     ." from tbl_chat_fila_secondary a, tbl_assunto b, tbl_situacao_chat c, tbl_config_fila d, tbl_chat_info_secondary e, tbl_pend_info f"
     ." where a.assunto_id=b.id_assunto"
     ." and a.status_fila=c.id_situacao"
-    //." and f.situacao_id=3"
     ." and (f.situacao_id=3 or f.situacao_id=4)"
     ." and a.id_fila_chat=f.chat_id"
     ." and a.fila_id=d.id_fila"
     ." and a.id_fila_chat=e.fila_chat_id"
-    ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'";
+    ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN ? AND ?";
 
-    if($_SESSION["dados"]['nivel_id']!="0"){
-        $sql.=" and a.contrato_id=".$_POST['contrato'];
+    $params = [$de, $ate];
+
+    if($nivelId !== 0){
+        $sql.=" and a.contrato_id=?";
+        $params[] = $contratoId;
     }
 
-    if($_SESSION["dados"]['nivel_id']=="5"){
-        $sql.=" and f.ate_resp=".$_SESSION["dados"]['id_user'];
+    if($nivelId === 5){
+        $sql.=" and f.ate_resp=?";
+        $params[] = $userId;
     }
 
-    if($_SESSION["dados"]['nivel_id']=="4"){
-        $sql.=" and f.bko_resp=".$_SESSION["dados"]['id_user'];
+    if($nivelId === 4){
+        $sql.=" and f.bko_resp=?";
+        $params[] = $userId;
     }
 
-    if($_POST['fila']!='' && $_POST['fila']!=0){
-        $sql.=" and a.fila_id=".$_POST['fila'];
+    if($filaId !== 0){
+        $sql.=" and a.fila_id=?";
+        $params[] = $filaId;
     }
 
     $sql.=" order by a.data_hora asc";
 
-    //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute($params);
     $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($dados);
 ?>
@@ -112,16 +126,16 @@
                             $pend ='<i class="far fa-check-circle fa-2x" style="color: green" title="Pendência finalizada"></i>';
                         }
 
-                        echo '<tr id="tr_'.$dados[$x]['id_chat'].'">';
-                            echo '<td>'.$dados[$x]['protocolo'].'</td>';
-                            echo '<td><center>'.$dados[$x]['nome_situacao'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['hora_registro'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['nome_fila'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['titulo_assunto'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['nome_ate'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['nome_bko'].'</center></td>';
+                        echo '<tr id="tr_'.(int) $dados[$x]['id_chat'].'">';
+                            echo '<td>'.stHtml($dados[$x]['protocolo']).'</td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_situacao']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['hora_registro']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_fila']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['titulo_assunto']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_ate']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_bko']).'</center></td>';
                             echo '<td><center>'.$pend.'</center></td>';
-                            echo '<td><center><i class="fas fa-info-circle fa-2x pointer" onclick="abreDetail('.$dados[$x]['id_chat'].')"></i></center></td>';
+                            echo '<td><center><i class="fas fa-info-circle fa-2x pointer" onclick="abreDetail('.(int) $dados[$x]['id_chat'].')"></i></center></td>';
                         echo '</tr>';
                     }
                 ?>

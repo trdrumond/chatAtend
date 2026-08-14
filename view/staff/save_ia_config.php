@@ -25,6 +25,11 @@ if (!stIaColumnExists($PDO, 'tbl_config_sis', 'openai_api_key')) {
 }
 
 $acao = (string) ($_POST['acao'] ?? 'salvar');
+if ($acao !== 'salvar' && $acao !== 'status') {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Ação inválida']);
+    exit;
+}
 if ($acao === 'status') {
     $key = stIaGetApiKey($PDO);
     echo json_encode([

@@ -12,6 +12,10 @@ if ($contratoId <= 0) {
     exit;
 }
 
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+    exit;
+}
+
 $sql = 'SELECT id_fila, nome_fila FROM tbl_config_fila WHERE contrato_id = ? ORDER BY nome_fila ASC';
 $stmt = $PDO->prepare($sql);
 $stmt->execute([$contratoId]);

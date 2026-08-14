@@ -8,6 +8,13 @@ include('../cnf/rotina_pendencia.php');
 $idContrato = isset($_POST['contrato']) ? (int)$_POST['contrato'] : 0;
 $idFila     = isset($_POST['fila']) ? (int)$_POST['fila'] : 0;
 $idEmpresa  = isset($_POST['empresa']) ? (int)$_POST['empresa'] : 0;
+$de         = preg_replace('/[^0-9\-]/', '', (string) ($_POST['de'] ?? ''));
+$ate        = preg_replace('/[^0-9\-]/', '', (string) ($_POST['ate'] ?? ''));
+
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $idContrato)) {
+    echo '<p class="text-danger">Contrato não autorizado.</p>';
+    return;
+}
 
 if($_POST['rel']=='base'){
 
@@ -97,17 +104,19 @@ if($_POST['rel']=='base'){
                     ." LEFT JOIN tbl_municipio mun ON e.municipio_id=mun.id_municipio"
                     ." LEFT JOIN tbl_agencia ag ON e.agencia_id=ag.id_agencia"
                     ." LEFT JOIN tbl_user bko ON a.bko_resp=bko.id_user"
-                    ." WHERE a.contrato_id=".$idContrato
+                    ." WHERE a.contrato_id=?"
                     ." AND a.data_hora >= ? AND a.data_hora <= ?";
 
-                    $params = [$deInicio, $ateFim];
+                    $params = [$idContrato, $deInicio, $ateFim];
 
                     if($idFila!=0){
-                        $sql.=" AND a.fila_id=".$idFila;
+                        $sql.=" AND a.fila_id=?";
+                        $params[] = $idFila;
                     }
 
                     if($idEmpresa!=0){
-                        $sql.=" AND e.empresa_id=".$idEmpresa;
+                        $sql.=" AND e.empresa_id=?";
+                        $params[] = $idEmpresa;
                     }
 
                     $sql.=" ORDER BY a.data_hora ASC";
@@ -121,7 +130,8 @@ if($_POST['rel']=='base'){
                         ." WHERE data_hora >= ? AND data_hora <= ?";
                         $paramsTma = [$deInicio, $ateFim];
                         if($idFila!=0){
-                            $sqlTma.=" AND fila_id=".$idFila;
+                            $sqlTma.=" AND fila_id=?";
+                            $paramsTma[] = $idFila;
                         }
                 $stmt = $PDO->prepare( $sqlTma );
                 $result = $stmt->execute( $paramsTma );
@@ -129,10 +139,10 @@ if($_POST['rel']=='base'){
                 $exTma = $dadosTma ? explode(".", $dadosTma['tma'] ?? '') : [''];
                 $exTme = $dadosTma ? explode(".", $dadosTma['tme'] ?? '') : [''];
 
-                $sql="SELECT id_campo, desc_campo, nome_campo from tbl_forms_pos_input_campo where fila_id=".$idFila;
+                $sql="SELECT id_campo, desc_campo, nome_campo from tbl_forms_pos_input_campo where fila_id=?";
 
                 $stmt = $PDO->prepare( $sql );
-                $result = $stmt->execute();
+                $result = $stmt->execute([$idFila]);
                 $dadosTr = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
                 // Carrega em lote TP + campos pos e estrelas (evita N+1). SELECT * funciona com ou sem coluna tp.
@@ -156,7 +166,11 @@ if($_POST['rel']=='base'){
                         foreach ($idsPorFila as $filaId => $chatIds) {
                             $chatIds = array_unique($chatIds);
                             $ph = implode(',', array_fill(0, count($chatIds), '?'));
-                            $sqlPos = "SELECT * FROM tbl_in_pos_{$filaId}_{$idContrato} WHERE chat_id IN ($ph)";
+                            $tablePos = 'tbl_in_pos_' . (int) $filaId . '_' . (int) $idContrato;
+                            if (!preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+                                continue;
+                            }
+                            $sqlPos = "SELECT * FROM {$tablePos} WHERE chat_id IN ($ph)";
                             $stmtPos = $PDO->prepare($sqlPos);
                             $stmtPos->execute(array_values($chatIds));
                             while ($row = $stmtPos->fetch(PDO::FETCH_ASSOC)) {
@@ -233,7 +247,7 @@ if($_POST['rel']=='base'){
                     <?php
                                     if(count($dadosTr)>0){
                                         for($xTr=0;$xTr<count($dadosTr);$xTr++){
-                                            echo '<th><center>'.strtoupper($dadosTr[$xTr]['desc_campo']).'</center></th>';
+                                            echo '<th><center>'.stHtml(strtoupper((string) $dadosTr[$xTr]['desc_campo'])).'</center></th>';
                                         }
                                     }
                                 ?>
@@ -269,28 +283,28 @@ if($_POST['rel']=='base'){
                                     }
 
                                     echo '<tr>';
-                                        echo '<td>'.$dados[$x]['protocolo'].'</td>';
-                                        echo '<td><center>'.$dados[$x]['nome_situacao'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['motivo_cancela'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['hora_registro'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['nome_fila'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['titulo_assunto'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['nome_ate'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['empresa_ate'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['regional_ate'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['agencia_ate'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['municipio_ate'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['nome_bko'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['hora_inicio'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['hora_fim'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['ta'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['te'].'</center></td>';
-                                        echo '<td><center>'.$dados[$x]['td'].'</center></td>';
-                                        echo '<td><center>'.($dadosTd['tp'] ?? '').'</center></td>';
-                                        echo '<td><center>'.$star['star'].'</center></td>';
+                                        echo '<td>'.stHtml($dados[$x]['protocolo']).'</td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['nome_situacao']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['motivo_cancela']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['hora_registro']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['nome_fila']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['titulo_assunto']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['nome_ate']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['empresa_ate']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['regional_ate']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['agencia_ate']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['municipio_ate']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['nome_bko']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['hora_inicio']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['hora_fim']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['ta']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['te']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dados[$x]['td']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dadosTd['tp'] ?? '').'</center></td>';
+                                        echo '<td><center>'.stHtml($star['star']).'</center></td>';
                                         if(count($dadosTr)>0){
                                             for($xTr=0;$xTr<count($dadosTr);$xTr++){
-                                                echo '<td><center>'.ucfirst($dadosTd[$dadosTr[$xTr]['nome_campo']] ?? '').'</center></td>';
+                                                echo '<td><center>'.stHtml(ucfirst((string) ($dadosTd[$dadosTr[$xTr]['nome_campo']] ?? ''))).'</center></td>';
                                             }
                                         }
                                     echo '</tr>';
@@ -344,31 +358,36 @@ if($_POST['rel']=='horario'){
     $sql="SELECT a.user_id, concat(b.nome, ' ', b.sobrenome) as nome_user, a.data_log, date_format(data_log, '%d/%m/%Y') as data_rel, date_format(date_in, '%H:%i:%s') as login, date_format(date_out, '%H:%i:%s') as logout"
     ." from tbl_log_diario a, tbl_user b"
     ." where a.user_id=b.id_user"
-    ." and date_format(a.data_log, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'"
+    ." and date_format(a.data_log, '%Y-%m-%d') BETWEEN ? AND ?"
     ." and b.nivel_id=4";
 
 
+    $paramsHor = [$de, $ate];
     if($idFila!=0){
-        $sql.=" and b.fila_id=".$idFila;
+        $sql.=" and b.fila_id=?";
+        $paramsHor[] = $idFila;
     }
 
     $sql.=" order by a.data_log asc";
-    //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute($paramsHor);
     $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($dados);
 
     $sql_2="SELECT count(a.user_id) as qtd from tbl_pause a, tbl_user b where a.user_id=b.id_user";
+    $paramsHor2 = [];
     if($idFila!=0){
-        $sql_2.=" and b.fila_id=".$idFila;
+        $sql_2.=" and b.fila_id=?";
+        $paramsHor2[] = $idFila;
     }
-    $sql_2.=" and date_format(a.hora_in, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."' group by a.user_id, date_format(a.hora_in, '%Y-%m-%d') order by date_format(a.hora_in, '%Y-%m-%d')";
+    $sql_2.=" and date_format(a.hora_in, '%Y-%m-%d') BETWEEN ? AND ? group by a.user_id, date_format(a.hora_in, '%Y-%m-%d') order by date_format(a.hora_in, '%Y-%m-%d')";
+    $paramsHor2[] = $de;
+    $paramsHor2[] = $ate;
 
     //echo "<br>".$sql_2;
 
     $stmt = $PDO->prepare( $sql_2 );
-    $result = $stmt->execute();
+    $result = $stmt->execute($paramsHor2);
     $dadosQtd = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
     $ind = array_search(max($dadosQtd),$dadosQtd);
@@ -407,22 +426,25 @@ if($_POST['rel']=='horario'){
         <tbody>
             <?php
                     for($x=0;$x<count($dados);$x++){
-                        $sql="SELECT date_format(hora_in, '%H:%i:%s') as hora_in, date_format(hora_out, '%H:%i:%s') as hora_out, date_format(hora_out, '%Y-%m-%d') as data_out from tbl_pause where date_format(hora_in, '%Y-%m-%d')='".$dados[$x]['data_log']."' and user_id=".$dados[$x]['user_id'];
+                        $userIdLoop = (int) $dados[$x]['user_id'];
+                        $dataLogLoop = preg_replace('/[^0-9\-]/', '', (string) ($dados[$x]['data_log'] ?? ''));
+
+                        $sql="SELECT date_format(hora_in, '%H:%i:%s') as hora_in, date_format(hora_out, '%H:%i:%s') as hora_out, date_format(hora_out, '%Y-%m-%d') as data_out from tbl_pause where date_format(hora_in, '%Y-%m-%d')=? and user_id=?";
 
                         //echo "<br>".$sql;
 
                         $stmt = $PDO->prepare( $sql );
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([$dataLogLoop, $userIdLoop]);
                         $dadosTd = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
-                        $sql_3="SELECT date_format(data_hora, '%H:%i:%s') as hora_disp from tbl_log_atendimento where acao='Disponivel' and user_id=".$dados[$x]['user_id']." and date_format(data_hora, '%Y-%m-%d')='".$dados[$x]['data_log']."' order by data_hora asc limit 1";
+                        $sql_3="SELECT date_format(data_hora, '%H:%i:%s') as hora_disp from tbl_log_atendimento where acao='Disponivel' and user_id=? and date_format(data_hora, '%Y-%m-%d')=? order by data_hora asc limit 1";
                         $stmt = $PDO->prepare( $sql_3 );
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([$userIdLoop, $dataLogLoop]);
                         $dadosDisp = $stmt->fetch( PDO::FETCH_ASSOC );
 
-                        $sql_4="SELECT sec_to_time(sum(time_to_sec(sla))) as prod from tbl_tma_atend where resp_id=".$dados[$x]['user_id']." and date_format(date_disp, '%Y-%m-%d')='".$dados[$x]['data_log']."' and date_format(date_in, '%Y-%m-%d')='".$dados[$x]['data_log']."'";
+                        $sql_4="SELECT sec_to_time(sum(time_to_sec(sla))) as prod from tbl_tma_atend where resp_id=? and date_format(date_disp, '%Y-%m-%d')=? and date_format(date_in, '%Y-%m-%d')=?";
                         $stmt = $PDO->prepare( $sql_4 );
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([$userIdLoop, $dataLogLoop, $dataLogLoop]);
                         $dadosProd = $stmt->fetch( PDO::FETCH_ASSOC );
 
                         $ex=explode('.', $dadosProd['prod']);
@@ -442,11 +464,11 @@ if($_POST['rel']=='horario'){
                             }
 
                             echo '<tr>';
-                                echo '<td>'.$dados[$x]['nome_user'].'</td>';
-                                echo '<td><center>'.$dados[$x]['data_rel'].'</center></td>';
-                                echo '<td><center>'.$dados[$x]['login'].'</center></td>';
-                                echo '<td><center>'.$dados[$x]['logout'].'</center></td>';
-                                echo '<td><center>'.$prod.'</center></td>';
+                                echo '<td>'.stHtml($dados[$x]['nome_user']).'</td>';
+                                echo '<td><center>'.stHtml($dados[$x]['data_rel']).'</center></td>';
+                                echo '<td><center>'.stHtml($dados[$x]['login']).'</center></td>';
+                                echo '<td><center>'.stHtml($dados[$x]['logout']).'</center></td>';
+                                echo '<td><center>'.stHtml($prod).'</center></td>';
 
                                 if($qtd_horario>0){
                                     for($y=0;$y<$qtd_horario;$y++){
@@ -470,8 +492,8 @@ if($_POST['rel']=='horario'){
 
 
 
-                                        echo '<td><center>'.$dadosTd[$y]['hora_in'].'</center></td>';
-                                        echo '<td><center>'.$dadosTd[$y]['hora_out'].'</center></td>';
+                                        echo '<td><center>'.stHtml($dadosTd[$y]['hora_in']).'</center></td>';
+                                        echo '<td><center>'.stHtml($dadosTd[$y]['hora_out']).'</center></td>';
                                     }
                                 }
 
@@ -494,15 +516,16 @@ if($_POST['rel']=='indicadores'){
             .", sec_to_time(avg(time_to_sec(ta) + time_to_sec(te))) as tmd"
             ." from tbl_chat_fila"
             ." WHERE (bko_resp<>0 and bko_resp is not null)"
-            ." and date_format(data_hora, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'";
+            ." and date_format(data_hora, '%Y-%m-%d') BETWEEN ? AND ?";
+            $paramsTma = [$de, $ate];
             if($idFila!=0){
-                $sqlTma.=" and fila_id=".$idFila;
+                $sqlTma.=" and fila_id=?";
+                $paramsTma[] = $idFila;
             }
             $sqlTma.=" group by bko_resp";
 
-    //echo "<br>".$sqlTma;
     $stmt = $PDO->prepare( $sqlTma );
-    $result = $stmt->execute();
+    $result = $stmt->execute($paramsTma);
     $dadosTma = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
 
@@ -549,36 +572,39 @@ if($_POST['rel']=='indicadores'){
                         $exProd = explode(".", $ls['prod']);
 
                         if($idFila!=0){
-                            $sql_tp="SELECT sec_to_time(avg(time_to_sec(a.tp))) as tmp"
-                                ." from tbl_in_pos_".$idFila."_".$idContrato." a, tbl_chat_info_secondary b, tbl_chat_fila_secondary c"
-                                ." where date_format(a.data_hora, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'"
-                                ." and a.chat_id=c.id_fila_chat"
-                                ." and b.fila_chat_id=c.id_fila_chat"
-                                ." and c.bko_resp=".$ls['bko_resp'];
-                            //echo "<br>".$sql_tp;
-                            $stmt = $PDO->prepare( $sql_tp );
-                            $result = $stmt->execute();
-                            $dadosTp = $stmt->fetch( PDO::FETCH_ASSOC );
-                            $exTmp = explode(".", $dadosTp['tmp']);
+                            $tablePos = 'tbl_in_pos_' . $idFila . '_' . $idContrato;
+                            if (preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+                                $sql_tp="SELECT sec_to_time(avg(time_to_sec(a.tp))) as tmp"
+                                    ." from {$tablePos} a, tbl_chat_info_secondary b, tbl_chat_fila_secondary c"
+                                    ." where date_format(a.data_hora, '%Y-%m-%d') BETWEEN ? AND ?"
+                                    ." and a.chat_id=c.id_fila_chat"
+                                    ." and b.fila_chat_id=c.id_fila_chat"
+                                    ." and c.bko_resp=?";
+                                $stmt = $PDO->prepare( $sql_tp );
+                                $stmt->execute([$de, $ate, (int) $ls['bko_resp']]);
+                                $dadosTp = $stmt->fetch( PDO::FETCH_ASSOC );
+                                $exTmp = explode(".", (string) ($dadosTp['tmp'] ?? ''));
+                            } else {
+                                $exTmp = [''];
+                            }
                         }
 
-                        $sqlStar="SELECT format(avg(star), 1) as star from tbl_classificacao where ate=".$ls['bko_resp']." and star is not null and star<>'' and date_format(data_hora, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'";
-                        //echo "<br>".$sqlStar;
+                        $sqlStar="SELECT format(avg(star), 1) as star from tbl_classificacao where ate=? and star is not null and star<>'' and date_format(data_hora, '%Y-%m-%d') BETWEEN ? AND ?";
                         $stmt = $PDO->prepare( $sqlStar );
-                        $result = $stmt->execute();
+                        $stmt->execute([(int) $ls['bko_resp'], $de, $ate]);
                         $dadosTs = $stmt->fetch( PDO::FETCH_ASSOC );
 
                         echo "<tr>";
-                            echo "<td>".$ls['nome_bko']."</td>";
-                            echo "<td align='center'>".$ls['qtd_atend']."</td>";
-                            echo "<td align='center'>".$exTme[0]."</td>";
-                            echo "<td align='center'>".$exTma[0]."</td>";
-                            echo "<td align='center'>".$exTmd[0]."</td>";
-                            echo "<td align='center'>".$exProd[0]."</td>";
+                            echo "<td>".stHtml($ls['nome_bko'])."</td>";
+                            echo "<td align='center'>".stHtml($ls['qtd_atend'])."</td>";
+                            echo "<td align='center'>".stHtml($exTme[0])."</td>";
+                            echo "<td align='center'>".stHtml($exTma[0])."</td>";
+                            echo "<td align='center'>".stHtml($exTmd[0])."</td>";
+                            echo "<td align='center'>".stHtml($exProd[0])."</td>";
                             if($_POST['fila']!=''){
-                                echo "<td align='center'>".$exTmp[0]."</td>";
+                                echo "<td align='center'>".stHtml($exTmp[0] ?? '')."</td>";
                             }
-                            echo "<td align='center'>".$dadosTs['star']."</td>";
+                            echo "<td align='center'>".stHtml($dadosTs['star'] ?? '')."</td>";
                         echo "</tr>";
                     }
                 ?>
@@ -590,35 +616,41 @@ if($_POST['rel']=='indicadores'){
 
     <?php
 if($_POST['rel']=='monitoria'){
-        if($_POST['fila']!=''){
+        if($idFila!=0){
 
-            $sql_campos="SELECT a.desc_campo, a.nome_campo from tbl_forms_mon_input_campo a, tbl_forms_mon_input_campo_cnf b where a.id_campo=b.campo_id and b.ativo=1 and a.fila_id=".$_POST['fila']." order by b.ordem";
+            $sql_campos="SELECT a.desc_campo, a.nome_campo from tbl_forms_mon_input_campo a, tbl_forms_mon_input_campo_cnf b where a.id_campo=b.campo_id and b.ativo=1 and a.fila_id=? order by b.ordem";
             $stmt = $PDO->prepare( $sql_campos );
-            $result = $stmt->execute();
+            $stmt->execute([$idFila]);
             $dadosCampos = $stmt->fetchAll( PDO::FETCH_ASSOC );
-            //echo "<br>".$sql_campos;
-            //echo "<br>".count($dadosCampos);
 
             $sql="SELECT a.id_mon, date_format(a.data_hora, '%d/%m/%Y') as data_mon, a.avaliacao";
                 for($y=0;$y<count($dadosCampos);$y++){
-                    $sql.=", ".$dadosCampos[$y]['nome_campo'];
+                    $nomeCampo = (string) ($dadosCampos[$y]['nome_campo'] ?? '');
+                    if (!preg_match('/^[a-zA-Z0-9_]+$/', $nomeCampo)) {
+                        continue;
+                    }
+                    $sql.=", ".$nomeCampo;
                 }
+            $tableMon = 'tbl_in_mon_' . $idFila . '_' . $idContrato;
+            $dados = [];
+            if (!preg_match('/^tbl_in_mon_\d+_\d+$/', $tableMon)) {
+                $dados = [];
+            } else {
             $sql.=", concat(b.nome, ' ', b.sobrenome) as resp_monitoria"
             .", d.protocolo, d.ate_resp as ate_resp, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=ate_resp) as solicitante, d.bko_resp as bko_resp, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=bko_resp) as backoffice"
             .", e.nome_fila"
-            ." from tbl_in_mon_".$_POST['fila']."_".$_POST['contrato']." a, tbl_user b, tbl_chat_info_secondary c, tbl_chat_fila_secondary d, tbl_config_fila e"
-            ." where a.fila_id=".$_POST['fila']
+            ." from {$tableMon} a, tbl_user b, tbl_chat_info_secondary c, tbl_chat_fila_secondary d, tbl_config_fila e"
+            ." where a.fila_id=?"
             ." and a.resp_mon=b.id_user"
             ." and a.chat_id=c.id_chat"
             ." and a.fila_id=e.id_fila"
             ." and c.fila_chat_id=d.id_fila_chat"
-            ." and a.data_hora BETWEEN '".$_POST['de']."' AND '".$_POST['ate']."'";
-
-            //echo "<br>".$sql;
+            ." and a.data_hora BETWEEN ? AND ?";
 
             $stmt = $PDO->prepare( $sql );
-            $result = $stmt->execute();
+            $stmt->execute([$idFila, $de, $ate]);
             $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
+            }
             if(count($dados)>0){
             ?>
     <table id="tbl_rel_mon" class="table table-hover">
@@ -645,7 +677,7 @@ if($_POST['rel']=='monitoria'){
                 </th>
                 <?php
                                     for($y=0;$y<count($dadosCampos);$y++){
-                                        echo "<th><center>".$dadosCampos[$y]['desc_campo']."</center></th>";
+                                        echo "<th><center>".stHtml($dadosCampos[$y]['desc_campo'])."</center></th>";
                                     }
                                 ?>
             </tr>
@@ -655,16 +687,16 @@ if($_POST['rel']=='monitoria'){
                                 for($x=0;$x<count($dados);$x++){
                                     $ls=$dados[$x];
                                     echo '<tr>
-                                            <td>'.$ls['protocolo'].'</td>
-                                            <td align="center">'.$ls['data_mon'].'</td>
-                                            <td align="center">'.$ls['resp_monitoria'].'</td>
-                                            <td align="center">'.$ls['avaliacao'].'</td>
-                                            <td align="center">'.$ls['solicitante'].'</td>
-                                            <td align="center">'.$ls['backoffice'].'</td>
-                                            <td align="center">'.$ls['nome_fila'].'</td>';
+                                            <td>'.stHtml($ls['protocolo']).'</td>
+                                            <td align="center">'.stHtml($ls['data_mon']).'</td>
+                                            <td align="center">'.stHtml($ls['resp_monitoria']).'</td>
+                                            <td align="center">'.stHtml($ls['avaliacao']).'</td>
+                                            <td align="center">'.stHtml($ls['solicitante']).'</td>
+                                            <td align="center">'.stHtml($ls['backoffice']).'</td>
+                                            <td align="center">'.stHtml($ls['nome_fila']).'</td>';
                                             for($y=0;$y<count($dadosCampos);$y++){
-                                                $resp = str_replace("_"," ",$ls[$dadosCampos[$y]['nome_campo']]);
-                                                echo '<td align="center">'.ucfirst(strtolower($resp)).'</td>';
+                                                $resp = str_replace("_"," ",(string) ($ls[$dadosCampos[$y]['nome_campo']] ?? ''));
+                                                echo '<td align="center">'.stHtml(ucfirst(strtolower($resp))).'</td>';
                                             }
                                     echo '</tr>';
                                 }

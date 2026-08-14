@@ -192,13 +192,23 @@ $urlDownload = $url . 'staff/base.xlsx';
                 }
             }
 
-            var rowClass = ' class="' + getUsuarioRowClasses(u) + '"';
+            var agenciaId = parseInt(u.agencia_id, 10) || 0;
+            var nomeAgencia = (u.nome_agencia && String(u.nome_agencia).trim()) ? u.nome_agencia : '';
+            var semAgencia = (agenciaId <= 0) || !nomeAgencia;
+            if (semAgencia) {
+                nomeAgencia = 'SEM AGÊNCIA (id=0)';
+            }
+            var rowClass = getUsuarioRowClasses(u);
+            if (semAgencia) {
+                rowClass += ' cnf-usu-row-sem-agencia';
+            }
+            var trTitle = semAgencia ? ' title="Agência inválida (agencia_id=0) — corrija pela edição"' : '';
 
-            var tr = '<tr' + rowClass + ' data-nivel-id="' + escapeHtml(u.nivel_id) + '" data-ativo="' + escapeHtml(u.ativo) + '">' +
+            var tr = '<tr class="' + rowClass + '"' + trTitle + ' data-nivel-id="' + escapeHtml(u.nivel_id) + '" data-ativo="' + escapeHtml(u.ativo) + '">' +
                 '<td class="cnf-usu-col-name"><strong>' + escapeHtml(u.nome_completo) + '</strong></td>' +
                 '<td><code class="cnf-usu-login">' + escapeHtml(u.nome_usuario) + '</code></td>' +
                 '<td class="cnf-usu-col-email">' + escapeHtml(u.email) + '</td>' +
-                '<td>' + escapeHtml(u.nome_agencia) + '</td>' +
+                '<td>' + escapeHtml(nomeAgencia) + '</td>' +
                 '<td class="text-center">' + escapeHtml(u.uf) + '</td>' +
                 '<td>' + escapeHtml(u.nome_empresa) + '</td>' +
                 '<td><span class="cnf-usu-nivel">' + escapeHtml(u.nome_nivel) + '</span></td>' +
@@ -377,7 +387,9 @@ $urlDownload = $url . 'staff/base.xlsx';
                             $result = $stmt->execute();
                             $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             for ($x = 0; $x < count($dados); $x++) {
-                                echo '<option value="' . $dados[$x]['id_nivel'] . '">' . $dados[$x]['icon'] . ' ' . $dados[$x]['nome_nivel'] . '</option>';
+                                $iconRaw = (string) ($dados[$x]['icon'] ?? '');
+                                $iconOut = (strpos($iconRaw, '<') !== false) ? $iconRaw : stHtml($iconRaw);
+                                echo '<option value="' . (int) $dados[$x]['id_nivel'] . '">' . $iconOut . ' ' . stHtml($dados[$x]['nome_nivel']) . '</option>';
                             }
                             ?>
                         </select>
@@ -387,17 +399,19 @@ $urlDownload = $url . 'staff/base.xlsx';
                     <select name="uf" id="uf">
                             <option value="">Selecione...</option>
                             <?php
-                            $qryUf = '';
+                            $sql = "SELECT id_estado, nome_estado, uf from tbl_estado where id_estado<>''";
+                            $ufParams = [];
                             if (($infoUser['nivel_id'] ?? 0) > 1) {
-                                $qryUf = " and id_estado='" . $infoUser['uf_id'] . "'";
+                                $sql .= ' and id_estado=?';
+                                $ufParams[] = (int) $infoUser['uf_id'];
                             }
-                            $sql = "SELECT id_estado, nome_estado, uf from tbl_estado where id_estado<>'' $qryUf order by nome_estado";
+                            $sql .= ' order by nome_estado';
                             //echo "<br>".$sql;
                             $stmt = $PDO->prepare($sql);
-                            $result = $stmt->execute();
+                            $result = $stmt->execute($ufParams);
                             $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             for ($x = 0; $x < count($dados); $x++) {
-                                echo '<option value="' . $dados[$x]['id_estado'] . '">' . $dados[$x]['nome_estado'] . ' - ' . $dados[$x]['uf'] . '</option>';
+                                echo '<option value="' . (int) $dados[$x]['id_estado'] . '">' . stHtml($dados[$x]['nome_estado']) . ' - ' . stHtml($dados[$x]['uf']) . '</option>';
                             }
                             ?>
                         </select>
@@ -471,10 +485,17 @@ $urlDownload = $url . 'staff/base.xlsx';
                 <div class="st-form-grid cnf-usu-form-grid">
                 <div class="st-field input-container">
                         <?php
-                        $sql = "SELECT id_contrato, nome_contrato, uf, ativo from tbl_contrato where ativo=1 order by nome_contrato";
+                        $sql = "SELECT id_contrato, nome_contrato, uf, ativo from tbl_contrato where ativo=1";
+                        $cttParams = [];
+                        if ((int) ($infoUser['nivel_id'] ?? 0) !== 0) {
+                            $cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+                            $sql .= " and id_contrato IN (" . $cttIn['ph'] . ")";
+                            $cttParams = $cttIn['params'];
+                        }
+                        $sql .= " order by nome_contrato";
                         //echo "<br>".$sql;
                         $stmt = $PDO->prepare($sql);
-                        $result = $stmt->execute();
+                        $result = $stmt->execute($cttParams);
                         ?>
                     <label class="st-label" for="contrato_import">Contrato <span class="st-required">*</span></label>
                     <select name="contrato_import" id="contrato_import">
@@ -482,7 +503,7 @@ $urlDownload = $url . 'staff/base.xlsx';
                             <?php
                             $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             for ($x = 0; $x < count($dados); $x++) {
-                                echo '<option value="' . $dados[$x]['id_contrato'] . '">' . $dados[$x]['nome_contrato'] . ' - ' . $dados[$x]['uf'] . '</option>';
+                                echo '<option value="' . (int) $dados[$x]['id_contrato'] . '">' . stHtml($dados[$x]['nome_contrato']) . ' - ' . stHtml($dados[$x]['uf']) . '</option>';
                             }
                             ?>
                         </select>
@@ -499,17 +520,19 @@ $urlDownload = $url . 'staff/base.xlsx';
                     <select name="uf_import" id="uf_import">
                             <option value="">Selecione...</option>
                             <?php
-                            $qryUf = '';
+                            $sql = "SELECT id_estado, nome_estado, uf from tbl_estado where id_estado<>''";
+                            $ufImportParams = [];
                             if (($infoUser['nivel_id'] ?? 0) >= 1) {
-                                $qryUf = " and id_estado='" . $infoUser['uf_id'] . "'";
+                                $sql .= ' and id_estado=?';
+                                $ufImportParams[] = (int) $infoUser['uf_id'];
                             }
-                            $sql = "SELECT id_estado, nome_estado, uf from tbl_estado where id_estado<>'' $qryUf order by nome_estado";
+                            $sql .= ' order by nome_estado';
                             //echo "<br>".$sql;
                             $stmt = $PDO->prepare($sql);
-                            $result = $stmt->execute();
+                            $result = $stmt->execute($ufImportParams);
                             $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             for ($x = 0; $x < count($dados); $x++) {
-                                echo '<option value="' . $dados[$x]['uf'] . '">' . $dados[$x]['nome_estado'] . ' - ' . $dados[$x]['uf'] . '</option>';
+                                echo '<option value="' . stHtml($dados[$x]['uf']) . '">' . stHtml($dados[$x]['nome_estado']) . ' - ' . stHtml($dados[$x]['uf']) . '</option>';
                             }
                             ?>
                         </select>
@@ -534,7 +557,7 @@ $urlDownload = $url . 'staff/base.xlsx';
     $(document).ready(function() {
 
         $("#downBase").click(function() {
-            var valFileDownloadPath = '<?= $urlDownload; ?>';
+            var valFileDownloadPath = <?= json_encode($urlDownload, JSON_UNESCAPED_SLASHES) ?>;
 
             window.open(valFileDownloadPath, '_blank');
         });
@@ -646,7 +669,7 @@ $urlDownload = $url . 'staff/base.xlsx';
             if (empresa == '') {
                 menAlert('Empresa');
             } else
-            if (agencia == '') {
+            if (agencia == '' || agencia == '0' || agencia == 0) {
                 menAlert('Agência');
             } else
 

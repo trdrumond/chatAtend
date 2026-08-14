@@ -1,23 +1,23 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
-
-$_POST['assunto'] = ($_POST['assunto']=='') ? 0 : $_POST['assunto'];
-
-if(strpos($_POST['mensagem'], '<a href')){
-    $_POST['mensagem'] = str_replace('<a', '<a target="_blank"', $_POST['mensagem']);
+$assunto = ($_POST['assunto'] ?? '') === '' ? 0 : (int) $_POST['assunto'];
+$titulo = (string) ($_POST['titulo'] ?? '');
+$mensagem = (string) ($_POST['mensagem'] ?? '');
+$contrato = (int) ($_POST['contrato'] ?? 0);
+$fila = (int) ($_POST['fila'] ?? 0);
+if ($contrato < 1 || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contrato)) {
+    return;
 }
 
-$sql="INSERT INTO tbl_faq (titulo_faq, txt, contrato_id, assunto_id, fila_id) VALUES ('".$_POST['titulo']."', '".$_POST['mensagem']."', '".$_POST['contrato']."', '".$_POST['assunto']."', '".$_POST['fila']."')";
+if (strpos($mensagem, '<a href') !== false) {
+    $mensagem = str_replace('<a', '<a target="_blank"', $mensagem);
+}
 
-//echo $sql;
+$stmt = $PDO->prepare("INSERT INTO tbl_faq (titulo_faq, txt, contrato_id, assunto_id, fila_id) VALUES (?, ?, ?, ?, ?)");
+$result = $stmt->execute([$titulo, $mensagem, $contrato, $assunto, $fila]);
 
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
+if ($result == 1) {
 ?>
 
 <script>
@@ -35,7 +35,6 @@ if($result==1){
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

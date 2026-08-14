@@ -347,11 +347,11 @@ function loaddadosIdx() {
                 $result = $stmt->execute();
                 $infoContrato = $stmt->fetch( PDO::FETCH_ASSOC );
 
-                $contratos=$infoContrato['id_contrato'];
-                $sql="SELECT a.id_contrato, concat(a.nome_contrato, '/', a.uf) as nome, b.id_fila, b.nome_fila from tbl_contrato a, tbl_config_fila b where a.ativo=1 and a.id_contrato in (".$contratos.") and b.contrato_id=a.id_contrato and b.ativo=1 order by id_fila asc";
+                $contratoPainelId = (int) ($infoContrato['id_contrato'] ?? 0);
+                $sql="SELECT a.id_contrato, concat(a.nome_contrato, '/', a.uf) as nome, b.id_fila, b.nome_fila from tbl_contrato a, tbl_config_fila b where a.ativo=1 and a.id_contrato=? and b.contrato_id=a.id_contrato and b.ativo=1 order by id_fila asc";
                 //echo "<br>".$sql;
                 $stmt = $PDO->prepare($sql);
-                $result = $stmt->execute();
+                $result = $stmt->execute([$contratoPainelId]);
                 $dadosContratos = $stmt->fetchAll( PDO::FETCH_ASSOC );
                 //depurador($dadosContratos);
             ?>

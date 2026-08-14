@@ -3,25 +3,23 @@ include('cnf/session.php');
 
 if($_POST['action']=='sair'){
 
-    $sqlInsLog="UPDATE tbl_log_diario SET ip='".$_SERVER['REMOTE_ADDR']."', date_out=now(), contrato_id='".$infoUser['contrato_id']."', municipio_id='".$infoUser['municipio_id']."', regional_id='".$infoUser['regional_id']."', agencia_id='".$infoUser['agencia_id']."', uf_id='".$infoUser['uf_id']."'  where user_id=".$idu." and data_log=curdate()";
+    $sqlInsLog="UPDATE tbl_log_diario SET ip=?, date_out=now(), contrato_id=?, municipio_id=?, regional_id=?, agencia_id=?, uf_id=? where user_id=? and data_log=curdate()";
 
     //echo "<br>".$sqlInsLog;
     $stmt = $PDO->prepare( $sqlInsLog );
-    $execInsLog = $stmt->execute();
+    $execInsLog = $stmt->execute([
+        (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        (int) ($infoUser['contrato_id'] ?? 0),
+        (int) ($infoUser['municipio_id'] ?? 0),
+        (int) ($infoUser['regional_id'] ?? 0),
+        (int) ($infoUser['agencia_id'] ?? 0),
+        (int) ($infoUser['uf_id'] ?? 0),
+        (int) $idu,
+    ]);
 
     if($execInsLog){
         if($infoUser['nivel_id']==4){
-            $sqlInsLog="INSERT INTO tbl_log_atendimento (user_id, contrato_id, agencia_id, fila_id, data_hora, acao) VALUES ('".$idu."', '".$infoUser['contrato_id']."', '".$infoUser['agencia_id']."', '".$infoUser['fila_id']."', now(), 'Logout')";
-
-            //echo "<br>".$sqlInsLog;
-            $stmt = $PDO->prepare( $sqlInsLog );
-            $execInsLog_ = $stmt->execute();
-
-            $sqlInsLog="INSERT INTO tbl_log_atendimento_secondary (user_id, contrato_id, agencia_id, fila_id, data_hora, acao) VALUES ('".$idu."', '".$infoUser['contrato_id']."', '".$infoUser['agencia_id']."', '".$infoUser['fila_id']."', now(), 'Logout')";
-
-            //echo "<br>".$sqlInsLog;
-            $stmt = $PDO->prepare( $sqlInsLog );
-            $execInsLog_ = $stmt->execute();
+            logAtendimento($PDO, (int) $idu, 'Logout');
         }
 
         //echo "<br>Sair";

@@ -1,22 +1,19 @@
 <?php
 include("../cnf/session.php");
 
+$msg = (string) ($_POST['msg'] ?? '');
+$chatId = (int) ($_POST['chatId'] ?? 0);
+$userId = (int) ($infoUser['id_user'] ?? 0);
 
-    //echo "executa script de leitura";
-    $sqlVisual="UPDATE tbl_com_msg_group_view SET dt_view=now() where group_chat=".$_POST['chatId']." and user_id=".$infoUser['id_user'];
-    //echo "<br>".$sqlVisual;
-    $stmt = $PDO->prepare( $sqlVisual );
-    $result = $stmt->execute();
+if ($chatId > 0 && $userId > 0) {
+    $sqlVisual = "UPDATE tbl_com_msg_group_view SET dt_view=now() where group_chat=? and user_id=?";
+    $stmt = $PDO->prepare($sqlVisual);
+    $stmt->execute([$chatId, $userId]);
+}
 
-
-echo $_POST['msg'];
+echo stChatRenderPostedMsg($msg, 0, null);
 ?>
 
 <script>
 loadComList();
 </script>
-
-
-
-
-

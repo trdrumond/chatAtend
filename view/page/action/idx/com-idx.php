@@ -217,6 +217,10 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 </div>
 
 <?php
+$userIdCom = (int) ($infoUser['id_user'] ?? 0);
+$contratoIdCom = (int) ($infoUser['contrato_id'] ?? $infoUser['id_contrato'] ?? 0);
+$nivelCom = (int) ($infoUser['nivel_id'] ?? 0);
+
 $nivelOptsCom = '<option value="">Perfil</option>';
 $sql = "SELECT id_nivel, nome_nivel, icon from tbl_nivel where id_nivel<>0 order by id_nivel asc";
 $stmt = $PDO->prepare($sql);
@@ -226,11 +230,16 @@ for ($x = 0; $x < count($dadosNivelCom); $x++) {
     $nivelOptsCom .= '<option value="' . $dadosNivelCom[$x]['id_nivel'] . '">' . $dadosNivelCom[$x]['nome_nivel'] . '</option>';
 }
 
-$qryColCom = ($infoUser['nivel_id'] != 0) ? ' and contrato_id=' . $infoUser['contrato_id'] : '';
 $colOptsCom = '<option value="">Colaborador</option>';
-$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col from tbl_user where id_user<>" . $infoUser['id_user'] . " $qryColCom and nivel_id<>0 order by nome_col asc";
+$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col from tbl_user where id_user<>? and nivel_id<>0";
+$colComParams = [$userIdCom];
+if ($nivelCom !== 0) {
+    $sql .= ' and contrato_id=?';
+    $colComParams[] = $contratoIdCom;
+}
+$sql .= ' order by nome_col asc';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($colComParams);
 $dadosColCom = $stmt->fetchAll(PDO::FETCH_ASSOC);
 for ($x = 0; $x < count($dadosColCom); $x++) {
     $colOptsCom .= '<option value="' . $dadosColCom[$x]['id_user'] . '">' . $dadosColCom[$x]['nome_col'] . '</option>';
@@ -264,11 +273,16 @@ for ($x = 0; $x < count($dadosNivelMassa); $x++) {
     $nivelOptsMassa .= '<option value="' . $dadosNivelMassa[$x]['id_nivel'] . '">' . $dadosNivelMassa[$x]['nome_nivel'] . '</option>';
 }
 
-$qryColMassa = ($infoUser['nivel_id'] != 0) ? ' and contrato_id=' . $infoUser['contrato_id'] : '';
 $colOptsMassa = '';
-$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col from tbl_user where id_user<>" . $infoUser['id_user'] . " $qryColMassa and nivel_id<>0 order by nome_col asc";
+$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col from tbl_user where id_user<>? and nivel_id<>0";
+$colMassaParams = [$userIdCom];
+if ($nivelCom !== 0) {
+    $sql .= ' and contrato_id=?';
+    $colMassaParams[] = $contratoIdCom;
+}
+$sql .= ' order by nome_col asc';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($colMassaParams);
 $dadosColMassa = $stmt->fetchAll(PDO::FETCH_ASSOC);
 for ($x = 0; $x < count($dadosColMassa); $x++) {
     $colOptsMassa .= '<option value="' . $dadosColMassa[$x]['id_user'] . '">' . $dadosColMassa[$x]['nome_col'] . '</option>';
@@ -302,10 +316,15 @@ $msgMassaId = 'message_com_massa_' . $msgMassaSuffix;
 </div></div></div>
 
 <?php
-$qryGroup = ($infoUser['nivel_id'] != 0) ? ' and contrato_id=' . $infoUser['contrato_id'] : '';
-$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user<>" . $infoUser['id_user'] . " $qryGroup order by nivel asc, nome_col asc";
+$sql = "SELECT id_user, concat(nome, ' ', sobrenome) as nome_col, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user<>?";
+$groupParams = [$userIdCom];
+if ($nivelCom !== 0) {
+    $sql .= ' and contrato_id=?';
+    $groupParams[] = $contratoIdCom;
+}
+$sql .= ' order by nivel asc, nome_col asc';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($groupParams);
 $dadosGroup = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $colOptsGroup = '';
 for ($x = 0; $x < count($dadosGroup); $x++) {

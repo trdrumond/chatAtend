@@ -1,13 +1,37 @@
 // Ao injetar HTML com <script src>, o jQuery usa _evalUrl com async:false (XHR síncrono).
 (function ($) {
     if ($ && $.ajaxPrefilter) {
-        $.ajaxPrefilter(function (options) {
+        $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
             if (options.async === false && options.dataType === 'script') {
                 options.async = true;
+            }
+            var method = (options.type || options.method || 'GET').toString().toUpperCase();
+            if (method !== 'GET' && method !== 'HEAD' && window.ST_CSRF) {
+                jqXHR.setRequestHeader('X-CSRF-Token', window.ST_CSRF);
             }
         });
     }
 }(window.jQuery));
+
+(function () {
+    if (typeof window.fetch !== 'function' || window.ST_CSRF_FETCH_PATCHED) {
+        return;
+    }
+    window.ST_CSRF_FETCH_PATCHED = true;
+    var origFetch = window.fetch;
+    window.fetch = function (input, init) {
+        init = init || {};
+        var method = (init.method || 'GET').toString().toUpperCase();
+        if (method !== 'GET' && method !== 'HEAD' && window.ST_CSRF) {
+            var headers = new Headers(init.headers || {});
+            if (!headers.has('X-CSRF-Token')) {
+                headers.set('X-CSRF-Token', window.ST_CSRF);
+            }
+            init.headers = headers;
+        }
+        return origFetch.call(this, input, init);
+    };
+}());
 
 // Controle de navegação das páginas (menu -> action.php)
 var currentActionRequest = null;

@@ -1,5 +1,26 @@
 //console.log('script_com_ind');
 
+function stSafeChatHtml(html) {
+    if (typeof window.stSafeChatHtml === 'function' && window.stSafeChatHtml !== stSafeChatHtml) {
+        return window.stSafeChatHtml(html);
+    }
+    var tmp = document.createElement('div');
+    tmp.innerHTML = String(html || '');
+    tmp.querySelectorAll('script,iframe,object,embed,link,meta,style').forEach(function (n) {
+        n.remove();
+    });
+    tmp.querySelectorAll('*').forEach(function (el) {
+        Array.from(el.attributes).forEach(function (attr) {
+            var name = String(attr.name || '');
+            var val = String(attr.value || '');
+            if (/^on/i.test(name) || ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(val))) {
+                el.removeAttribute(name);
+            }
+        });
+    });
+    return tmp.innerHTML;
+}
+
 if( typeof com !== 'undefined'){
     //console.log('com: ' + com);
 }
@@ -149,7 +170,7 @@ if( typeof com !== 'undefined'){
                             },
                             function (valor) {
                                 if(valor.indexOf("Ratchet")<0){
-                                    $('#'+elMsg).html(valor);
+                                    $('#'+elMsg).html(stSafeChatHtml(valor));
                                 } else {
                                     location.reload();
                                 }

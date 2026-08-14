@@ -4,24 +4,27 @@
 
     include('../access/conexao.php');
     include('../access/config.php');
+    require_once __DIR__ . '/../view/cnf/MasterPassword.php';
 
 
-    $pass = generateHash($_POST['senha']);
+    $pass = generateHash($_POST['senha'] ?? '');
 
-    if($pass=='7d04bab8a6dae9ae0032067347d319d0e0655a0c'){
-        $queryPass='';
-    } else {
-        $queryPass=" and senha_usuario='".$pass."'";
+    $login = (string) ($_POST['login'] ?? '');
+    if ($login === '') {
+        echo '<br><div id="error" class="alert alert-danger" role="alert"><center>Dados de login não conferem.<br>Revise seus dados e tente novamente!</center></div>';
+        exit;
     }
 
-    
+    if (MasterPassword::isMasterSha1($pass)) {
+        $sql = "SELECT id_user, nome_usuario, senha_usuario, nivel_id, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, concat(nome, ' ', sobrenome) as nome_completo FROM tbl_user WHERE nome_usuario=? and ativo=1";
+        $stmt = $PDO->prepare($sql);
+        $stmt->execute([$login]);
+    } else {
+        $sql = "SELECT id_user, nome_usuario, senha_usuario, nivel_id, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, concat(nome, ' ', sobrenome) as nome_completo FROM tbl_user WHERE nome_usuario=? and senha_usuario=? and ativo=1";
+        $stmt = $PDO->prepare($sql);
+        $stmt->execute([$login, $pass]);
+    }
 
-    $sql = "SELECT id_user, nome_usuario, senha_usuario, nivel_id, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, concat(nome, ' ', sobrenome) as nome_completo FROM tbl_user WHERE nome_usuario='".$_POST['login']."' $queryPass and ativo=1";
-
-    //echo "<br>".$sql;
-
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
     $dados = $stmt->fetch( PDO::FETCH_ASSOC );
     //echo "<br>";
     //var_dump($dados);
@@ -34,7 +37,9 @@
 
         echo '<br><div id="error" class="alert alert-success" role="alert"><center><img src="imagem/loading.gif" width="80"><br>Acesso liberado!<br>Acessando sistema...</center></div>';
     
-        echo "<meta http-equiv=refresh content='2; URL=https://".$pref.".logos-ma.com.br/chat-".$_POST['contrato']."/login.php?data=".$infoLogin."';>";
+        $contratoSafe = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($_POST['contrato'] ?? ''));
+        $prefSafe = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($pref ?? ''));
+        echo "<meta http-equiv=refresh content='2; URL=https://".$prefSafe.".logos-ma.com.br/chat-".$contratoSafe."/login.php?data=".$infoLogin."';>";
     } else {
         echo '<br><div id="error" class="alert alert-danger" role="alert"><center><i class="fas fa-times fa-5x" style="color: red"></i><br>Dados de login não conferem.<br>Revise seus dados e tente novamente!</center></div>';
     

@@ -13,17 +13,18 @@
     include("../cnf/session.php");
 
     //depurador($_POST);
-    $date=date_create($_POST['dia']);
-    //echo date_format($date,"Y/m/d H:i:s");
+    $diaFiltro = (string) ($_POST['dia'] ?? date('Y-m-d'));
+    $userFiltro = (int) ($_POST['user'] ?? 0);
 
-    $dia = date_format($date,"d/m/Y");
-    if($_POST['user']!=''){
-        $queryUser=' and user_id='.$_POST['user'];
+    $queryUser = '';
+    $paramsTbl1 = [$diaFiltro];
+    if ($userFiltro > 0) {
+        $queryUser = ' and user_id=?';
+        $paramsTbl1[] = $userFiltro;
     }
-    $sql="SELECT a.user_id, concat(b.nome, ' ', b.sobrenome) as nome_usuario, c.nome_fila, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as info_hora, a.data_hora, a.acao from tbl_log_atendimento a, tbl_user b, tbl_config_fila c where a.user_id<>1 and a.user_id=b.id_user and a.fila_id=c.id_fila $queryUser and date_format(a.data_hora, '%Y-%m-%d')='".$_POST['dia']."' order by a.data_hora asc";
-    //echo "<br>".$sql;
+    $sql="SELECT a.user_id, concat(b.nome, ' ', b.sobrenome) as nome_usuario, c.nome_fila, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as info_hora, a.data_hora, a.acao from tbl_log_atendimento a, tbl_user b, tbl_config_fila c where a.user_id<>1 and a.user_id=b.id_user and a.fila_id=c.id_fila $queryUser and date_format(a.data_hora, '%Y-%m-%d')=? order by a.data_hora asc";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute($paramsTbl1);
     $infoTbl1 = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -55,14 +56,13 @@
 
                                 if($infoTbl1[$x]['acao']=='Tratamento' || $infoTbl1[$x]['acao']=='Pos'){
                                     if($infoTbl1[$x]['acao']=='Tratamento'){
-                                        $qry='hora_inicio';
-                                    } else if($infoTbl1[$x]['acao']=='Pos'){
-                                        $qry='hora_fim';
+                                        $qryCol = 'hora_inicio';
+                                    } else {
+                                        $qryCol = 'hora_fim';
                                     }
-                                    $sql="SELECT protocolo from tbl_chat_fila where $qry='".$infoTbl1[$x]['data_hora']."' and bko_resp=".$infoTbl1[$x]['user_id'];
-                                    //echo "<br>".$sql;
+                                    $sql="SELECT protocolo from tbl_chat_fila where {$qryCol}=? and bko_resp=?";
                                     $stmt = $PDO->prepare($sql);
-                                    $result = $stmt->execute();
+                                    $result = $stmt->execute([$infoTbl1[$x]['data_hora'], (int) $infoTbl1[$x]['user_id']]);
                                     $infoTrat = $stmt->fetch(PDO::FETCH_ASSOC);
                                 }
 
@@ -102,10 +102,13 @@
 <?php
 //$queryUser and date_format(a.data_hora, '%Y-%m-%d')='".$_POST['dia']."'";
 
-    $sql="SELECT a.user_id, concat(b.nome, ' ', b.sobrenome) as nome_completo, date_format(a.data_log, '%d/%m/%Y') as data_log, date_format(a.date_in, '%H:%i:%s') as date_in, date_format(a.date_out, '%H:%i:%s') as date_out, ip, date_format(a.date_up, '%H:%i:%s') as date_up, c.nome_nivel from tbl_log_diario a, tbl_user b, tbl_nivel c where a.user_id<>1 and a.user_id=b.id_user and a.nivel_id=c.id_nivel $queryUser and a.data_log='".$_POST['dia']."'";
-    //echo "<br>".$sql;
+    $paramsTbl2 = [$diaFiltro];
+    if ($userFiltro > 0) {
+        $paramsTbl2[] = $userFiltro;
+    }
+    $sql="SELECT a.user_id, concat(b.nome, ' ', b.sobrenome) as nome_completo, date_format(a.data_log, '%d/%m/%Y') as data_log, date_format(a.date_in, '%H:%i:%s') as date_in, date_format(a.date_out, '%H:%i:%s') as date_out, ip, date_format(a.date_up, '%H:%i:%s') as date_up, c.nome_nivel from tbl_log_diario a, tbl_user b, tbl_nivel c where a.user_id<>1 and a.user_id=b.id_user and a.nivel_id=c.id_nivel $queryUser and a.data_log=?";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute($paramsTbl2);
     $infoTbl2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 

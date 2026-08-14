@@ -1,33 +1,29 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$comId = (int) ($_POST['com'] ?? 0);
 
-$sql = "SELECT count(id_file) as qtd FROM tbl_com_files where com_id='".$_POST['com']."'";
-//echo "<br>".$sql;
+$sql = "SELECT count(id_file) as qtd FROM tbl_com_files where com_id=?";
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
-$infoQtd = $stmt->fetch( PDO::FETCH_ASSOC );
+$result = $stmt->execute([$comId]);
+$infoQtd = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$name_file = str_pad($infoQtd['qtd']+1, 3, '0', STR_PAD_LEFT);
+$name_file = str_pad(($infoQtd['qtd'] ?? 0) + 1, 3, '0', STR_PAD_LEFT);
 
-$sql="INSERT INTO tbl_com_files (link_file, name_file, rem, com_id) VALUES ('".$_POST['file']."', '".$name_file."', '".$_POST['rem']."', '".$_POST['com']."')";
+$sql = "INSERT INTO tbl_com_files (link_file, name_file, rem, com_id) VALUES (?, ?, ?, ?)";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([
+    (string) ($_POST['file'] ?? ''),
+    $name_file,
+    (string) ($_POST['rem'] ?? ''),
+    $comId,
+]);
 
-//echo "<br>".$sql;
-
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-if($result==1){
+if ($result == 1) {
 ?>
 <script>
-    //sendFileCom(<?=$_POST['com']?>);
-
-    name_file = '<?=$name_file; ?>';
-    link = '<?=$_POST['file']; ?>';
-    //console.log('save_file_com:' + name_file);
-
+    name_file = <?= json_encode($name_file, JSON_UNESCAPED_UNICODE) ?>;
+    link = <?= json_encode((string) ($_POST['file'] ?? ''), JSON_UNESCAPED_UNICODE) ?>;
 </script>
 
 <?php } ?>

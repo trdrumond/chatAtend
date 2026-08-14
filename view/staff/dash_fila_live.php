@@ -15,6 +15,10 @@ if (!isset($infoUser) || !is_array($infoUser) || (int) ($infoUser['nivel_id'] ??
     exit;
 }
 
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
 if (!isset($infoUserConfig) || !is_array($infoUserConfig)) {
     $infoUserConfig = ['contrato_id' => '0'];
 }
@@ -24,12 +28,13 @@ if (function_exists('session_write_close')) {
 }
 
 $nivelUsu = (int) ($infoUser['nivel_id'] ?? 0);
-$contratoIn = $infoUserConfig['contrato_id'];
-$qryContrato = ($nivelUsu > 0) ? " AND contrato_id IN ($contratoIn)" : '';
-$qryFilaCtt = ($nivelUsu > 0) ? " AND f.contrato_id IN ($contratoIn)" : '';
-$qryUserCtt = ($nivelUsu > 0) ? " AND u.contrato_id IN ($contratoIn)" : '';
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$cttParams = ($nivelUsu > 0) ? $cttIn['ids'] : [];
+$qryContrato = ($nivelUsu > 0) ? ' AND contrato_id IN (' . $cttIn['ph'] . ')' : '';
+$qryFilaCtt = ($nivelUsu > 0) ? ' AND f.contrato_id IN (' . $cttIn['ph'] . ')' : '';
+$qryUserCtt = ($nivelUsu > 0) ? ' AND u.contrato_id IN (' . $cttIn['ph'] . ')' : '';
 $qryPendFilaCtt = ($nivelUsu > 0)
-    ? ' AND p.fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $contratoIn . '))'
+    ? ' AND p.fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $cttIn['ph'] . '))'
     : '';
 
 $atendSql = stFilaSqlAtendimentoAtivo();
@@ -111,16 +116,23 @@ function cnfDashFormatStar(?string $star): string
 /**
  * @return array<int, array<string, mixed>>
  */
-function cnfDashLoadTeam(PDO $pdo, int $filaId, string $qryUserCtt, string $atendSql): array
+function cnfDashLoadTeam(PDO $pdo, int $filaId, string $qryUserCtt, string $atendSql, array $cttParams = []): array
 {
-    $sqlFila = $filaId > 0 ? ' AND u.fila_id = ' . $filaId : '';
+    $teamParams = [];
+    $sqlFila = '';
+    if ($filaId > 0) {
+        $sqlFila = ' AND u.fila_id = ?';
+        $teamParams[] = $filaId;
+    }
 
     $sqlUsers = "SELECT u.id_user, u.nome, u.sobrenome, u.fila_id,
             COALESCE(NULLIF((SELECT img FROM tbl_user_img_perfil WHERE user_id = u.id_user), ''), 'img/perfil.fw.png') AS img
         FROM tbl_user u
         WHERE u.ativo = 1 AND u.nivel_id = 4 $sqlFila $qryUserCtt
         ORDER BY u.fila_id, u.nome ASC";
-    $users = $pdo->query($sqlUsers)->fetchAll(PDO::FETCH_ASSOC);
+    $stmtUsers = $pdo->prepare($sqlUsers);
+    $stmtUsers->execute(array_merge($teamParams, $cttParams));
+    $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
     if (!count($users)) {
         return [];
     }
@@ -129,12 +141,22 @@ function cnfDashLoadTeam(PDO $pdo, int $filaId, string $qryUserCtt, string $aten
     foreach ($users as $u) {
         $userIds[] = (int) $u['id_user'];
     }
-    $uidsIn = implode(',', array_unique($userIds));
+    $uidBind = stSqlInBind(array_values(array_unique($userIds)));
+    $uidsPh = $uidBind['ph'];
+    $uidsParams = $uidBind['params'];
+    $stFetch = static function (PDO $pdo, string $sql, array $params): array {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return is_array($rows) ? $rows : [];
+    };
 
     $onlineMap = [];
-    foreach ($pdo->query(
-        "SELECT user_id FROM tbl_log_diario WHERE data_log = CURDATE() AND user_id IN ($uidsIn) AND date_out IS NULL"
-    )->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    foreach ($stFetch(
+        $pdo,
+        "SELECT user_id FROM tbl_log_diario WHERE data_log = CURDATE() AND user_id IN ($uidsPh) AND date_out IS NULL",
+        $uidsParams
+    ) as $row) {
         $onlineMap[(int) $row['user_id']] = true;
     }
 
@@ -144,28 +166,32 @@ function cnfDashLoadTeam(PDO $pdo, int $filaId, string $qryUserCtt, string $aten
         INNER JOIN (
             SELECT user_id, MAX(data_hora) AS max_dt
             FROM tbl_log_atendimento
-            WHERE user_id IN ($uidsIn)
+            WHERE user_id IN ($uidsPh)
               AND data_hora >= CURDATE()
               AND data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
               AND acao IN ('Login','Disponivel','Indisponivel','Tratamento','Logout','Pausa','Pos')
             GROUP BY user_id
         ) ult ON la.user_id = ult.user_id AND la.data_hora = ult.max_dt";
-    foreach ($pdo->query($sqlUltAcao)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    foreach ($stFetch($pdo, $sqlUltAcao, $uidsParams) as $row) {
         $atendAcaoMap[(int) $row['user_id']] = $row;
     }
 
     $atendAtivoMap = [];
-    foreach ($pdo->query(
+    foreach ($stFetch(
+        $pdo,
         "SELECT resp_id, date_in FROM tbl_tma_atend
-            WHERE resp_id IN ($uidsIn) AND DATE(date_disp) = CURDATE() AND DATE(date_in) = CURDATE() AND date_out IS NULL"
-    )->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            WHERE resp_id IN ($uidsPh) AND DATE(date_disp) = CURDATE() AND DATE(date_in) = CURDATE() AND date_out IS NULL",
+        $uidsParams
+    ) as $row) {
         $atendAtivoMap[(int) $row['resp_id']] = $row['date_in'];
     }
 
     $qtdAtendMap = [];
-    foreach ($pdo->query(
-        "SELECT bko_resp, COUNT(*) AS qtd FROM tbl_chat_fila WHERE bko_resp IN ($uidsIn) AND $atendSql GROUP BY bko_resp"
-    )->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    foreach ($stFetch(
+        $pdo,
+        "SELECT bko_resp, COUNT(*) AS qtd FROM tbl_chat_fila WHERE bko_resp IN ($uidsPh) AND $atendSql GROUP BY bko_resp",
+        $uidsParams
+    ) as $row) {
         $qtdAtendMap[(int) $row['bko_resp']] = (int) $row['qtd'];
     }
 
@@ -174,10 +200,10 @@ function cnfDashLoadTeam(PDO $pdo, int $filaId, string $qryUserCtt, string $aten
     $sqlStar = "SELECT ate, FORMAT(AVG(star), 1) AS star FROM tbl_classificacao
         WHERE star IS NOT NULL AND star <> ''
           AND data_hora >= '0001-01-01'
-          AND data_hora < DATE_SUB(CURDATE(), INTERVAL $day DAY)
-          AND ate IN ($uidsIn)
+          AND data_hora < DATE_SUB(CURDATE(), INTERVAL ? DAY)
+          AND ate IN ($uidsPh)
         GROUP BY ate";
-    foreach ($pdo->query($sqlStar)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    foreach ($stFetch($pdo, $sqlStar, array_merge([$day], $uidsParams)) as $row) {
         $starMap[(int) $row['ate']] = cnfDashFormatStar(isset($row['star']) ? (string) $row['star'] : null);
     }
 
@@ -303,7 +329,7 @@ function cnfDashFormatTimeAgg(?string $val): string
 /**
  * @return array{menor_espera: string, maior_espera: string, atend_rapido: string, maior_atend: string}
  */
-function cnfDashLoadTaTeStats(PDO $pdo, int $filaId, string $qryContrato): array
+function cnfDashLoadTaTeStats(PDO $pdo, int $filaId, string $qryContrato, array $cttParams = []): array
 {
     $sql = 'SELECT'
         .' SEC_TO_TIME(MIN(CASE WHEN te IS NOT NULL AND te <> \'\' AND TIME_TO_SEC(te) > 0 THEN TIME_TO_SEC(te) END)) AS menor_espera,'
@@ -315,12 +341,16 @@ function cnfDashLoadTaTeStats(PDO $pdo, int $filaId, string $qryContrato): array
         .' AND hora_inicio >= CURDATE()'
         .' AND hora_inicio < DATE_ADD(CURDATE(), INTERVAL 1 DAY)'
         .' AND hora_fim IS NOT NULL AND hora_fim <> \'\'';
+    $tateParams = [];
     if ($filaId > 0) {
-        $sql .= ' AND fila_id = ' . $filaId;
+        $sql .= ' AND fila_id = ?';
+        $tateParams[] = $filaId;
     }
     $sql .= $qryContrato;
 
-    $row = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC) ?: [];
+    $stmtTate = $pdo->prepare($sql);
+    $stmtTate->execute(array_merge($tateParams, $cttParams));
+    $row = $stmtTate->fetch(PDO::FETCH_ASSOC) ?: [];
 
     return [
         'menor_espera' => cnfDashFormatTimeAgg($row['menor_espera'] ?? null),
@@ -334,13 +364,13 @@ function cnfDashLoadTaTeStats(PDO $pdo, int $filaId, string $qryContrato): array
  * @param array<int, int> $filaIds
  * @return array<int, array{menor_espera: string, maior_espera: string, atend_rapido: string, maior_atend: string}>
  */
-function cnfDashLoadTaTeStatsPorFila(PDO $pdo, array $filaIds, string $qryContrato): array
+function cnfDashLoadTaTeStatsPorFila(PDO $pdo, array $filaIds, string $qryContrato, array $cttParams = []): array
 {
     $filaIds = array_values(array_unique(array_map('intval', $filaIds)));
     if (!count($filaIds)) {
         return [];
     }
-    $idsIn = implode(',', $filaIds);
+    $filaIn = stSqlInBind($filaIds);
     $sql = 'SELECT fila_id,'
         .' SEC_TO_TIME(MIN(CASE WHEN te IS NOT NULL AND te <> \'\' AND TIME_TO_SEC(te) > 0 THEN TIME_TO_SEC(te) END)) AS menor_espera,'
         .' SEC_TO_TIME(MAX(CASE WHEN te IS NOT NULL AND te <> \'\' AND TIME_TO_SEC(te) > 0 THEN TIME_TO_SEC(te) END)) AS maior_espera,'
@@ -351,12 +381,14 @@ function cnfDashLoadTaTeStatsPorFila(PDO $pdo, array $filaIds, string $qryContra
         .' AND hora_inicio >= CURDATE()'
         .' AND hora_inicio < DATE_ADD(CURDATE(), INTERVAL 1 DAY)'
         .' AND hora_fim IS NOT NULL AND hora_fim <> \'\''
-        .' AND fila_id IN (' . $idsIn . ')'
+        .' AND fila_id IN (' . $filaIn['ph'] . ')'
         . $qryContrato
         .' GROUP BY fila_id';
 
+    $stmtFilaTate = $pdo->prepare($sql);
+    $stmtFilaTate->execute(array_merge($filaIn['ids'], $cttParams));
     $map = [];
-    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    foreach ($stmtFilaTate->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $fid = (int) ($row['fila_id'] ?? 0);
         if ($fid <= 0) {
             continue;
@@ -372,15 +404,20 @@ function cnfDashLoadTaTeStatsPorFila(PDO $pdo, array $filaIds, string $qryContra
     return $map;
 }
 
-function cnfDashLoadAcessosUnicos(PDO $pdo, int $contratoId, string $qryContrato): int
+function cnfDashLoadAcessosUnicos(PDO $pdo, int $contratoId, string $qryContrato, array $cttParams = []): int
 {
     $sql = 'SELECT COUNT(DISTINCT user_id) AS total FROM tbl_log_diario WHERE data_log = CURDATE()';
+    $acessoParams = [];
     if ($contratoId > 0) {
-        $sql .= ' AND contrato_id = ' . $contratoId;
+        $sql .= ' AND contrato_id = ?';
+        $acessoParams[] = $contratoId;
     } else {
         $sql .= $qryContrato;
+        $acessoParams = $cttParams;
     }
-    $row = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC);
+    $stmtAcesso = $pdo->prepare($sql);
+    $stmtAcesso->execute($acessoParams);
+    $row = $stmtAcesso->fetch(PDO::FETCH_ASSOC);
 
     return (int) ($row['total'] ?? 0);
 }
@@ -395,13 +432,15 @@ function cnfDashLoadAcessosUnicosPorContrato(PDO $pdo, array $contratoIds): arra
     if (!count($contratoIds)) {
         return [];
     }
-    $idsIn = implode(',', $contratoIds);
+    $cttBind = stSqlInBind($contratoIds);
     $sql = 'SELECT contrato_id, COUNT(DISTINCT user_id) AS total'
         .' FROM tbl_log_diario'
-        .' WHERE data_log = CURDATE() AND contrato_id IN (' . $idsIn . ')'
+        .' WHERE data_log = CURDATE() AND contrato_id IN (' . $cttBind['ph'] . ')'
         .' GROUP BY contrato_id';
     $map = [];
-    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    $stmtCttAcc = $pdo->prepare($sql);
+    $stmtCttAcc->execute($cttBind['ids']);
+    foreach ($stmtCttAcc->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $map[(int) ($row['contrato_id'] ?? 0)] = (int) ($row['total'] ?? 0);
     }
 
@@ -418,18 +457,22 @@ function cnfDashMergeIndicadores(array $base, array $extra): array
     return array_merge($base, $extra);
 }
 
-function cnfDashLoadEspera(PDO $pdo, int $filaId, string $qryContrato): array
+function cnfDashLoadEspera(PDO $pdo, int $filaId, string $qryContrato, array $cttParams = []): array
 {
     $sql = "SELECT COUNT(*) AS qtd,
             TIMEDIFF(CURTIME(), DATE_FORMAT(MIN(data_hora), '%H:%i:%s')) AS tempo_espera
         FROM tbl_chat_fila
         WHERE status_fila = " . ST_FILA_NA_FILA;
+    $esperaParams = [];
     if ($filaId > 0) {
-        $sql .= ' AND fila_id = ' . $filaId;
+        $sql .= ' AND fila_id = ?';
+        $esperaParams[] = $filaId;
     }
     $sql .= $qryContrato;
 
-    $row = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC) ?: [];
+    $stmtEspera = $pdo->prepare($sql);
+    $stmtEspera->execute(array_merge($esperaParams, $cttParams));
+    $row = $stmtEspera->fetch(PDO::FETCH_ASSOC) ?: [];
 
     return [
         'qtd' => (int) ($row['qtd'] ?? 0),
@@ -452,7 +495,12 @@ try {
             WHERE status_fila >= " . ST_FILA_CONCLUIDO . " AND hora_fim IS NOT NULL AND hora_fim <> ''
             AND DATE(hora_inicio) = CURDATE() $qryContrato) AS tme";
 
-    $geralRow = $PDO->query($sqlGeral)->fetch(PDO::FETCH_ASSOC) ?: [];
+    $geralParams = $cttParams === []
+        ? []
+        : array_merge($cttParams, $cttParams, $cttParams, $cttParams, $cttParams, $cttParams);
+    $stmtGeral = $PDO->prepare($sqlGeral);
+    $stmtGeral->execute($geralParams);
+    $geralRow = $stmtGeral->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $sqlFilas = "SELECT f.id_fila, f.nome_fila, f.contrato_id, f.ativo,
             CONCAT(c.nome_contrato, '/', c.uf) AS nome_contrato,
@@ -466,7 +514,9 @@ try {
               WHERE fila_id = f.id_fila AND (status_fila = " . ST_FILA_NA_FILA . " OR $atendSql)
           ) > 0)
         ORDER BY f.nome_fila ASC";
-    $filas = $PDO->query($sqlFilas)->fetchAll(PDO::FETCH_ASSOC);
+    $stmtFilas = $PDO->prepare($sqlFilas);
+    $stmtFilas->execute($cttParams);
+    $filas = $stmtFilas->fetchAll(PDO::FETCH_ASSOC);
     $filaIds = [];
     foreach ($filas as $f) {
         $filaIds[] = (int) $f['id_fila'];
@@ -476,7 +526,9 @@ try {
     $pendHojePorFila = [];
     $pendTotalPorFila = [];
     if (count($filaIds) > 0) {
-        $idsIn = implode(',', $filaIds);
+        $filaBind = stSqlInBind($filaIds);
+        $idsPh = $filaBind['ph'];
+        $idsParams = $filaBind['params'];
 
         $sqlStats = "SELECT fila_id,
                 SUM(CASE WHEN status_fila = " . ST_FILA_NA_FILA . " THEN 1 ELSE 0 END) AS em_fila,
@@ -487,25 +539,31 @@ try {
             . " AND DATE(hora_fim) = CURDATE() AND ta IS NOT NULL AND ta <> '' THEN TIME_TO_SEC(ta) END)) AS tma,
                 SEC_TO_TIME(AVG(CASE WHEN status_fila >= " . ST_FILA_CONCLUIDO
             . " AND DATE(hora_fim) = CURDATE() AND te IS NOT NULL AND te <> '' THEN TIME_TO_SEC(te) END)) AS tme
-            FROM tbl_chat_fila WHERE fila_id IN ($idsIn) GROUP BY fila_id";
-        foreach ($PDO->query($sqlStats)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            FROM tbl_chat_fila WHERE fila_id IN ($idsPh) GROUP BY fila_id";
+        $stmtStats = $PDO->prepare($sqlStats);
+        $stmtStats->execute($idsParams);
+        foreach ($stmtStats->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $statsPorFila[(int) $row['fila_id']] = $row;
         }
 
         $sqlPendHoje = 'SELECT fila_id, COUNT(*) AS pend FROM tbl_pend_info p'
             .' WHERE p.data_hora >= CURDATE()'
             .' AND p.data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)'
-            .' AND p.fila_id IN (' . $idsIn . ')'
+            .' AND p.fila_id IN (' . $idsPh . ')'
             .' GROUP BY fila_id';
-        foreach ($PDO->query($sqlPendHoje)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $stmtPendHoje = $PDO->prepare($sqlPendHoje);
+        $stmtPendHoje->execute($idsParams);
+        foreach ($stmtPendHoje->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $pendHojePorFila[(int) $row['fila_id']] = (int) $row['pend'];
         }
 
         $sqlPendTotal = 'SELECT fila_id, COUNT(*) AS pend FROM tbl_pend_info'
             .' WHERE situacao_id = 3 AND data_hora_fim IS NULL'
-            .' AND fila_id IN (' . $idsIn . ')'
+            .' AND fila_id IN (' . $idsPh . ')'
             .' GROUP BY fila_id';
-        foreach ($PDO->query($sqlPendTotal)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $stmtPendTotal = $PDO->prepare($sqlPendTotal);
+        $stmtPendTotal->execute($idsParams);
+        foreach ($stmtPendTotal->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $pendTotalPorFila[(int) $row['fila_id']] = (int) $row['pend'];
         }
     }
@@ -535,16 +593,18 @@ try {
         }
     }
 
-    $esperaGeral = cnfDashLoadEspera($PDO, 0, $qryContrato);
+    $esperaGeral = cnfDashLoadEspera($PDO, 0, $qryContrato, $cttParams);
     $esperaPorFila = [];
     if (count($filaIds) > 0) {
-        $idsIn = implode(',', $filaIds);
+        $espBind = stSqlInBind($filaIds);
         $sqlEsp = "SELECT fila_id, COUNT(*) AS qtd,
                 TIMEDIFF(CURTIME(), DATE_FORMAT(MIN(data_hora), '%H:%i:%s')) AS tempo_espera
             FROM tbl_chat_fila
-            WHERE status_fila = " . ST_FILA_NA_FILA . " AND fila_id IN ($idsIn)
+            WHERE status_fila = " . ST_FILA_NA_FILA . " AND fila_id IN ({$espBind['ph']})
             GROUP BY fila_id";
-        foreach ($PDO->query($sqlEsp)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $stmtEsp = $PDO->prepare($sqlEsp);
+        $stmtEsp->execute($espBind['params']);
+        foreach ($stmtEsp->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $esperaPorFila[(int) $row['fila_id']] = [
                 'qtd' => (int) $row['qtd'],
                 'tempo' => cnfDashTrimTime(isset($row['tempo_espera']) ? $row['tempo_espera'] : null),
@@ -552,15 +612,15 @@ try {
         }
     }
 
-    $allTeam = cnfDashLoadTeam($PDO, 0, $qryUserCtt, $atendSql);
+    $allTeam = cnfDashLoadTeam($PDO, 0, $qryUserCtt, $atendSql, $cttParams);
     $teamByFila = cnfDashGroupTeam($allTeam);
     $allFilaItens = cnfDashLoadAllFilaItens($PDO);
     $filaItensByFila = cnfDashGroupFilaItens($allFilaItens);
     $geralFilaItens = cnfDashFilaItensView($allFilaItens, true);
 
-    $geralTaTe = cnfDashLoadTaTeStats($PDO, 0, $qryContrato);
-    $geralAcessos = cnfDashLoadAcessosUnicos($PDO, 0, $qryContrato);
-    $taTePorFila = cnfDashLoadTaTeStatsPorFila($PDO, $filaIds, $qryContrato);
+    $geralTaTe = cnfDashLoadTaTeStats($PDO, 0, $qryContrato, $cttParams);
+    $geralAcessos = cnfDashLoadAcessosUnicos($PDO, 0, $qryContrato, $cttParams);
+    $taTePorFila = cnfDashLoadTaTeStatsPorFila($PDO, $filaIds, $qryContrato, $cttParams);
 
     $filasOut = [];
     foreach ($filas as $f) {

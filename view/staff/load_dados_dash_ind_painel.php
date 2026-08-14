@@ -4,24 +4,37 @@ include("../cnf/conn.php");
 //depurador($_POST);
 $infoUser['nivel_id']=0;
 $nivel_usu = $infoUser['nivel_id'];
+$contratoIdPost = (int) ($_POST['contrato_id'] ?? 0);
+$filaIdPost = (int) ($_POST['fila_id'] ?? 0);
 
 //DADOS CONCLUÍDOS
 if($infoUser['nivel_id']<5){
 
 
-        $contratos=$infoUserConfig['contrato_id'];
-
-        if($_POST['contrato_id']!=0){
-            $qryContrato = " and contrato_id in (".$_POST['contrato_id'].")";
-            if($nivel_usu==4){
-                $qryBko = " and fila_id=".$_POST['fila_id'];
+        $dashPainelParams = [];
+        $qryContrato = '';
+        $qryBko = '';
+        if($contratoIdPost != 0){
+            $cttBind = stSqlInBind([$contratoIdPost]);
+            $qryContrato = ' and contrato_id in (' . $cttBind['ph'] . ')';
+            if($nivel_usu==4 && $filaIdPost > 0){
+                $qryBko = ' and fila_id=?';
+                $dashPainelParams = array_merge(
+                    $cttBind['ids'], [$filaIdPost],
+                    $cttBind['ids'], [$filaIdPost],
+                    $cttBind['ids'], [$filaIdPost],
+                    $cttBind['ids'],
+                    $cttBind['ids']
+                );
             } else {
-                $qryBko = "";
+                $dashPainelParams = array_merge(
+                    $cttBind['ids'],
+                    $cttBind['ids'],
+                    $cttBind['ids'],
+                    $cttBind['ids'],
+                    $cttBind['ids']
+                );
             }
-
-        } else {
-            $qryContrato ='';
-            $qryBko = "";
         }
 
 
@@ -36,7 +49,7 @@ if($infoUser['nivel_id']<5){
         //echo "<script>console.log(".$sql.");</script>";
 
         $stmt = $PDO->prepare($sql);
-        $result = $stmt->execute();
+        $result = $stmt->execute($dashPainelParams);
         $dadosHoje = $stmt->fetch( PDO::FETCH_ASSOC );
         //echo "<br>";
         //var_dump($dadosHoje);
@@ -46,8 +59,6 @@ if($infoUser['nivel_id']<5){
         $cntHojeConcluido = ($cntHojeConcluido=='') ? '---' : $cntHojeConcluido;
 
             $sum=0;
-            $contratos=$infoUserConfig['contrato_id'];
-
             $sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_fila_chat) as qtd from tbl_chat_fila where status_fila>=4 and date_format(hora_fim, '%Y-%m-%d')=date_format(curdate(), '%Y-%m-%d') and fila_id=id_fila) as qtd from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
             //echo "<br>".$sql;
             $stmt = $PDO_LOAD->prepare($sql);
@@ -82,7 +93,6 @@ $('#list-concluido').html(table_concluido);
 
 
             $sum=0;
-            $contratos=$infoUserConfig['contrato_id'];
             $sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_fila_chat) as qtd from tbl_chat_fila where status_fila=1 and fila_id=id_fila) as qtd from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
             //echo "<br>".$sql;
             $stmt = $PDO_LOAD->prepare($sql);
@@ -115,7 +125,6 @@ $('#list-fila').html(table_fila);
     $cntHojeAtend = ($cntHojeAtend=='') ? '---' : $cntHojeAtend;
 
         $sum=0;
-        $contratos=$infoUserConfig['contrato_id'];
         $sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_fila_chat) as qtd from tbl_chat_fila where status_fila=2 and date_format(hora_inicio, '%Y-%m-%d')=date_format(curdate(), '%Y-%m-%d') and fila_id=id_fila) as qtd from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
         //echo "<br>".$sql;
         $stmt = $PDO_LOAD->prepare($sql);
@@ -151,7 +160,6 @@ $('#list-atend').html(table_atend);
 
 
         $sum=0;
-        $contratos=$infoUserConfig['contrato_id'];
         $sql="SELECT a.id_fila, a.nome_fila, (SELECT sec_to_time(avg(time_to_sec(ta))) as tma from tbl_chat_fila where ta is not null and status_fila>=4 and date_format(hora_fim, '%Y-%m-%d')=date_format(curdate(), '%Y-%m-%d') and fila_id=id_fila) as tma from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
         //echo "<br>".$sql;
         $stmt = $PDO_LOAD->prepare($sql);
@@ -189,7 +197,6 @@ $('#list-tma').html(table_tma);
 
 
         $sum=0;
-        $contratos=$infoUserConfig['contrato_id'];
         $sql="SELECT a.id_fila, a.nome_fila, (SELECT sec_to_time(avg(time_to_sec(te))) as tme from tbl_chat_fila where te is not null and status_fila>=4 and date_format(hora_fim, '%Y-%m-%d')=date_format(curdate(), '%Y-%m-%d') and fila_id=id_fila) as tme from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
         //echo "<br>".$sql;
         $stmt = $PDO_LOAD->prepare($sql);
@@ -225,10 +232,8 @@ $('#list-tme').html(table_tme);
 
     //DADOS USUÁRIOS LOGADOS
 
-        if($_POST['contrato_id']==0){
-            $contratos=$infoUserConfig['contrato_id'];
+        if($contratoIdPost == 0){
         } else {
-            $contratos=$infoUser['contrato_id'];
         }
 
 
@@ -258,11 +263,12 @@ $('#list-tme').html(table_tme);
         //depurador($dadosContratos);
         $count=0;
         for($z=0;$z<count($dadosContratos);$z++){
+            $filaIdLoop = (int) $dadosContratos[$z]['id_fila'];
 
-            $sql = "SELECT user_id as id_us, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=id_us) as nome, (SELECT count(*) from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and user_id=id_us) as acao, (SELECT date_format(data_hora, '%H:%i:%s') from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and acao='Logout' and user_id=id_us order by data_hora desc limit 1) as logout, (SELECT date_format(data_hora, '%H:%i:%s') from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and acao<>'Logout' and user_id=id_us order by data_hora desc limit 1) as atend FROM tbl_log_diario where data_log=curdate() and nivel_id=4 and date_out is null and fila_id='".$dadosContratos[$z]['id_fila']."'";
+            $sql = "SELECT user_id as id_us, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=id_us) as nome, (SELECT count(*) from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and user_id=id_us) as acao, (SELECT date_format(data_hora, '%H:%i:%s') from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and acao='Logout' and user_id=id_us order by data_hora desc limit 1) as logout, (SELECT date_format(data_hora, '%H:%i:%s') from tbl_log_atendimento where date_format(data_hora, '%y-%m-%d')=curdate() and acao<>'Logout' and user_id=id_us order by data_hora desc limit 1) as atend FROM tbl_log_diario where data_log=curdate() and nivel_id=4 and date_out is null and fila_id=?";
             //echo "<br>".$sql;
             $stmt = $PDO->prepare($sql);
-            $result = $stmt->execute();
+            $result = $stmt->execute([$filaIdLoop]);
             $infoGeralFila = $stmt->fetchAll( PDO::FETCH_ASSOC );
             //depurador($infoGeralFila);
             $qtdOnLineFila = 0;
@@ -314,7 +320,6 @@ $('#list-tme').html(table_tme);
 
 
         $sum=0;
-        $contratos=$infoUserConfig['contrato_id'];
         $sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_pend) as qtd from tbl_pend_info where situacao_id<>7 and fila_id=id_fila and data_hora_visualizacao is not null) as qtd from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
         //echo "<br>".$sql;
         $stmt = $PDO_LOAD->prepare($sql);

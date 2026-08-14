@@ -1,13 +1,17 @@
 <?php
 include("../cnf/session.php");
 
-if($_POST['id_fila']==''){
-    $_POST['id_fila'] = 0;
+$idFila = (int) ($_POST['id_fila'] ?? 0);
+$idContrato = (int) ($_POST['id_contrato'] ?? 0);
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $idContrato)) {
+    $idContrato = 0;
 }
 
 //depurador($_POST);
-if($_POST['id_fila']!=0){
-    $sqlQuery = " and fila_id=".$_POST['id_fila'];
+$sqlParams = [];
+if($idFila != 0){
+    $sqlQuery = " and fila_id=?";
+    $sqlParams[] = $idFila;
 } else {
     $sqlQuery = "";
 }
@@ -18,7 +22,7 @@ $sql="SELECT count(*) as qtd, status_fila, (SELECT nome_situacao from tbl_situac
 
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($sqlParams);
 $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($ddChats_2);
 
@@ -26,14 +30,14 @@ $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
 
    <script>
-    //var chart = am4core.create("chart_2_<?php echo $_POST['id_fila']. '_'.$_POST['id_contrato']; ?>",
+    //var chart = am4core.create("chart_2_<?php echo $idFila. '_'.$idContrato; ?>",
 
 
             am5.ready(function() {
 
             // Create root element
             // https://www.amcharts.com/docs/v5/getting-started/#Root_element
-            var root = am5.Root.new("chart_2_<?php echo $_POST['id_fila']. '_'.$_POST['id_contrato']; ?>");
+            var root = am5.Root.new("chart_2_<?php echo $idFila. '_'.$idContrato; ?>");
 
             // Set themes
             // https://www.amcharts.com/docs/v5/concepts/themes/
@@ -91,7 +95,7 @@ $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
             <?php
                 for($y=0;$y<count($ddChats_2);$y++){
                     $ls=$ddChats_2[$y];
-                    echo '{ Situacao: "'.$ls['nome_status'].'", qtd: '.$ls['qtd'].' },';
+                    echo '{ Situacao: ' . json_encode((string) ($ls['nome_status'] ?? ''), JSON_UNESCAPED_UNICODE) . ', qtd: ' . (int) $ls['qtd'] . ' },';
                 }
             ?>
             ]);
@@ -112,5 +116,5 @@ $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
         </style>
 
         <div id="titulo"><h6>Quantidade por Status (<?= date('d/m/Y') ?>)</h6></div>
-        <div id="chart_2_<?php echo $_POST['id_fila']. '_'.$_POST['id_contrato']; ?>" class="chartdiv"></div>
+        <div id="chart_2_<?php echo $idFila. '_'.$idContrato; ?>" class="chartdiv"></div>
     </div>

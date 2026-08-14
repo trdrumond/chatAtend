@@ -134,6 +134,7 @@ $headCache = getCachedLayout('layout_head_v3_' . md5($patch), function () use (
 echo $headCache;
 ?>
 
+    <script>window.ST_CSRF = <?= json_encode($stCsrf ?? '', JSON_UNESCAPED_SLASHES) ?>;</script>
     <script>
     window.stTinyMceConfig = {
         base: <?= json_encode($patch, JSON_UNESCAPED_SLASHES) ?>,

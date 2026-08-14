@@ -2,27 +2,28 @@
 include("../cnf/session.php");
 require_once __DIR__ . '/../cnf/cache_layout.php';
 
-//depurador($_POST);
+$userId = (int) ($_POST['id'] ?? 0);
+$imgText = (string) ($_POST['imgText'] ?? '');
 
-$very_1="SELECT img from tbl_user_img_perfil where user_id=".$_POST['id'];
-//echo "<br>".$very_1;
-$stmt = $PDO->prepare( $very_1 );
-$result = $stmt->execute();
-$info = $stmt->fetch( PDO::FETCH_ASSOC );
-
-if($info['img']!=''){
-    $sql="UPDATE tbl_user_img_perfil SET img='".$_POST['imgText']."' where user_id=".$_POST['id'];
-} else {
-    $sql="INSERT INTO tbl_user_img_perfil (user_id, img) values ('".$_POST['id']."', '".$_POST['imgText']."')";
+if ($userId <= 0) {
+    exit;
 }
 
-//echo "<br>".$sql;
+$stmt = $PDO->prepare("SELECT img from tbl_user_img_perfil where user_id=?");
+$stmt->execute([$userId]);
+$info = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+if (is_array($info) && ($info['img'] ?? '') !== '') {
+    $stmt = $PDO->prepare("UPDATE tbl_user_img_perfil SET img=? where user_id=?");
+    $result = $stmt->execute([$imgText, $userId]);
+} else {
+    $stmt = $PDO->prepare("INSERT INTO tbl_user_img_perfil (user_id, img) values (?, ?)");
+    $result = $stmt->execute([$userId, $imgText]);
+}
 
-if($result==1){
-    clearUserLayoutCache((int) $_POST['id']);
+if ($result == 1) {
+    clearUserLayoutCache($userId);
+    $imgJs = json_encode($imgText, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
 <script>
     
@@ -31,7 +32,7 @@ if($result==1){
                 'Sua imagem foi carregada corretamente!',
                 'success'
             );
-    $("#user_img_perfil").html('<img src="<?php echo $_POST['imgText']; ?>" class="rounded-circle" alt="perfil" height="80" width="80" style="margin: auto;">');
+    $("#user_img_perfil").html('<img src=' + <?= $imgJs ?> + ' class="rounded-circle" alt="perfil" height="80" width="80" style="margin: auto;">');
     
     
 

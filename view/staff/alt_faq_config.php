@@ -1,42 +1,40 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$id = (int) ($_POST['id'] ?? 0);
+if ($id < 1) {
+    return;
+}
+$stmtCtt = $PDO->prepare("SELECT contrato_id from tbl_faq where id_faq=?");
+$stmtCtt->execute([$id]);
+$rowCtt = $stmtCtt->fetch(PDO::FETCH_ASSOC);
+if (!is_array($rowCtt) || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], (int) ($rowCtt['contrato_id'] ?? 0))) {
+    return;
+}
+$titulo = (string) ($_POST['titulo'] ?? '');
+$mensagem = (string) ($_POST['mensagem'] ?? '');
+$assunto = (int) ($_POST['assunto'] ?? 0);
+$status = (($_POST['status'] ?? '') !== '') ? 1 : 0;
 
-if($_POST['status']!=''){
-    $status=1;
-} else {
-    $status=0;
+if (strpos($mensagem, '<a href') !== false) {
+    $mensagem = str_replace('<a', '<a target="_blank"', $mensagem);
 }
 
+$stmt = $PDO->prepare("UPDATE tbl_faq SET titulo_faq=?, txt=?, assunto_id=?, ativo=? where id_faq=?");
+$result = $stmt->execute([$titulo, $mensagem, $assunto, $status, $id]);
 
-if(strpos($_POST['mensagem'], '<a href')){
-    $_POST['mensagem'] = str_replace('<a', '<a target="_blank"', $_POST['mensagem']);
-}
-
-
-
-$sql="UPDATE tbl_faq SET titulo_faq='".$_POST['titulo']."', txt='".$_POST['mensagem']."', assunto_id='".$_POST['assunto']."', ativo=$status where id_faq=".$_POST['id'];
-
-//echo "<br>".$sql;
-
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
+if ($result == 1) {
+    $modalId = json_encode((string) $id);
 ?>
 <script>
 
-    $("#modal_alt_<?php echo $_POST['id']; ?>").modal('hide');
+    $("#modal_alt_" + <?= $modalId ?>).modal('hide');
     actionPage('cad-faq', 'cnf');
 
 
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

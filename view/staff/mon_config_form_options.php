@@ -2,10 +2,11 @@
 include("../cnf/conn.php");
 //depurador($_POST);
 
-$sql="SELECT a.campo_id, a.fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=a.fila_id) as nome_forms, a.input_id, (SELECT nome_input from tbl_forms_mon_input where id_input=a.input_id) as nome_input, (SELECT tipo_input from tbl_forms_mon_input where id_input=a.input_id) as tipo_input, desc_campo, nome_campo, ativo, b.date_time from tbl_forms_mon_input_campo_cnf a, tbl_forms_mon_input_campo b where a.campo_id=b.id_campo and a.campo_id=".$_POST['id_campo'];
-//echo "<br>".$sql."<br>";
+$idCampo = (int) ($_POST['id_campo'] ?? 0);
+
+$sql="SELECT a.campo_id, a.fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=a.fila_id) as nome_forms, a.input_id, (SELECT nome_input from tbl_forms_mon_input where id_input=a.input_id) as nome_input, (SELECT tipo_input from tbl_forms_mon_input where id_input=a.input_id) as tipo_input, desc_campo, nome_campo, ativo, b.date_time from tbl_forms_mon_input_campo_cnf a, tbl_forms_mon_input_campo b where a.campo_id=b.id_campo and a.campo_id=?";
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$idCampo]);
 $info = $stmt->fetch( PDO::FETCH_ASSOC );
 //depurador($info);
 
@@ -33,17 +34,15 @@ $info = $stmt->fetch( PDO::FETCH_ASSOC );
 
     <?php
         if($info['tipo_input']=='checkbox'){
-            $sql_opt_1="SELECT id_option, desc_option, referencia, valor_mon_option from tbl_forms_mon_input_option where referencia='opcao_chk_1_mon' and campo_id=".$_POST['id_campo'];
-            //echo "<br>".$sql_opt_1;
+            $sql_opt_1="SELECT id_option, desc_option, referencia, valor_mon_option from tbl_forms_mon_input_option where referencia='opcao_chk_1_mon' and campo_id=?";
             $stmt = $PDO->prepare( $sql_opt_1 );
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idCampo]);
             $option_1 = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($option_1);
 
-            $sql_opt_2="SELECT id_option, desc_option, referencia, valor_mon_option from tbl_forms_mon_input_option where referencia='opcao_chk_2_mon' and campo_id=".$_POST['id_campo'];
-            //echo "<br>".$sql_opt_2;
+            $sql_opt_2="SELECT id_option, desc_option, referencia, valor_mon_option from tbl_forms_mon_input_option where referencia='opcao_chk_2_mon' and campo_id=?";
             $stmt = $PDO->prepare( $sql_opt_2 );
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idCampo]);
             $option_2 = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($option_2);
 
@@ -229,17 +228,17 @@ $info = $stmt->fetch( PDO::FETCH_ASSOC );
     <?php } ?>
 
     <?php if($info['tipo_input']=='text'){
-            $sql_txt="SELECT id_option, referencia, valor_mon_option from tbl_forms_mon_input_option where campo_id=".$_POST['id_campo'];
-            //echo "<br>".$sql_opt_1;
+            $sql_txt="SELECT id_option, referencia, valor_mon_option from tbl_forms_mon_input_option where campo_id=?";
             $stmt = $PDO->prepare( $sql_txt );
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idCampo]);
             $opt_txt = $stmt->fetch( PDO::FETCH_ASSOC );
 
             if($opt_txt['id_option']==''){
-                $sqlInsert="INSERT INTO tbl_forms_mon_input_option (fila_id, input_id, campo_id, desc_option, value_option, valor_mon_option, referencia) VALUES ('".$_POST['id_fila']."', '".$info['input_id']."', '".$_POST['id_campo']."', '', '', '0', 'text')";
-                //echo "<br>".$sqlInsert;
+                $idFila = (int) ($_POST['id_fila'] ?? 0);
+                $inputId = (int) ($info['input_id'] ?? 0);
+                $sqlInsert="INSERT INTO tbl_forms_mon_input_option (fila_id, input_id, campo_id, desc_option, value_option, valor_mon_option, referencia) VALUES (?, ?, ?, '', '', '0', 'text')";
                 $stmt = $PDO->prepare( $sqlInsert );
-                $result = $stmt->execute();
+                $result = $stmt->execute([$idFila, $inputId, $idCampo]);
 
                 $opt_txt['valor_mon_option']=0;
             }

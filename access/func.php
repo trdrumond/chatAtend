@@ -58,13 +58,22 @@ function geraToken($matricula){
 }
 
 function logAtendimento($PDO, $userId, $acao){
-    $stmt = $PDO->prepare("SELECT id_user, contrato_id, agencia_id, fila_id from tbl_user where id_user=".$userId);
-    $stmt->execute();
+    $stmt = $PDO->prepare("SELECT id_user, contrato_id, agencia_id, fila_id from tbl_user where id_user=?");
+    $stmt->execute([(int) $userId]);
     $userDados = $stmt->fetch( PDO::FETCH_ASSOC );
+    if (!$userDados) {
+        return;
+    }
 
-    $sql="INSERT INTO tbl_log_atendimento (user_id, contrato_id, agencia_id, fila_id, acao) VALUES ('".$userDados['id_user']."', '".$userDados['contrato_id']."', '".$userDados['agencia_id']."', '".$userDados['fila_id']."', '".$acao."')";
+    $sql="INSERT INTO tbl_log_atendimento (user_id, contrato_id, agencia_id, fila_id, acao) VALUES (?, ?, ?, ?, ?)";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([
+        $userDados['id_user'],
+        $userDados['contrato_id'],
+        $userDados['agencia_id'],
+        $userDados['fila_id'],
+        $acao,
+    ]);
     //if($result==1){echo "<br>Deu Boa!";} else{echo "<br>Deu Ruim!";}
 }
 

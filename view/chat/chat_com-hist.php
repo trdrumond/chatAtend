@@ -31,29 +31,32 @@
     }
 </script>
 <?php
-    $sql="SELECT data_hora from tbl_com_msg_group where chat_group=".$_POST['id_com']." rem_id<>".$infoUser['id_user']." and  order by id_msg limit 1";
+    $comIdGroup = (int) ($_POST['id_com'] ?? 0);
+    $userIdGroup = (int) ($infoUser['id_user'] ?? 0);
+
+    $sql="SELECT data_hora from tbl_com_msg_group where chat_group=? and rem_id<>? order by id_msg limit 1";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$comIdGroup, $userIdGroup]);
     $infoMsg = $stmt->fetch( PDO::FETCH_ASSOC );
     //depurador($infoMsg);
-    $sql="SELECT user_id, dt_view from tbl_com_msg_group_view where group_chat=".$_POST['id_com']." and user_id=".$infoUser['id_user'];
+    $sql="SELECT user_id, dt_view from tbl_com_msg_group_view where group_chat=? and user_id=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$comIdGroup, $userIdGroup]);
     $infoMsgView = $stmt->fetch( PDO::FETCH_ASSOC );
 
     if($infoMsgView['user_id']==''){
-        $sql = "INSERT INTO tbl_com_msg_group_view (user_id, group_chat) value ('".$infoUser['id_user']."', '".$_POST['id_com']."')";
+        $sql = "INSERT INTO tbl_com_msg_group_view (user_id, group_chat) VALUES (?, ?)";
         //echo "<br>".$sql;
         $stmt = $PDO->prepare( $sql );
-        $result = $stmt->execute();
+        $result = $stmt->execute([$userIdGroup, $comIdGroup]);
     }
 
-    $sql = "UPDATE tbl_com_msg_group_view SET dt_view=now() where group_chat=".$_POST['id_com']." and user_id=".$infoUser['id_user'];
+    $sql = "UPDATE tbl_com_msg_group_view SET dt_view=now() where group_chat=? and user_id=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([$comIdGroup, $userIdGroup]);
     if($result){
         echo '<script>loadComList();</script>';
     }
@@ -63,25 +66,25 @@
 
     $tk = strtotime(date('Y-m-d H:i:s'));
 
-    $sql="SELECT id_com, data_hora, rem_chat, dest_chat, grupo_com from tbl_com_info where id_com=".$_POST['id_com'];
+    $sql="SELECT id_com, data_hora, rem_chat, dest_chat, grupo_com from tbl_com_info where id_com=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$comIdGroup]);
     $infoCom = $stmt->fetch( PDO::FETCH_ASSOC );
     //depurador($infoCom);
 
 
     if($infoCom['rem_chat']==0 && $infoCom['dest_chat']==0){
-        $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_group, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg_group a where chat_group=".$infoCom['id_com']." order by id_msg desc limit 0,30";
+        $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_group, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg_group a where chat_group=? order by id_msg desc limit 0,30";
     } else {
-        $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_group, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg a where com_id=".$infoCom['id_com']." order by id_msg desc limit 0,30";
+        $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_group, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg a where com_id=? order by id_msg desc limit 0,30";
     }
 
 
     //echo "<br>".$sql_hist;
 
     $stmt = $PDO->prepare($sql_hist);
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $infoCom['id_com']]);
     $infoComMsg = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
     //depurador($infoComMsg);
@@ -134,9 +137,9 @@
 
     <?php
         $infoParticipantes='';
-        $sqlGroupConfig="SELECT grupo_com_id, equipe_adm, equipe_bko, equipe_ate, cols, (SELECT grupo_nome from tbl_com_info where id_com=grupo_com_id) as nome_grupo from tbl_com_config where grupo_com_id=".$_POST['id_com'];
+        $sqlGroupConfig="SELECT grupo_com_id, equipe_adm, equipe_bko, equipe_ate, cols, (SELECT grupo_nome from tbl_com_info where id_com=grupo_com_id) as nome_grupo from tbl_com_config where grupo_com_id=?";
         $stmt = $PDO->prepare($sqlGroupConfig);
-        $result = $stmt->execute();
+        $result = $stmt->execute([$comIdGroup]);
         $infoConfigGrupo = $stmt->fetch( PDO::FETCH_ASSOC );
         // var_dump($infoConfigGrupo);
         if($infoConfigGrupo['cols']!=''){
@@ -156,12 +159,17 @@
                                     $infoConfigGrupo['col']=substr($infoConfigGrupo['col'], 2);
                                     //echo "<br>".$infoConfigGrupo['col'];
 
-                                    $sqlGroupConfig="SELECT concat(nome, ' ', sobrenome) as nome_user, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user IN (".$infoConfigGrupo['col'].") order by nivel, nome_user";
-                                    //echo "<br>".$sqlGroupConfig;
+                                    $colIds = array_values(array_filter(array_map('intval', preg_split('/\s*,\s*/', (string) ($infoConfigGrupo['col'] ?? ''), -1, PREG_SPLIT_NO_EMPTY))));
+                                    $infoPart = [];
+                                    if (count($colIds) > 0) {
+                                        $ph = implode(',', array_fill(0, count($colIds), '?'));
+                                        $sqlGroupConfig="SELECT concat(nome, ' ', sobrenome) as nome_user, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel from tbl_user where id_user IN ($ph) order by nivel, nome_user";
+                                        //echo "<br>".$sqlGroupConfig;
 
-                                    $stmt = $PDO->prepare($sqlGroupConfig);
-                                    $result = $stmt->execute();
-                                    $infoPart = $stmt->fetchAll( PDO::FETCH_ASSOC );
+                                        $stmt = $PDO->prepare($sqlGroupConfig);
+                                        $result = $stmt->execute($colIds);
+                                        $infoPart = $stmt->fetchAll( PDO::FETCH_ASSOC );
+                                    }
                                     //depurador($infoPart);
 
                                     for($arrPart=0;$arrPart<count($infoPart);$arrPart++){

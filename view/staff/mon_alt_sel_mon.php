@@ -1,19 +1,11 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$id = (int) ($_POST['id'] ?? 0);
+$valor = (int) ($_POST['valor'] ?? 0);
 
-
-$sql="UPDATE tbl_forms_mon_input_option SET valor_mon_option=".$_POST['valor']." where id_option=".$_POST['id'];
-
-echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-/*
-if($result==1){
-    echo "gravado";
-}
-*/
+$sql = "UPDATE tbl_forms_mon_input_option SET valor_mon_option=? where id_option=?";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$valor, $id]);
 
 ?>

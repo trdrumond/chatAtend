@@ -38,8 +38,11 @@ $busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
 
 // Filtro por contrato
 $qryContrato = '';
+$cttParams = [];
 if ($infoUser['nivel_id'] > 1) {
-    $qryContrato = " AND b.id_contrato IN (" . $infoUserConfig['contrato_id'] . ")";
+    $cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''), 'ctt');
+    $qryContrato = " AND b.id_contrato IN (" . $cttIn['ph'] . ")";
+    $cttParams = $cttIn['params'];
 }
 
 $camposBase =
@@ -54,16 +57,15 @@ $camposBase =
     " (SELECT nome_fila FROM tbl_config_fila WHERE id_fila = a.fila_id) AS nome_fila ";
 
 $fromBase =
-    " FROM tbl_user a, tbl_contrato b, tbl_municipio c, tbl_agencia d, " .
-    " tbl_estado e, tbl_nivel g, tbl_regional f, tbl_empresa h " .
-    " WHERE a.contrato_id = b.id_contrato " .
-    " AND a.municipio_id = c.id_municipio " .
-    " AND a.agencia_id = d.id_agencia " .
-    " AND a.uf_id = e.id_estado " .
-    " AND a.regional_id = f.id_regional " .
-    " AND a.empresa_id = h.id_empresa " .
-    " AND a.nivel_id = g.id_nivel " .
-    " AND a.id_user > 1 " .
+    " FROM tbl_user a " .
+    " INNER JOIN tbl_contrato b ON a.contrato_id = b.id_contrato " .
+    " INNER JOIN tbl_municipio c ON a.municipio_id = c.id_municipio " .
+    " LEFT JOIN tbl_agencia d ON a.agencia_id = d.id_agencia " .
+    " INNER JOIN tbl_estado e ON a.uf_id = e.id_estado " .
+    " INNER JOIN tbl_nivel g ON a.nivel_id = g.id_nivel " .
+    " INNER JOIN tbl_regional f ON a.regional_id = f.id_regional " .
+    " INNER JOIN tbl_empresa h ON a.empresa_id = h.id_empresa " .
+    " WHERE a.id_user > 1 " .
     // Ativos ou inativos com até 90 dias
     " AND (a.ativo = 1 OR (a.ativo = 0 AND a.data_inativo >= DATE_SUB(CURDATE(), INTERVAL 90 DAY))) " .
     $qryContrato;
@@ -80,6 +82,7 @@ if ($busca !== '') {
         " OR c.nome_municipio LIKE :q " .
         " OR c.uf LIKE :q " .
         " OR d.nome_agencia LIKE :q " .
+        " OR (a.agencia_id = 0 AND 'SEM AGÊNCIA (id=0)' LIKE :q) " .
         " OR h.nome_empresa LIKE :q " .
         " OR g.nome_nivel LIKE :q " .
         " OR (SELECT nome_fila FROM tbl_config_fila WHERE id_fila = a.fila_id) LIKE :q " .
@@ -96,7 +99,7 @@ $sql =
     " ORDER BY " . stUsuarioListOrderSql('a');
 
 $stmt = $PDO->prepare($sql);
-foreach ($paramsBusca as $k => $v) {
+foreach (array_merge($cttParams, $paramsBusca) as $k => $v) {
     $stmt->bindValue($k, $v);
 }
 $stmt->execute();
@@ -121,11 +124,17 @@ while ($d = $stmt->fetch(PDO::FETCH_ASSOC)) {
         }
     }
 
+    $agenciaIdRow = (int)$d['agencia_id'];
+    $nomeAgenciaRow = $d['nome_agencia'];
+    if ($agenciaIdRow <= 0 || $nomeAgenciaRow === null || trim((string)$nomeAgenciaRow) === '') {
+        $nomeAgenciaRow = 'SEM AGÊNCIA (id=0)';
+    }
+
     fputcsv($output, [
         $d['nome_completo'],
         $d['nome_usuario'],
         $d['email'],
-        $d['nome_agencia'],
+        $nomeAgenciaRow,
         $d['uf'],
         $d['nome_empresa'],
         $d['nome_nivel'],

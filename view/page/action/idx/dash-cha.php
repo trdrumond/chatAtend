@@ -107,8 +107,9 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 
 <?php
 
-    $stm = $PDO->query("SELECT protocolo, data_hora from tbl_chat_fila where status_fila=1 and ate_resp=".$infoUser['id_user']);
-
+    $ateId = (int) ($infoUser['id_user'] ?? 0);
+    $stm = $PDO->prepare("SELECT protocolo, data_hora from tbl_chat_fila where status_fila=1 and ate_resp=?");
+    $stm->execute([$ateId]);
     $infoFila = $stm->fetch(PDO::FETCH_ASSOC);
 
     if($infoFila['protocolo']!=''){
@@ -129,13 +130,13 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 
         <?php
 
-                $sqlVer="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te from tbl_chat_fila where (status_fila=".ST_FILA_NA_FILA." or ".stFilaSqlChamarSolicitante().") and ate_resp=".$_SESSION['dados']['id_user'];
+                $sqlVer="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te from tbl_chat_fila where (status_fila=".ST_FILA_NA_FILA." or ".stFilaSqlChamarSolicitante().") and ate_resp=?";
 
                 //echo "<br>".$sqlVer;
 
                 $stmt = $PDO->prepare($sqlVer);
 
-                $result = $stmt->execute();
+                $result = $stmt->execute([$ateId]);
 
                 $infFila = $stmt->fetch( PDO::FETCH_ASSOC );
 
@@ -260,13 +261,13 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 
                 <?php
 
-                    $sqlVer="SELECT id_fila_chat, protocolo, status_fila, (SELECT nome_situacao from tbl_situacao_chat where id_situacao=status_fila) as nome_situacao, (SELECT id_chat from tbl_chat_info where fila_chat_id=id_fila_chat) as chat_id from tbl_chat_fila where (status_fila=7) and date_format(data_hora, '%Y-%m-%d')=curdate() and ate_resp=".$_SESSION['dados']['id_user'];
+                    $sqlVer="SELECT id_fila_chat, protocolo, status_fila, (SELECT nome_situacao from tbl_situacao_chat where id_situacao=status_fila) as nome_situacao, (SELECT id_chat from tbl_chat_info where fila_chat_id=id_fila_chat) as chat_id from tbl_chat_fila where (status_fila=7) and date_format(data_hora, '%Y-%m-%d')=curdate() and ate_resp=?";
 
                     //echo "<br>".$sqlVer;
 
                     $stmt = $PDO->prepare($sqlVer);
 
-                    $result = $stmt->execute();
+                    $result = $stmt->execute([$ateId]);
 
                     $pend = $stmt->fetchAll( PDO::FETCH_ASSOC );
 

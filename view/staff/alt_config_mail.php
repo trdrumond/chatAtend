@@ -20,10 +20,10 @@ include("../cnf/session.php");
 <script>
 $(document).ready(function() {
 
-    filUser(<?php echo $_POST['id']; ?>);
+    filUser(<?= (int) ($_POST['id'] ?? 0) ?>);
 
     $("#save_mail").click(function() {
-        var id = <?php echo $_POST['id']; ?>;
+        var id = <?= (int) ($_POST['id'] ?? 0) ?>;
         filUser(id);
     });
 

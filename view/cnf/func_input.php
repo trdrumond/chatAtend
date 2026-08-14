@@ -149,7 +149,7 @@ function inputCheckbox($desc_campo, $nome_campo, $opc_1, $id_opc_1, $value_1, $o
 function inputTextMon($desc_campo, $nome_campo, $tipo_campo, $obg, $chatId){
     if($tipo_campo=='date'){$value=date('Y-m-d');} else {$value='';}
     if($obg==1){$flagObg='<strong>* </strong>';} else {$flagObg='';}
-    $nome_campo = $nome_campo . '_' .$chatId;
+    $nome_campo = stHtml($nome_campo) . '_' . (int) $chatId;
     echo "<script>";
 
 
@@ -186,8 +186,8 @@ function inputTextMon($desc_campo, $nome_campo, $tipo_campo, $obg, $chatId){
 
     echo '<div class="content-10-input">
                 <div class="input-container">
-                    <input type="'.$tipo_campo.'" id="'.$nome_campo.'" name="'.$nome_campo.'" class="input"  pattern=".+" value="'.$value.'"/>
-                    <label for="'.$nome_campo.'">'.$flagObg.''.$desc_campo.'</label>
+                    <input type="'.stHtml($tipo_campo).'" id="'.$nome_campo.'" name="'.$nome_campo.'" class="input"  pattern=".+" value="'.stHtml($value).'"/>
+                    <label for="'.$nome_campo.'">'.$flagObg.''.stHtml($desc_campo).'</label>
                 </div>
             </div>';
 }
@@ -204,13 +204,13 @@ function inputTextMon($desc_campo, $nome_campo, $tipo_campo, $obg, $chatId){
  */
 function inputSelectMon($desc_campo, $nome_campo, $options, $obg, $chatId){
     if($obg==1){$flagObg='<strong>* </strong>';} else {$flagObg='';}
-    $nome_campo = $nome_campo . '_' .$chatId;
+    $nome_campo = stHtml($nome_campo) . '_' . (int) $chatId;
         echo '<div class="content-10-input">
             <div class="input-container">
                 <select id="'.$nome_campo.'">
-                    <option value="">'.$flagObg.''.$desc_campo.'</option>';
+                    <option value="">'.$flagObg.''.stHtml($desc_campo).'</option>';
                     for($y=0;$y<count($options);$y++){
-                        echo '<option value="'.$options[$y]['desc_option'].'">'.$options[$y]['desc_option'].'</option>';
+                        echo '<option value="'.stHtml($options[$y]['desc_option']).'">'.stHtml($options[$y]['desc_option']).'</option>';
                     }
                 echo '
                 </select>
@@ -233,18 +233,18 @@ function inputSelectMon($desc_campo, $nome_campo, $options, $obg, $chatId){
  */
 function inputCheckboxMon($desc_campo, $nome_campo, $opc_1, $id_opc_1, $value_1, $opc_2, $id_opc_2, $value_2, $obg, $chatId){
     if($obg==1){$flagObg='<strong>* </strong>';} else {$flagObg='';}
-    $nome_campo = $nome_campo . '_' .$chatId;
+    $nome_campo = stHtml($nome_campo) . '_' . (int) $chatId;
     //echo "<br>".$chatId."<br>";
     echo '<div class="content-10-input option">
-            <label class="label_option">'.$flagObg.''.$desc_campo.'</label>
+            <label class="label_option">'.$flagObg.''.stHtml($desc_campo).'</label>
             <div class="input-container">
-                <div id="div_opt_1_'.$chatId.'" class="opcao">
-                    <input type="radio" name="'.$nome_campo.'" id="opt_1_'.$id_opc_1.'_'.$chatId.'" class="radio-btn-default" value="'.$value_1.'">
-                    <label for="opt_1_'.$id_opc_1.'_'.$chatId.'"> '.$opc_1.' </label>
+                <div id="div_opt_1_'.(int) $chatId.'" class="opcao">
+                    <input type="radio" name="'.$nome_campo.'" id="opt_1_'.stHtml($id_opc_1).'_'.(int) $chatId.'" class="radio-btn-default" value="'.stHtml($value_1).'">
+                    <label for="opt_1_'.stHtml($id_opc_1).'_'.(int) $chatId.'"> '.stHtml($opc_1).' </label>
                 </div>
-                <div id="div_opt_2_'.$chatId.'" class="opcao">
-                    <input type="radio" name="'.$nome_campo.'" id="opt_2_'.$id_opc_2.'_'.$chatId.'" class="radio-btn-default" value="'.$value_2.'">
-                    <label for="opt_2_'.$id_opc_2.'_'.$chatId.'"> '.$opc_2.' </label>
+                <div id="div_opt_2_'.(int) $chatId.'" class="opcao">
+                    <input type="radio" name="'.$nome_campo.'" id="opt_2_'.stHtml($id_opc_2).'_'.(int) $chatId.'" class="radio-btn-default" value="'.stHtml($value_2).'">
+                    <label for="opt_2_'.stHtml($id_opc_2).'_'.(int) $chatId.'"> '.stHtml($opc_2).' </label>
                 </div>
             </div>
         </div>';

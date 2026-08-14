@@ -9,7 +9,7 @@ if ($tokenChat === '') {
     return;
 }
 
-$sql = 'SELECT a.id_chat, a.fila_chat_id, a.status_chat, b.status_fila,'
+$sql = 'SELECT a.id_chat, a.fila_chat_id, a.status_chat, a.contrato_id, b.status_fila,'
     .' timediff(now(), b.hora_inicio) AS ta, b.bko_resp'
     .' FROM tbl_chat_info a'
     .' INNER JOIN tbl_chat_fila b ON a.fila_chat_id = b.id_fila_chat'
@@ -24,6 +24,10 @@ if (empty($infoChat['id_chat'])) {
 
 $idChat = (int) $infoChat['id_chat'];
 $idFilaChat = (int) $infoChat['fila_chat_id'];
+$contrato = (int) ($infoChat['contrato_id'] ?? 0);
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contrato)) {
+    return;
+}
 $statusFila = (int) $infoChat['status_fila'];
 $statusChat = (int) $infoChat['status_chat'];
 $filaEncerrada = ($statusFila >= 4);
@@ -38,7 +42,6 @@ if (!empty($infoChat['bko_resp']) && !$filaEncerrada) {
 }
 
 $msg = isset($_POST['msg']) ? (string) $_POST['msg'] : '';
-$contrato = isset($_POST['contrato']) ? (int) $_POST['contrato'] : 0;
 
 if ($msg !== '' && !$chatEncerrado) {
     $sql = 'INSERT INTO tbl_chat_msg (chat_id, contrato_id, rem_id, dest_id, msg) VALUES (?, ?, 0, 0, ?)';

@@ -6,15 +6,17 @@
     if (file_exists($file)) {include($file);} else {include("../".$file);}
     //echo "<br>TESTE 1";
     if(!isset($dados_servico['id_servico'])){
-        $dados_servico['id_servico'] = $_POST['id_servicos'];
+        $dados_servico['id_servico'] = (int) ($_POST['id_servicos'] ?? 0);
+    } else {
+        $dados_servico['id_servico'] = (int) $dados_servico['id_servico'];
     }
     //echo "<br>TESTE 2";
 
 
-    $sql="SELECT id_campo, servico_id, (SELECT nome_servico from tbl_servicos where id_servico=servico_id) as nome_servico, input_id, (SELECT nome_input from tbl_servicos_input where id_input=input_id) as nome_input, (SELECT tipo_input from tbl_servicos_input where id_input=input_id) as tipo_input, desc_campo, nome_campo, ativo, date_time from tbl_servicos_input_campo where servico_id=".$dados_servico['id_servico']." order by desc_campo asc";
+    $sql="SELECT id_campo, servico_id, (SELECT nome_servico from tbl_servicos where id_servico=servico_id) as nome_servico, input_id, (SELECT nome_input from tbl_servicos_input where id_input=input_id) as nome_input, (SELECT tipo_input from tbl_servicos_input where id_input=input_id) as tipo_input, desc_campo, nome_campo, ativo, date_time from tbl_servicos_input_campo where servico_id=? order by desc_campo asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $dados_servico['id_servico']]);
     $info = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($info);
 if(count($info)>0){

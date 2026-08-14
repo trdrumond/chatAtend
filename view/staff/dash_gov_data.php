@@ -40,9 +40,11 @@ if ($deDt > $ateDt) {
 $deInicio = $deDt . ' 00:00:00';
 $ateFim = $ateDt . ' 23:59:59';
 
-$qryContratoPerm = ($nivelUsu > 0) ? ' AND contrato_id IN (' . $infoUserConfig['contrato_id'] . ')' : '';
+$cttAllowed = stParseIdCsv($infoUserConfig['contrato_id'] ?? '');
+$cttIn = stSqlInBind($cttAllowed);
+$useCttPerm = $nivelUsu > 0;
 if ($idContrato > 0) {
-    if ($nivelUsu > 0 && strpos($infoUserConfig['contrato_id'], (string) $idContrato) === false) {
+    if ($useCttPerm && !in_array($idContrato, $cttAllowed, true)) {
         http_response_code(403);
         echo json_encode(['ok' => false, 'error' => 'Contrato não permitido']);
         exit;
@@ -154,8 +156,9 @@ $paramsBase = [$deInicio, $ateFim];
 if ($idContrato > 0) {
     $whereExtra .= ' AND x.contrato_id = ?';
     $paramsBase[] = $idContrato;
-} elseif ($qryContratoPerm !== '') {
-    $whereExtra .= str_replace('contrato_id', 'x.contrato_id', $qryContratoPerm);
+} elseif ($useCttPerm) {
+    $whereExtra .= ' AND x.contrato_id IN (' . $cttIn['ph'] . ')';
+    $paramsBase = array_merge($paramsBase, $cttIn['ids']);
 }
 if ($idFila > 0) {
     $whereExtra .= ' AND x.fila_id = ?';
@@ -221,8 +224,9 @@ $pendParams = [$deInicio, $ateFim];
 if ($idContrato > 0) {
     $pendWhere .= ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id = ?)';
     $pendParams[] = $idContrato;
-} elseif ($nivelUsu > 0) {
-    $pendWhere .= ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $infoUserConfig['contrato_id'] . '))';
+} elseif ($useCttPerm) {
+    $pendWhere .= ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $cttIn['ph'] . '))';
+    $pendParams = array_merge($pendParams, $cttIn['ids']);
 }
 if ($idFila > 0) {
     $pendWhere .= ' AND fila_id = ?';
@@ -232,13 +236,19 @@ $stmtPend = $PDO->prepare('SELECT COUNT(*) FROM tbl_pend_info WHERE ' . $pendWhe
 $stmtPend->execute($pendParams);
 $pendPeriodo = (int) $stmtPend->fetchColumn();
 
-$stmtPendAb = $PDO->prepare('SELECT COUNT(*) FROM tbl_pend_info WHERE situacao_id = 3 AND data_hora_fim IS NULL' . ($idFila > 0 ? ' AND fila_id = ?' : ($idContrato > 0 ? ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id = ?)' : ($nivelUsu > 0 ? ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $infoUserConfig['contrato_id'] . '))' : ''))));
+$pendAbSql = 'SELECT COUNT(*) FROM tbl_pend_info WHERE situacao_id = 3 AND data_hora_fim IS NULL';
 $pendAbParams = [];
 if ($idFila > 0) {
+    $pendAbSql .= ' AND fila_id = ?';
     $pendAbParams[] = $idFila;
 } elseif ($idContrato > 0) {
+    $pendAbSql .= ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id = ?)';
     $pendAbParams[] = $idContrato;
+} elseif ($useCttPerm) {
+    $pendAbSql .= ' AND fila_id IN (SELECT id_fila FROM tbl_config_fila WHERE contrato_id IN (' . $cttIn['ph'] . '))';
+    $pendAbParams = $cttIn['ids'];
 }
+$stmtPendAb = $PDO->prepare($pendAbSql);
 $stmtPendAb->execute($pendAbParams);
 $pendAbertas = (int) $stmtPendAb->fetchColumn();
 
@@ -259,8 +269,9 @@ $logParams = [$deDt, $ateDt];
 if ($idContrato > 0) {
     $logWhere .= ' AND contrato_id = ?';
     $logParams[] = $idContrato;
-} elseif ($nivelUsu > 0) {
-    $logWhere .= ' AND contrato_id IN (' . $infoUserConfig['contrato_id'] . ')';
+} elseif ($useCttPerm) {
+    $logWhere .= ' AND contrato_id IN (' . $cttIn['ph'] . ')';
+    $logParams = array_merge($logParams, $cttIn['ids']);
 }
 if ($idFila > 0) {
     $logWhere .= ' AND fila_id = ?';

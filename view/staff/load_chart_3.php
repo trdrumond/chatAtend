@@ -1,48 +1,58 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$formId = (int) ($_POST['id_form'] ?? 0);
+$contratoId = (int) ($_POST['id_contrato'] ?? 0);
+$tableDem = 'tbl_in_dem_' . $formId . '_' . $contratoId;
 
-$sql="SELECT count(a.id_form_dem) as qtd, a.situacao_id from tbl_in_dem_".$_POST['id_form']."_".$_POST['id_contrato']." a where date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.situacao_id order by qtd desc";
-//echo "<br>".$sql;
+if (!preg_match('/^tbl_in_dem_\d+_\d+$/', $tableDem)) {
+    return;
+}
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+    return;
+}
+
+$qtd_aberto = 0;
+$qtd_tratamento = 0;
+$qtd_pendente = 0;
+$qtd_concluido = 0;
+
+$sql = "SELECT count(a.id_form_dem) as qtd, a.situacao_id from {$tableDem} a where date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.situacao_id order by qtd desc";
 $stmt = $PDO->prepare($sql);
 $result = $stmt->execute();
-$ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
-//depurador($ddChats_2);
-for($y=0;$y<count($ddChats_2);$y++){
-    $ls=$ddChats_2[$y];
+$ddChats_2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if($ls['situacao_id']==1){
+for ($y = 0; $y < count($ddChats_2); $y++) {
+    $ls = $ddChats_2[$y];
+
+    if ($ls['situacao_id'] == 1) {
         $qtd_aberto = $qtd_aberto + $ls['qtd'];
     }
-    if($ls['situacao_id']==2){
+    if ($ls['situacao_id'] == 2) {
         $qtd_tratamento = $qtd_tratamento + $ls['qtd'];
     }
-    if($ls['situacao_id']==3){
+    if ($ls['situacao_id'] == 3) {
         $qtd_pendente = $qtd_pendente + $ls['qtd'];
     }
-    if($ls['situacao_id']==4){
+    if ($ls['situacao_id'] == 4) {
         $qtd_concluido = $qtd_concluido + $ls['qtd'];
     }
 }
 $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
 
+$chartFormId = (int) ($dadosContratos[$x]['id_form'] ?? $formId);
+$chartContratoId = (int) ($infoUser['contrato_id'] ?? $contratoId);
+$chartKey = $chartFormId . '_' . $chartContratoId;
+
 ?>
    <script>
         am4core.ready(function() {
 
-        // Themes begin
         am4core.useTheme(am4themes_frozen);
         am4core.useTheme(am4themes_animated);
-        // Themes end
 
-        // create chart
-        var chart = am4core.create("chart_3_<?php echo $dadosContratos[$x]['id_form']. '_'.$infoUser['contrato_id']; ?>", am4charts.GaugeChart);
+        var chart = am4core.create("chart_3_<?= $chartKey ?>", am4charts.GaugeChart);
         chart.innerRadius = am4core.percent(82);
-
-        /**
-         * Normal axis
-         */
 
         var axis = chart.xAxes.push(new am4charts.ValueAxis());
         axis.min = 0;
@@ -59,10 +69,6 @@ $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
         axis.renderer.labels.template.adapter.add("text", function(text) {
         return text + "%";
         })
-
-        /**
-         * Axis for ranges
-         */
 
         var colorSet = new am4core.ColorSet();
 
@@ -86,10 +92,6 @@ $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
         range1.axisFill.fillOpacity = 1;
         range1.axisFill.fill = colorSet.getIndex(2);
 
-        /**
-         * Label
-         */
-
         var label = chart.radarContainer.createChild(am4core.Label);
         label.isMeasured = false;
         label.fontSize = 20;
@@ -98,11 +100,6 @@ $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
         label.horizontalCenter = "middle";
         label.verticalCenter = "bottom";
         label.text = "5%";
-
-
-        /**
-         * Hand
-         */
 
         var hand = chart.hands.push(new am4charts.ClockHand());
         hand.axis = axis2;
@@ -126,8 +123,9 @@ $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
         }, 1000, am4core.ease.cubicOut).start();
         }, 2000);
 
-        }); // end am4core.ready()
+        });
     </script>
     <div class="chart-100">
-        <div id="chart_3_<?php echo $dadosContratos[$x]['id_form']. '_'.$infoUser['contrato_id']; ?>" class="chartdiv"></div>
+        <div id="chart_3_<?= $chartKey ?>" class="chartdiv"></div>
     </div>
+

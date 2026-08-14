@@ -10,31 +10,36 @@ if(date('H:i:s') < '08:00:00'){
     $infoFila = $stmt->fetchAll( PDO::FETCH_ASSOC );
     if(count($infoFila)>0){
         for($x=0;$x<count($infoFila);$x++){
+            $tmaId = (int) ($infoFila[$x]['id'] ?? 0);
+            if ($tmaId <= 0) {
+                continue;
+            }
             if(($infoFila[$x]['resp_id']!=$infoFila[$x]['bko_resp'])||($infoFila[$x]['date_disp'] < date('Y-m-d'))){
                 //echo "<br>";
                 //var_dump($infoFila[$x]);
                 //echo "<br>".$infoFila[$x]['id'] .  " -  ".$infoFila[$x]['resp_id'] .  " -  ".$infoFila[$x]['chat_id'] .  " -  ".$infoFila[$x]['bko_resp'] .  " -  ".$infoFila[$x]['status_fila'] .  " -  ".$infoFila[$x]['date_disp'];
 
-                $sqlInsLog="DELETE FROM tbl_tma_atend where id=".$infoFila[$x]['id'];
+                $sqlInsLog="DELETE FROM tbl_tma_atend where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$tmaId]);
 
             }
             if($infoFila[$x]['status_fila']==4 && ($infoFila[$x]['date_out']=='')){
                 //echo "<br>".$infoFila[$x]['id'] .  " -  ".$infoFila[$x]['resp_id'] .  " -  ".$infoFila[$x]['chat_id'] .  " -  ".$infoFila[$x]['bko_resp'] .  " -  ".$infoFila[$x]['status_fila'] .  " -  ".$infoFila[$x]['date_disp'];
 
                 $sla=sec_to_time(time_to_sec($infoFila[$x]['hora_fim'])-time_to_sec($infoFila[$x]['date_in']));
+                $horaFim = (string) ($infoFila[$x]['hora_fim'] ?? '');
 
-                $sqlInsLog="UPDATE tbl_tma_atend SET date_out='".$infoFila[$x]['hora_fim']."', sla='".$sla."' where id=".$infoFila[$x]['id'];
+                $sqlInsLog="UPDATE tbl_tma_atend SET date_out=?, sla=? where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$horaFim, $sla, $tmaId]);
 
-                $sqlInsLog="UPDATE tbl_tma_atend_secondary SET date_out='".$infoFila[$x]['hora_fim']."', sla='".$sla."' where id=".$infoFila[$x]['id'];
+                $sqlInsLog="UPDATE tbl_tma_atend_secondary SET date_out=?, sla=? where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$horaFim, $sla, $tmaId]);
             }
         }
     }
@@ -46,20 +51,24 @@ if(date('H:i:s') < '08:00:00'){
     $infoFila = $stmt->fetchAll( PDO::FETCH_ASSOC );
     if(count($infoFila)>0){
         for($x=0;$x<count($infoFila);$x++){
+            $tmaId = (int) ($infoFila[$x]['id'] ?? 0);
+            if ($tmaId <= 0) {
+                continue;
+            }
             if(($infoFila[$x]['resp_id']!=$infoFila[$x]['bko_resp'])||($infoFila[$x]['date_disp'] < date('Y-m-d'))){
                 //echo "<br>";
                 //var_dump($infoFila[$x]);
                 //echo "<br>".$infoFila[$x]['id'] .  " -  ".$infoFila[$x]['resp_id'] .  " -  ".$infoFila[$x]['chat_id'] .  " -  ".$infoFila[$x]['bko_resp'] .  " -  ".$infoFila[$x]['status_fila'] .  " -  ".$infoFila[$x]['date_disp'];
 
-                $sqlInsLog="DELETE FROM tbl_tma_atend where id=".$infoFila[$x]['id'];
+                $sqlInsLog="DELETE FROM tbl_tma_atend where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$tmaId]);
 
-                $sqlInsLog="DELETE FROM tbl_tma_atend_secondary where id=".$infoFila[$x]['id'];
+                $sqlInsLog="DELETE FROM tbl_tma_atend_secondary where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$tmaId]);
 
             }
         }
@@ -75,26 +84,31 @@ if(date('H:i:s') < '08:00:00'){
     //depurador($info);
     if(count($info)>0){
         for($inf=0;$inf<count($info);$inf++){
-            $sqlInfo = "SELECT id, date_disp from tbl_tma_atend where fila_id is null and date_disp='".$info[$inf]['date_disp']."'";
+            $dateDispDup = (string) ($info[$inf]['date_disp'] ?? '');
+            $sqlInfo = "SELECT id, date_disp from tbl_tma_atend where fila_id is null and date_disp=?";
             //echo "<br>".$sqlInfo;
             $stmt = $PDO->prepare($sqlInfo);
-            $result = $stmt->execute();
+            $result = $stmt->execute([$dateDispDup]);
             $infoDate = $stmt->fetchAll( PDO::FETCH_ASSOC );
             //depurador($infoDate);
             for($i=0;$i<count($infoDate);$i++){
+                $tmaDupId = (int) ($infoDate[$i]['id'] ?? 0);
+                if ($tmaDupId <= 0) {
+                    continue;
+                }
                 $exp = explode(':', $infoDate[$i]['date_disp']);
                 $seg = rand(0, 59);
                 $seg = ($seg < 10) ? '0'.$seg : $seg;
                 $newTime = $exp[0].":".$exp[1].":".$seg;
                 //echo '<br>'.$infoDate[$i]['date_disp']. " - ".$newTime;
-                $sqlInsLog="UPDATE tbl_tma_atend SET date_disp='".$newTime."' where id=".$infoDate[$i]['id'];
+                $sqlInsLog="UPDATE tbl_tma_atend SET date_disp=? where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
-                $sqlInsLog="UPDATE tbl_tma_atend_secondary SET date_disp='".$newTime."' where id=".$infoDate[$i]['id'];
+                $execInsLog = $stmt->execute([$newTime, $tmaDupId]);
+                $sqlInsLog="UPDATE tbl_tma_atend_secondary SET date_disp=? where id=?";
                 //echo "<br>".$sqlInsLog;
                 $stmt = $PDO->prepare( $sqlInsLog );
-                $execInsLog = $stmt->execute();
+                $execInsLog = $stmt->execute([$newTime, $tmaDupId]);
 
             }
 
@@ -135,10 +149,14 @@ if(date('H:i:s') < '08:00:00'){
             || (empty($info[$x]['data_log']) && empty($info[$x]['data_update']) && $info[$x]['cad_diff'] > $info[$x]['dias_inativa'])
         ){
             //echo "<br>==>".$info[$x]['data_log']." - ".$info[$x]['data_update']." - ".$info[$x]['cad_diff'];
-            $sqlInativa="UPDATE tbl_user SET data_inativo=curdate(), ativo=0 where id_user=".$info[$x]['id_user'];
+            $inativaUserId = (int) ($info[$x]['id_user'] ?? 0);
+            if ($inativaUserId <= 0) {
+                continue;
+            }
+            $sqlInativa="UPDATE tbl_user SET data_inativo=curdate(), ativo=0 where id_user=?";
             //echo "<br>".$sqlInativa;
             $stmt = $PDO->prepare( $sqlInativa );
-            $execInativa = $stmt->execute();
+            $execInativa = $stmt->execute([$inativaUserId]);
         }
     }
 

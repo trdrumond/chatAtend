@@ -424,12 +424,12 @@ function stChatBkoFetchFila(PDO $PDO, int $bkoId, int $contratoId, string $proto
         }
     }
 
-    $pick = function (string $whereFila) use ($PDO, $cols, $contratoId): array {
+    $pick = function (string $whereFila, array $bindParams = []) use ($PDO, $cols, $contratoId): array {
         $sql = 'SELECT '.$cols.' FROM tbl_chat_fila WHERE status_fila='.ST_FILA_NA_FILA
-            .' AND contrato_id='.$contratoId.' AND (bko_resp IS NULL OR bko_resp=\'\' OR bko_resp=0)'
+            .' AND contrato_id=? AND (bko_resp IS NULL OR bko_resp=\'\' OR bko_resp=0)'
             .' AND '.$whereFila.' ORDER BY id_fila_chat ASC LIMIT 1';
         $stmt = $PDO->prepare($sql);
-        $stmt->execute();
+        $stmt->execute(array_merge([$contratoId], $bindParams));
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         if (!empty($row['id_fila_chat']) && ($row['te'] === '' || $row['te'] === null)) {
             $row['te'] = $row['te_diff'] ?? '';
@@ -438,7 +438,7 @@ function stChatBkoFetchFila(PDO $PDO, int $bkoId, int $contratoId, string $proto
     };
 
     if ($filaIdPref > 0) {
-        $row = $pick('fila_id='.$filaIdPref);
+        $row = $pick('fila_id=?', [$filaIdPref]);
         if (!empty($row['id_fila_chat'])) {
             return $row;
         }

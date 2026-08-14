@@ -2,10 +2,11 @@
 include("../cnf/conn.php");
 //depurador($_POST);
 
-$sql="SELECT a.campo_id, a.fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=a.fila_id) as nome_forms, a.input_id, (SELECT nome_input from tbl_forms_pos_input where id_input=a.input_id) as nome_input, (SELECT tipo_input from tbl_forms_pos_input where id_input=a.input_id) as tipo_input, desc_campo, nome_campo, ativo, b.date_time from tbl_forms_pos_input_campo_cnf a, tbl_forms_pos_input_campo b where a.campo_id=b.id_campo and a.campo_id=".$_POST['id_campo'];
-//echo "<br>".$sql."<br>";
+$idCampo = (int) ($_POST['id_campo'] ?? 0);
+
+$sql="SELECT a.campo_id, a.fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=a.fila_id) as nome_forms, a.input_id, (SELECT nome_input from tbl_forms_pos_input where id_input=a.input_id) as nome_input, (SELECT tipo_input from tbl_forms_pos_input where id_input=a.input_id) as tipo_input, desc_campo, nome_campo, ativo, b.date_time from tbl_forms_pos_input_campo_cnf a, tbl_forms_pos_input_campo b where a.campo_id=b.id_campo and a.campo_id=?";
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$idCampo]);
 $info = $stmt->fetch( PDO::FETCH_ASSOC );
 
 
@@ -33,17 +34,15 @@ $info = $stmt->fetch( PDO::FETCH_ASSOC );
 <div class="content-10-line">
     <?php
         if($info['tipo_input']=='checkbox'){
-            $sql_opt_1="SELECT id_option, desc_option, referencia from tbl_forms_pos_input_option where referencia='opcao_chk_1' and campo_id=".$_POST['id_campo'];
-            //echo "<br>".$sql_opt_1;
+            $sql_opt_1="SELECT id_option, desc_option, referencia from tbl_forms_pos_input_option where referencia='opcao_chk_1' and campo_id=?";
             $stmt = $PDO->prepare( $sql_opt_1 );
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idCampo]);
             $option_1 = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($option_1);
 
-            $sql_opt_2="SELECT id_option, desc_option, referencia from tbl_forms_pos_input_option where referencia='opcao_chk_2' and campo_id=".$_POST['id_campo'];
-            //echo "<br>".$sql_opt_2;
+            $sql_opt_2="SELECT id_option, desc_option, referencia from tbl_forms_pos_input_option where referencia='opcao_chk_2' and campo_id=?";
             $stmt = $PDO->prepare( $sql_opt_2 );
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idCampo]);
             $option_2 = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($option_2);
 

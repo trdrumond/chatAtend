@@ -20,6 +20,41 @@ var host = 'wss://solvetask-mt.logos-ma.com.br/celpe';
 console.log(host);
 var conn = new WebSocket(host);
 
+function stEscapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function stFormatChatPlainText(str) {
+    return stEscapeHtml(str).replace(/\r?\n/g, '<br>');
+}
+
+function stSafeChatHtml(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = String(html || '');
+    tmp.querySelectorAll('script,iframe,object,embed,link,meta,style').forEach(function (n) {
+        n.remove();
+    });
+    tmp.querySelectorAll('*').forEach(function (el) {
+        Array.from(el.attributes).forEach(function (attr) {
+            var name = String(attr.name || '');
+            var val = String(attr.value || '');
+            if (/^on/i.test(name) || ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(val))) {
+                el.removeAttribute(name);
+            }
+        });
+    });
+    return tmp.innerHTML;
+}
+
+window.stEscapeHtml = stEscapeHtml;
+window.stFormatChatPlainText = stFormatChatPlainText;
+window.stSafeChatHtml = stSafeChatHtml;
+
 function stChatSolFilaActive() {
     return $('#action-page .st-fila-sol-workspace').length > 0;
 }
@@ -1465,7 +1500,7 @@ function saveMsg(chatId, inp_message, userDestinatario, userRemetente, tokenChat
             msg, dest, rem, tokenChat, contrato
         },
         function (valor) {
-            $(feed).html(valor);
+            $(feed).html(stSafeChatHtml(valor));
         });
 
 
@@ -1543,7 +1578,7 @@ function saveMsgTransfer(chatId, inp_message, tokenChat, contrato, fila, assunto
             chatId, msg, dest, rem, tokenChat, contrato, fila, assunto
         },
         function (valor) {
-            $(feed).html(valor);
+            $(feed).html(stSafeChatHtml(valor));
             //console.log(valor);
         });
 
@@ -1567,7 +1602,7 @@ function saveMsgSys(chatId, inp_message, tokenChat, contrato, userRemetente) {
             msg: msg, dest: dest, rem: rem, tokenChat: tokenChat, contrato: contrato, flag: flagUser
         },
         function (valor) {
-            $(feed).html(valor);
+            $(feed).html(stSafeChatHtml(valor));
             var msgText = String(msg || '');
             if (typeof stChatTryStartAtendimento === 'function' &&
                 (msgText.indexOf('entrou no chat') !== -1 || msgText.indexOf('voltou para o chat') !== -1)) {
@@ -1596,7 +1631,7 @@ function saveMsgAtent(chatId, inp_message, tokenChat, contrato) {
             msg, dest, rem, tokenChat, contrato
         },
         function (valor) {
-            $(feed).html(valor);
+            $(feed).html(stSafeChatHtml(valor));
         });
 
 
@@ -1828,7 +1863,7 @@ function renderChatParagrafo(elId, msg, chatId, how) {
                 $('#' + elId).html('<center><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></center>');
             }
         }).done(function (valor) {
-            $('#' + elId).html(valor);
+            $('#' + elId).html(stSafeChatHtml(valor));
             if (how === 'other') {
                 if (typeof safePlayMen === 'function') {
                     safePlayMen();
@@ -1841,7 +1876,7 @@ function renderChatParagrafo(elId, msg, chatId, how) {
         });
         return true;
     }
-    el.innerHTML = html;
+    el.innerHTML = stSafeChatHtml(html);
     if (how === 'other') {
         if (typeof safePlayMen === 'function') {
             safePlayMen();
@@ -1944,7 +1979,7 @@ function showMessages(chatId, how, data, destinatario) {
                     }
                 })
                 .done(function(valor){
-                    $('#'+elMsg).html(valor);
+                    $('#'+elMsg).html(stSafeChatHtml(valor));
                     testLoad=1;
                     if(how === 'other'){
                         play_men();
@@ -2148,7 +2183,7 @@ function showMessagesAdmin(chatId, how, data, destinatario, remetente) {
                     }
                 })
                 .done(function(valor){
-                    $('#'+elMsg).html(valor);
+                    $('#'+elMsg).html(stSafeChatHtml(valor));
 
                 })
                 .fail(function(jqXHR, textStatus, valor){
@@ -2265,7 +2300,7 @@ function showMessagesAdmin(chatId, how, data, destinatario, remetente) {
                         }
                     })
                         .done(function (valor) {
-                            $('#' + elMsg).html(valor);
+                            $('#' + elMsg).html(stSafeChatHtml(valor));
                             if (window.stDashAcomp && typeof window.stDashAcomp.scrollBottom === 'function') {
                                 window.stDashAcomp.scrollBottom($(div_area), true);
                             }
@@ -2277,7 +2312,7 @@ function showMessagesAdmin(chatId, how, data, destinatario, remetente) {
             } else {
                 var divMsg = '#' + elMsg;
                 setTimeout(function () {
-                    $(divMsg).html(msg);
+                    $(divMsg).html(stFormatChatPlainText(msg));
                     if (window.stDashAcomp && typeof window.stDashAcomp.scrollBottom === 'function') {
                         window.stDashAcomp.scrollBottom($(div_area), true);
                     }

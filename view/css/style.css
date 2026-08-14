@@ -6676,6 +6676,11 @@ body:has(.dash-oper--geral) {
     box-shadow: inset 3px 0 0 #cbd5e1;
 }
 
+.cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-sem-agencia {
+    background: #fff3cd !important;
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+
 .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-active:hover {
     filter: brightness(.97);
 }

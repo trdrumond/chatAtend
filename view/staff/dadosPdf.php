@@ -168,10 +168,17 @@ $dadosPdf .='
 </div>
 ';
     //depurador($_GET);
-    $date=date_create($_GET['dia']);
-    //echo date_format($date,"Y/m/d H:i:s");
+    $diaRaw = preg_replace('/[^0-9\-]/', '', (string) ($_GET['dia'] ?? ''));
+    if ($diaRaw === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $diaRaw)) {
+        $diaRaw = date('Y-m-d');
+    }
+    $date = date_create($diaRaw);
+    if ($date === false) {
+        $date = date_create(date('Y-m-d'));
+        $diaRaw = date('Y-m-d');
+    }
 
-    $dia = date_format($date,"d/m/Y");
+    $dia = date_format($date, "d/m/Y");
 
     $sql="SELECT count(*) as qtd_entradas, date_format(data_hora, '%Y-%m-%d') AS dia,
         (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as qtd_atendido,
@@ -179,10 +186,10 @@ $dadosPdf .='
         (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as tme_atend,
         (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as qtd_abandono,
         (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as tme_aband
-        from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')='".$_GET['dia']."'";
+        from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$diaRaw]);
     $infoInd = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $porc_atendido = number_format((($infoInd['qtd_atendido']*100)/$infoInd['qtd_entradas']), 2);
@@ -202,11 +209,11 @@ $dadosPdf .='
         count(*) as qtd_atendimento, sec_to_time(sum(time_to_sec(ta))) as ta_total,
         sec_to_time(avg(time_to_sec(ta))) as ta_medio
         from tbl_chat_fila_secondary
-        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')='".$_GET['dia']."'
+        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')=?
          group by assunto_id order by qtd_atendimento desc limit 10";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$diaRaw]);
     $infoSvc = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -216,11 +223,11 @@ $dadosPdf .='
         count(*) as qtd_atendimento, sec_to_time(sum(time_to_sec(ta))) as ta_total,
         sec_to_time(avg(time_to_sec(ta))) as ta_medio
         from tbl_chat_fila_secondary
-        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')='".$_GET['dia']."'
+        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')=?
          group by bko_resp order by qtd_atendimento asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$diaRaw]);
     $infoBack = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $dadosPdf.='

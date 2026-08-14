@@ -6,16 +6,18 @@
     if (file_exists($file)) {include($file);} else {include("../".$file);}
     //echo "<br>TESTE 1";
     if(!isset($dados_form['id_fila'])){
-        $dados_form['id_fila'] = $_POST['id_filas'];
+        $dados_form['id_fila'] = (int) ($_POST['id_filas'] ?? 0);
+    } else {
+        $dados_form['id_fila'] = (int) $dados_form['id_fila'];
     }
     //echo "<br>TESTE 2";
 
 
 
-    $sql="SELECT id_hr, fila_id, inicio_hr, fim_hr, ativo from tbl_fila_horario where fila_id=".$dados_form['id_fila']." order by id_hr asc";
+    $sql="SELECT id_hr, fila_id, inicio_hr, fim_hr, ativo from tbl_fila_horario where fila_id=? order by id_hr asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $dados_form['id_fila']]);
     $info = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($info);
 if(count($info)>0){

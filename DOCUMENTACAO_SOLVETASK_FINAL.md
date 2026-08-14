@@ -47,7 +47,7 @@ solvetask/piloto/
 - **Host**: localhost
 - **Database**: web_chatlogos_piloto
 - **Usuário**: acesso.sistemas
-- **Senha**: tDHMpeXVTzQAZsGD
+- **Senha**: <SENHA_DB_LOCAL>
 
 ### 2.3 Configuração do WebSocket
 **Arquivo**: `view/chat/assets/js/script.js`

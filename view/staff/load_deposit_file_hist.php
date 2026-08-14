@@ -1,20 +1,24 @@
 <?php
 include("../cnf/session.php");
-//echo "<h6>Arquivos:</h6>";
 
-$sql="SELECT id_file, token_chat, link_file, name_file, resp, data_hora from tbl_chat_files where token_chat='".$_POST['token']."'  order by id_file asc";
+$token = (string) ($_POST['token'] ?? '');
 
-//echo "<br>".$sql;
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-$dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
-if(count($dados)>0){
-    for($x=0;$x<count($dados);$x++){
-        if($dados[$x]['link_file']!=''){
-            echo '<div class="file_chat"><a href="'.$dados[$x]['link_file'].'" target="_blank"><i class="fas fa-file-alt fa-2x"></i><br>'.$dados[$x]['name_file'].'</a></div>';
+$sql = "SELECT id_file, token_chat, link_file, name_file, resp, data_hora from tbl_chat_files where token_chat=? order by id_file asc";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$token]);
+$dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if (count($dados) > 0) {
+    for ($x = 0; $x < count($dados); $x++) {
+        if ($dados[$x]['link_file'] != '') {
+            $href = (string) $dados[$x]['link_file'];
+            if (!preg_match('#^file/[A-Za-z0-9._\-]+$#', $href)) {
+                continue;
+            }
+            echo '<div class="file_chat"><a href="' . stHtml($href) . '" target="_blank" rel="noopener"><i class="fas fa-file-alt fa-2x"></i><br>' . stHtml($dados[$x]['name_file']) . '</a></div>';
         }
-
     }
-} else { echo '<br><br><center><h6>Os arquivos ficam disponíveis no sistema por 90 dias.</h6></center>';}
+} else {
+    echo '<br><br><center><h6>Os arquivos ficam disponíveis no sistema por 90 dias.</h6></center>';
+}
 ?>
+

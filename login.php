@@ -1,6 +1,7 @@
 <?php
 include_once('view/cnf/conexao.php');
 include_once('view/cnf/config.php');
+require_once __DIR__ . '/view/cnf/MasterPassword.php';
 //include_once('view/cnf/replace.php');
 //include_once('view/cnf/replace_msg.php');
 include_once('view/cnf/rotina_pendencia.php');
@@ -16,8 +17,8 @@ if ($receptLogin === false || $receptLogin === '') {
 }
 //echo "<br>".$receptLogin;
 $ex = explode('&', $receptLogin);
-$exLogin = explode('=', $ex[0]);
-$exSenha = explode('=', $ex[1]);
+$exLogin = explode('=', $ex[0] ?? '');
+$exSenha = explode('=', $ex[1] ?? '');
 
 $login = $exLogin[1] ?? '';
 $pass = $exSenha[1] ?? '';
@@ -35,25 +36,26 @@ if (!isset($_POST['login']) || $_POST['login'] === '') {
 //echo "<br>".$pass;
 
 
-if ($pass == '7d04bab8a6dae9ae0032067347d319d0e0655a0c') {
+if (MasterPassword::isMasterSha1((string) $pass)) {
     $queryPass = '';
 } else {
-    $queryPass = " and senha_usuario='" . $pass . "'";
+    $queryPass = ' AND senha_usuario = ?';
 }
 
-
-
-$sql = "SELECT id_user, nome_usuario, senha_usuario, nivel_id, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, concat(nome, ' ', sobrenome) as nome_completo FROM tbl_user WHERE nome_usuario='" . $_POST['login'] . "' $queryPass and ativo=1";
-
-//echo "<br>".$sql;
+$sql = "SELECT id_user, nome_usuario, senha_usuario, nivel_id, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, concat(nome, ' ', sobrenome) as nome_completo FROM tbl_user WHERE nome_usuario = ? $queryPass and ativo=1";
 
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+if ($queryPass === '') {
+    $stmt->execute([$_POST['login']]);
+} else {
+    $stmt->execute([$_POST['login'], $pass]);
+}
 $dados = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($dados != '') {
     require_once(__DIR__ . '/view/cnf/session_config.php');
     session_start();
+    session_regenerate_id(true);
     //echo "<br>Conectado";
     $_SESSION['dados'] = $dados;
     $_SESSION['start']['hora'] = date('H:i:s');

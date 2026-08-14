@@ -2,10 +2,16 @@
 require_once __DIR__ . '/../../../cnf/session.php';
 require_once __DIR__ . '/_cnf_ui.php';
 
-$qry = ($infoUser['nivel_id'] > 1) ? ' and id_contrato in (' . $infoUserConfig['contrato_id'] . ')' : '';
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$listParams = [];
+$qry = '';
+if ($infoUser['nivel_id'] > 1) {
+    $qry = ' and id_contrato in (' . $cttIn['ph'] . ')';
+    $listParams = $cttIn['ids'];
+}
 $sql = "SELECT id_fila, nome_fila, assuntos_id, contrato_id, (SELECT concat(nome_contrato, ' - ', uf) from tbl_contrato where id_contrato=contrato_id) as nome_contrato, ativo, (SELECT count(*) from tbl_forms_pos_input_campo where fila_id=id_fila) as pos, (SELECT count(*) from tbl_forms_mon_input_campo where fila_id=id_fila) as mon, multichat from tbl_config_fila where id_fila<>'' $qry" . cnf_sql_order_ativo_nome('nome_fila');
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($listParams);
 $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $count = count($dados);
 
@@ -56,9 +62,9 @@ echo cnf_datatable_init('tabela', [
     $id = $dados[$x]['id_fila'];
     $assOpts = '';
     $exp_ass = explode(',', $dados[$x]['assuntos_id']);
-    $sqlAss = 'SELECT id_assunto, titulo_assunto from tbl_assunto where ativo=1 and contrato_id=' . (int) $dados[$x]['contrato_id'] . ' order by titulo_assunto asc';
+    $sqlAss = 'SELECT id_assunto, titulo_assunto from tbl_assunto where ativo=1 and contrato_id=? order by titulo_assunto asc';
     $stmt = $PDO->prepare($sqlAss);
-    $stmt->execute();
+    $stmt->execute([(int) $dados[$x]['contrato_id']]);
     $ls = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($ls as $row) {
         $sel = in_array($row['id_assunto'], $exp_ass) ? ' selected' : '';
@@ -163,9 +169,9 @@ $(function() {
 
 <?php
 $cttOpts = '<option value="">Selecione...</option>';
-$sql = 'SELECT id_contrato, nome_contrato, uf, ativo from tbl_contrato where ativo=1 and id_contrato in (' . $infoUserConfig['contrato_id'] . ') order by nome_contrato';
+$sql = 'SELECT id_contrato, nome_contrato, uf, ativo from tbl_contrato where ativo=1 and id_contrato in (' . $cttIn['ph'] . ') order by nome_contrato';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($cttIn['ids']);
 $ctts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($ctts as $row) {
     $cttOpts .= '<option value="' . $row['id_contrato'] . '">' . htmlspecialchars($row['nome_contrato'] . ' - ' . $row['uf']) . '</option>';

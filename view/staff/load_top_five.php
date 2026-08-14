@@ -1,34 +1,43 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$formId = (int) ($_POST['id_form'] ?? 0);
+$contratoId = (int) ($_POST['id_contrato'] ?? 0);
+$tableDem = 'tbl_in_dem_' . $formId . '_' . $contratoId;
 
-$sql="SELECT count(a.resp_id) as qtd, a.resp_id, b.nome, b.sobrenome, c.img from tbl_in_dem_".$_POST['id_form']."_".$_POST['id_contrato']." a, tbl_user b, tbl_user_img_perfil c where a.resp_id is not null and a.situacao_id=4 and a.resp_id=b.id_user and a.resp_id=c.user_id and date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.resp_id order by qtd desc limit 5";
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
-    $ddChats_1 = $stmt->fetchAll( PDO::FETCH_ASSOC );
+if (!preg_match('/^tbl_in_dem_\d+_\d+$/', $tableDem)) {
+    return;
+}
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+    return;
+}
+
+$sql = "SELECT count(a.resp_id) as qtd, a.resp_id, b.nome, b.sobrenome, c.img from {$tableDem} a, tbl_user b, tbl_user_img_perfil c where a.resp_id is not null and a.situacao_id=4 and a.resp_id=b.id_user and a.resp_id=c.user_id and date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.resp_id order by qtd desc limit 5";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute();
+$ddChats_1 = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$chartKey = $formId . '_' . $contratoId;
+
 ?>
     <script>
         am4core.useTheme(am4themes_animated);
 
-        var chart = am4core.create("chart_<?php echo $_POST['id_form']. '_'.$_POST['id_contrato']; ?>", am4charts.XYChart);
-
+        var chart = am4core.create("chart_<?= $chartKey ?>", am4charts.XYChart);
 
         chart.paddingBottom = 30;
 
-        // Setting data
         chart.data = [
             <?php
-                for($y=0;$y<count($ddChats_1);$y++){
-                    $ls=$ddChats_1[$y];
-                    $ls['nome_completo']=ucwords((strtolower($ls['nome'])).' '.(strtolower($ls['sobrenome'][0]))).".";
+                for ($y = 0; $y < count($ddChats_1); $y++) {
+                    $ls = $ddChats_1[$y];
+                    $ls['nome_completo'] = ucwords((strtolower($ls['nome'])) . ' ' . (strtolower($ls['sobrenome'][0]))) . '.';
 
                     echo '{
-                        "id": "'.$ls['resp_id'].'",
-                        "img": "'.$ls['img'].'",
-                        "Colaborador": "'.$ls['nome_completo'].'",
-                        "qtd": '.$ls['qtd'].'
+                        "id": "' . $ls['resp_id'] . '",
+                        "img": "' . $ls['img'] . '",
+                        "Colaborador": "' . $ls['nome_completo'] . '",
+                        "qtd": ' . $ls['qtd'] . '
                     },';
                 }
             ?>
@@ -104,7 +113,6 @@ $sql="SELECT count(a.resp_id) as qtd, a.resp_id, b.nome, b.sobrenome, c.img from
             }
         })
 
-
         image.adapter.add("mask", function (mask, target) {
             var circleBullet = target.parent;
             return circleBullet.circle;
@@ -132,10 +140,9 @@ $sql="SELECT count(a.resp_id) as qtd, a.resp_id, b.nome, b.sobrenome, c.img from
             }
         })
 
-
-
     </script>
     <div class="chart-100">
         <h5>Top Five Colaboradores/Mês</h5>
-        <div id="chart_<?php echo $_POST['id_form']. '_'.$_POST['id_contrato']; ?>" class="chartdiv"></div>
+        <div id="chart_<?= $chartKey ?>" class="chartdiv"></div>
     </div>
+

@@ -14,9 +14,10 @@ include("../cnf/session.php");
             $stmt = $PDO->prepare($sql);
             $result = $stmt->execute();
             $dds = $stmt->fetchAll( PDO::FETCH_ASSOC );
+            $idBko = (int) ($_POST['id_bko'] ?? 0);
             for($y=0;$y<count($dds);$y++){
-                if($_POST['id_bko']==$dds[$y]['id_user']){$sel="selected";} else {$sel="";}
-                echo '<option value="'.$dds[$y]['id_user'].'" '.$sel.'>'.$dds[$y]['nome'].'</option>';
+                if($idBko==(int) $dds[$y]['id_user']){$sel="selected";} else {$sel="";}
+                echo '<option value="'.(int) $dds[$y]['id_user'].'" '.$sel.'>'.stHtml($dds[$y]['nome']).'</option>';
             }
         ?>
     </select>
@@ -28,7 +29,7 @@ include("../cnf/session.php");
             var bko = $('#sel_bko').val();
             //console.log(sol);
             if(bko != ''){
-                altBko(bko, <?=$_POST['fila_chat_id']?>);
+                altBko(bko, <?= (int) ($_POST['fila_chat_id'] ?? 0) ?>);
             }
 
         });

@@ -332,11 +332,11 @@ if ($infoUser['nivel_id'] >= 1) {
 
     <?php
 
-    $contratos = $infoUserConfig['contrato_id'];
-    $sql = "SELECT a.id_contrato, concat(a.nome_contrato, '/', a.uf) as nome, b.id_fila, b.nome_fila, b.ativo, (SELECT count(id_fila_chat) from tbl_chat_fila where fila_id=id_fila and (status_fila=".ST_FILA_NA_FILA." or ".stFilaSqlAtendimentoAtivo().")) as qtd_on from tbl_contrato a, tbl_config_fila b where a.ativo=1 and a.id_contrato in (" . $contratos . ") and b.contrato_id=a.id_contrato order by nome asc";
+    $cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+    $sql = "SELECT a.id_contrato, concat(a.nome_contrato, '/', a.uf) as nome, b.id_fila, b.nome_fila, b.ativo, (SELECT count(id_fila_chat) from tbl_chat_fila where fila_id=id_fila and (status_fila=".ST_FILA_NA_FILA." or ".stFilaSqlAtendimentoAtivo().")) as qtd_on from tbl_contrato a, tbl_config_fila b where a.ativo=1 and a.id_contrato in (" . $cttIn['ph'] . ") and b.contrato_id=a.id_contrato order by nome asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute($cttIn['ids']);
     $dadosContratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     //depurador($dadosContratos);
     ?>

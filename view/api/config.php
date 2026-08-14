@@ -41,10 +41,13 @@ include("conn.php");
         //echo "<br>".count($users);
 
         for($x=0;$x <= count($users);$x++){
-            $sqlInsert="INSERT INTO tbl_user_pass (user_id, date_refresh, pass) VALUES ('".$users[$x]['id_user']."', curdate(), '".$users[$x]['senha_usuario']."')";
+            if (empty($users[$x]['id_user'])) {
+                continue;
+            }
+            $sqlInsert="INSERT INTO tbl_user_pass (user_id, date_refresh, pass) VALUES (?, curdate(), ?)";
             //echo "<br>".$sqlInsert;
             $stmt = $PDO->prepare( $sqlInsert );
-            $result = $stmt->execute();
+            $result = $stmt->execute([(int) $users[$x]['id_user'], (string) ($users[$x]['senha_usuario'] ?? '')]);
         }
 
         //echo "Configuração inicial realizada com sucesso!";

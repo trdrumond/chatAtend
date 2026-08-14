@@ -17,21 +17,22 @@ $infoPendAte = '';
 
 //depurador($_POST);
 
+$filaIdPost = (int) ($_POST['fila_id'] ?? 0);
+
     if($nivel_usu==4){
-        $qeryPend = " and fila_id=".$_POST['fila_id']." and bko_resp='".$idu."' and data_hora_fim is null";
+        $sql_pend = "SELECT count(id_pend) as qtd FROM tbl_pend_info where situacao_id=3 and fila_id=? and bko_resp=? and data_hora_fim is null";
+        $stmt = $PDO->prepare($sql_pend);
+        $result = $stmt->execute([$filaIdPost, $idu]);
     } else
     if($nivel_usu==5){
-        $qeryPend = " and ate_resp='".$idu."' and data_hora_fim is not null and data_hora_visualizacao is null";
+        $sql_pend = "SELECT count(id_pend) as qtd FROM tbl_pend_info where situacao_id=3 and ate_resp=? and data_hora_fim is not null and data_hora_visualizacao is null";
+        $stmt = $PDO->prepare($sql_pend);
+        $result = $stmt->execute([$idu]);
     } else {
-        $qeryPend = " and data_hora_visualizacao is null";
+        $sql_pend = "SELECT count(id_pend) as qtd FROM tbl_pend_info where situacao_id=3 and data_hora_visualizacao is null";
+        $stmt = $PDO->prepare($sql_pend);
+        $result = $stmt->execute();
     }
-
-
-
-    $sql_pend = "SELECT count(id_pend) as qtd FROM tbl_pend_info where situacao_id=3 $qeryPend";
-    //echo "<br>".$sql_pend;
-    $stmt = $PDO->prepare($sql_pend);
-    $result = $stmt->execute();
     $infoGeral = $stmt->fetch( PDO::FETCH_ASSOC );
 
     if($infoGeral['qtd']>0){
@@ -56,11 +57,11 @@ $infoPendAte = '';
 
 $table_pend ='<table class="table table-hover"><thrade><th>FILA</th><th>QTD</th></thrade><tbody>';
 $sum=0;
-$contratos=$infoUserConfig['contrato_id'];
-$sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_pend) as qtd from tbl_pend_info where situacao_id=3 and fila_id=id_fila and data_hora_visualizacao is null) as qtd from tbl_config_fila a where a.ativo=1 order by a.nome_fila";
+$cttBind = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$sql="SELECT a.id_fila, a.nome_fila, (SELECT count(id_pend) as qtd from tbl_pend_info where situacao_id=3 and fila_id=id_fila and data_hora_visualizacao is null) as qtd from tbl_config_fila a where a.ativo=1 and a.contrato_id in ({$cttBind['ph']}) order by a.nome_fila";
 //echo "<br>".$sql;
 $stmt = $PDO_LOAD->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($cttBind['params']);
 $dadosContratos = $stmt->fetchAll( PDO::FETCH_ASSOC );
 $count=0;
 for($z=0;$z<count($dadosContratos);$z++){
@@ -68,8 +69,8 @@ for($z=0;$z<count($dadosContratos);$z++){
         $ex = explode('.', $dadosContratos[$z]['tma']);
 
         $table_pend.= "<tr>";
-            $table_pend.= "<td>".$dadosContratos[$z]['nome_fila']."</td>";
-            $table_pend.= "<td>". $dadosContratos[$z]['qtd']."</td>";
+            $table_pend.= "<td>" . htmlspecialchars((string) $dadosContratos[$z]['nome_fila'], ENT_QUOTES, 'UTF-8') . "</td>";
+            $table_pend.= "<td>" . htmlspecialchars((string) $dadosContratos[$z]['qtd'], ENT_QUOTES, 'UTF-8') . "</td>";
         $table_pend.= "</tr>";
     }
 }
@@ -78,18 +79,15 @@ $table_pend.='</tbody></table>';
 
 
 if($nivel_usu==5){
-    $qeryPend = " and ate_resp='".$idu."' and data_hora_fim is not null and data_hora_visualizacao is null";
-
-    $sql="SELECT id_pend, chat_id, (SELECT protocolo from tbl_chat_fila where id_chat_fila=chat_id) as protocolo FROM tbl_pend_info where situacao_id=3 $qeryPend";
-    //echo "<br>".$sql;
+    $sql="SELECT id_pend, chat_id, (SELECT protocolo from tbl_chat_fila where id_fila_chat=chat_id) as protocolo FROM tbl_pend_info where situacao_id=3 and ate_resp=? and data_hora_fim is not null and data_hora_visualizacao is null";
     $stmt = $PDO_LOAD->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$idu]);
     $dadosContratos = $stmt->fetchAll( PDO::FETCH_ASSOC );
     $count=0;
     for($z=0;$z<count($dadosContratos);$z++){
         if($dadosContratos[$z]['id_pend']!=''){
-            echo $dadosContratos[$z]['protocolo'];
-            $infoPendAte .= " - " . $dadosContratos[$z]['protocolo'];
+            echo htmlspecialchars((string) $dadosContratos[$z]['protocolo'], ENT_QUOTES, 'UTF-8');
+            $infoPendAte .= " - " . htmlspecialchars((string) $dadosContratos[$z]['protocolo'], ENT_QUOTES, 'UTF-8');
         }
     }
 }

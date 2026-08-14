@@ -82,17 +82,20 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 
 
 
+$bkoId = (int) $infoUser['id_user'];
+$contratoDash = (int) ($infoUser['contrato_id'] ?? $infoUser['id_contrato'] ?? 0);
+
 $sql="SELECT ia.id_fila_chat, ia.protocolo, ia.ate_resp, ia.nome, ia.sobrenome, ia.indice, ia.motivo, ia.bko_resp"
     ." FROM infoAte ia"
     ." INNER JOIN tbl_chat_fila cf ON cf.id_fila_chat = ia.id_fila_chat"
     ." INNER JOIN tbl_chat_info ci ON ci.fila_chat_id = cf.id_fila_chat AND ci.status_chat = 1"
-    ." WHERE ia.bko_resp=".$infoUser['id_user']
-    ." AND cf.contrato_id=".(int)$infoUser['contrato_id']
+    ." WHERE ia.bko_resp=?"
+    ." AND cf.contrato_id=?"
     ." AND ".str_replace('status_fila', 'cf.status_fila', stFilaSqlAtendimentoAtivo());
 
 $stmt = $PDO->prepare( $sql );
 
-$result = $stmt->execute();
+$result = $stmt->execute([$bkoId, $contratoDash]);
 
 $infoAte = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
@@ -104,21 +107,21 @@ if (count($infoAte) < 1) {
 
 if(count($infoAte)<1){
 
-    $sql="SELECT resp_id, contrato_id, date_disp from infoAtendimento where resp_id=".$infoUser['id_user'];
+    $sql="SELECT resp_id, contrato_id, date_disp from infoAtendimento where resp_id=?";
 
     $stmt = $PDO->prepare( $sql );
 
-    $result = $stmt->execute();
+    $result = $stmt->execute([$bkoId]);
 
     $infoAtend = $stmt->fetch( PDO::FETCH_ASSOC );
 
     if($infoAtend['resp_id']==''){
 
-        $sql="INSERT INTO tbl_tma_atend (resp_id, contrato_id, date_disp) VALUES ('".$infoUser['id_user']."', '".$infoUser['id_contrato']."', now())";
+        $sql="INSERT INTO tbl_tma_atend (resp_id, contrato_id, date_disp) VALUES (?, ?, now())";
 
         $stmt = $PDO->prepare( $sql );
 
-        $result = $stmt->execute();
+        $result = $stmt->execute([$bkoId, (int) $infoUser['id_contrato']]);
 
         $infoAtend['date_disp'] = date('Y-m-d H:i:s');
 
@@ -128,21 +131,21 @@ if(count($infoAte)<1){
 
 
 
-$sql="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl_log_atendimento where user_id=".$infoUser['id_user']." order by data_hora desc limit 1";
+$sql="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl_log_atendimento where user_id=? order by data_hora desc limit 1";
 
 $stmt = $PDO->prepare( $sql );
 
-$result = $stmt->execute();
+$result = $stmt->execute([$bkoId]);
 
 $infoLog = $stmt->fetch( PDO::FETCH_ASSOC );
 
 
 
-$sqlVer="SELECT user_id, pause_id, hora_in from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=".$_SESSION['dados']['id_user'];
+$sqlVer="SELECT user_id, pause_id, hora_in from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=?";
 
 $stmt = $PDO->prepare($sqlVer);
 
-$result = $stmt->execute();
+$result = $stmt->execute([(int) $_SESSION['dados']['id_user']]);
 
 $ver = $stmt->fetch( PDO::FETCH_ASSOC );
 

@@ -2,10 +2,16 @@
 require_once __DIR__ . '/../../../cnf/session.php';
 require_once __DIR__ . '/_cnf_ui.php';
 
-$qry = ($infoUser['nivel_id'] > 1) ? ' and id_contrato in (' . $infoUserConfig['contrato_id'] . ')' : '';
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$listParams = [];
+$qry = '';
+if ($infoUser['nivel_id'] > 1) {
+    $qry = ' and id_contrato in (' . $cttIn['ph'] . ')';
+    $listParams = $cttIn['ids'];
+}
 $sql = "SELECT id_contrato, nome_contrato, ativo, uf, com, new_conv, grupos, men_massa, resp_men, env_file, env_img, nome_robo, (SELECT count(*) from tbl_user where contrato_id=id_contrato and ativo=1) as qtdUser from tbl_contrato where id_contrato<>'' $qry" . cnf_sql_order_ativo_nome('nome_contrato');
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($listParams);
 $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $count = count($dados);
 

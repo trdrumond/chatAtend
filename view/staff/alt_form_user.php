@@ -1,26 +1,28 @@
 <?php
 include("../cnf/session.php");
 
+$userId = (int) ($_POST['id'] ?? 0);
+$formId = (int) ($_POST['form'] ?? 0);
 
-$sql="UPDATE tbl_user SET form_id='".$_POST['form']."' where id_user=".$_POST['id'];
+if ($userId < 1) {
+    return;
+}
 
-//echo $sql;
+$sql = "UPDATE tbl_user SET form_id=? where id_user=?";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$formId, $userId]);
 
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-if($result==1){
-?>
+if ($result == 1) {
+    ?>
 <script>
     Swal.fire(
                 'Sua Demanda foi alterada!',
                 '',
                 'success'
             );
-
-
 </script>
 <?php
-    }
+}
 
-    ?>
+?>
+

@@ -35,20 +35,23 @@ else {
 <script type="text/javascript" src='chat/assets/js/script_com_ind.js?<?= time() ?>' defer></script>
 <?php
 
+$comIdInd = (int) ($_POST['id_com'] ?? 0);
+$userIdInd = (int) ($infoUser['id_user'] ?? 0);
+
 $tk = strtotime(date('Y-m-d H:i:s'));
 
-$sqlVisual="UPDATE tbl_com_msg SET dt_visual=now() where dt_visual is null and com_id=".$_POST['id_com']." and dest_id=".$infoUser['id_user'];
+$sqlVisual="UPDATE tbl_com_msg SET dt_visual=now() where dt_visual is null and com_id=? and dest_id=?";
 //echo "<br>".$sqlVisual;
 $stmt = $PDO->prepare( $sqlVisual );
-$result = $stmt->execute();
+$result = $stmt->execute([$comIdInd, $userIdInd]);
 if($result){
     echo '<script>loadComList(indice, com);</script>';
 }
 
-$sql="SELECT id_com, data_hora, rem_chat, dest_chat, grupo_com from tbl_com_info where id_com=".$_POST['id_com'];
+$sql="SELECT id_com, data_hora, rem_chat, dest_chat, grupo_com from tbl_com_info where id_com=?";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([$comIdInd]);
 $infoCom = $stmt->fetch( PDO::FETCH_ASSOC );
 //depurador($infoCom);
 
@@ -60,12 +63,12 @@ if((int) $infoCom['dest_chat'] === (int) $infoUser['id_user']){
     $destChat = (int) $infoCom['rem_chat'];
 }
 
-    $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg a where com_id=".$infoCom['id_com']." order by id_msg desc limit 0,30";
+    $sql_hist="SELECT a.id_msg, a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT nome from tbl_user where id_user=rem_id) as nome, (SELECT sobrenome from tbl_user where id_user=rem_id) as sobrenome, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.msg from tbl_com_msg a where com_id=? order by id_msg desc limit 0,30";
 
 //echo "<br>".$sql_hist;
 
 $stmt = $PDO->prepare($sql_hist);
-$result = $stmt->execute();
+$result = $stmt->execute([(int) $infoCom['id_com']]);
 $infoComMsg = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
 //depurador($infoComMsg);

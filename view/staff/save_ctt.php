@@ -1,17 +1,16 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$nome = (string) ($_POST['nome'] ?? '');
+$uf = (string) ($_POST['uf'] ?? '');
+if ((int) ($infoUser['nivel_id'] ?? 0) > 1) {
+    return;
+}
 
-$sql="INSERT INTO tbl_contrato (nome_contrato, uf) VALUES ('".$_POST['nome']."', '".$_POST['uf']."')";
+$stmt = $PDO->prepare("INSERT INTO tbl_contrato (nome_contrato, uf) VALUES (?, ?)");
+$result = $stmt->execute([$nome, $uf]);
 
-//echo $sql;
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
+if ($result == 1) {
 ?>
 
 <script>
@@ -29,7 +28,6 @@ if($result==1){
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

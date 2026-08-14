@@ -8,17 +8,16 @@ include("../cnf/session.php");
 $idFila = isset($_POST['fila']) ? (int)$_POST['fila'] : 0;
 
 $sql = "SELECT id_fila_chat, protocolo, hora_registro, tempo_decorrido, id_fila, nome_fila, titulo_assunto, nome_ate, agencia, municipio from fila_atual";
+$params = [];
 if ($idFila != 0) {
-    $sql .= " where id_fila=" . $idFila;
+    $sql .= " where id_fila=?";
+    $params[] = $idFila;
 }
 
 $sql .= " order by hora_registro asc";
 
-
-
-//echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($params);
 ?>
 <style>
     .pointer {

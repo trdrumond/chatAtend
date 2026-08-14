@@ -29,8 +29,11 @@ $busca = isset($_POST['busca']) ? trim($_POST['busca']) : '';
 
 // Filtro por contrato conforme já usado em cad-usu.php
 $qryContrato = '';
+$cttParams = [];
 if ($infoUser['nivel_id'] > 1) {
-    $qryContrato = " AND b.id_contrato IN (" . $infoUserConfig['contrato_id'] . ")";
+    $cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''), 'ctt');
+    $qryContrato = " AND b.id_contrato IN (" . $cttIn['ph'] . ")";
+    $cttParams = $cttIn['params'];
 }
 
 // Campos base
@@ -46,16 +49,15 @@ $camposBase =
     " (SELECT nome_fila FROM tbl_config_fila WHERE id_fila = a.fila_id) AS nome_fila ";
 
 $fromBase =
-    " FROM tbl_user a, tbl_contrato b, tbl_municipio c, tbl_agencia d, " .
-    " tbl_estado e, tbl_nivel g, tbl_regional f, tbl_empresa h " .
-    " WHERE a.contrato_id = b.id_contrato " .
-    " AND a.municipio_id = c.id_municipio " .
-    " AND a.agencia_id = d.id_agencia " .
-    " AND a.uf_id = e.id_estado " .
-    " AND a.regional_id = f.id_regional " .
-    " AND a.empresa_id = h.id_empresa " .
-    " AND a.nivel_id = g.id_nivel " .
-    " AND a.id_user > 1 " .
+    " FROM tbl_user a " .
+    " INNER JOIN tbl_contrato b ON a.contrato_id = b.id_contrato " .
+    " INNER JOIN tbl_municipio c ON a.municipio_id = c.id_municipio " .
+    " LEFT JOIN tbl_agencia d ON a.agencia_id = d.id_agencia " .
+    " INNER JOIN tbl_estado e ON a.uf_id = e.id_estado " .
+    " INNER JOIN tbl_nivel g ON a.nivel_id = g.id_nivel " .
+    " INNER JOIN tbl_regional f ON a.regional_id = f.id_regional " .
+    " INNER JOIN tbl_empresa h ON a.empresa_id = h.id_empresa " .
+    " WHERE a.id_user > 1 " .
     // Ativos ou inativos com até 90 dias
     " AND (a.ativo = 1 OR (a.ativo = 0 AND a.data_inativo >= DATE_SUB(CURDATE(), INTERVAL 90 DAY))) " .
     $qryContrato;
@@ -73,6 +75,7 @@ if ($busca !== '') {
         " OR c.nome_municipio LIKE :q " .
         " OR c.uf LIKE :q " .
         " OR d.nome_agencia LIKE :q " .
+        " OR (a.agencia_id = 0 AND 'SEM AGÊNCIA (id=0)' LIKE :q) " .
         " OR h.nome_empresa LIKE :q " .
         " OR g.nome_nivel LIKE :q " .
         " OR (SELECT nome_fila FROM tbl_config_fila WHERE id_fila = a.fila_id) LIKE :q " .
@@ -85,7 +88,7 @@ if ($busca !== '') {
 // Total
 $sqlCount = "SELECT COUNT(*) AS total " . $fromBase . $whereBusca;
 $stmt = $PDO->prepare($sqlCount);
-foreach ($paramsBusca as $k => $v) {
+foreach (array_merge($cttParams, $paramsBusca) as $k => $v) {
     $stmt->bindValue($k, $v);
 }
 $stmt->execute();
@@ -101,7 +104,7 @@ $sqlDados =
     " LIMIT :offset, :limit";
 
 $stmt = $PDO->prepare($sqlDados);
-foreach ($paramsBusca as $k => $v) {
+foreach (array_merge($cttParams, $paramsBusca) as $k => $v) {
     $stmt->bindValue($k, $v);
 }
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -116,6 +119,11 @@ $permiteMail = ($infoUser['nivel_id'] < 1) ? 1 : 0;
 $cadCnf = ($cad_cnf == 1) ? 1 : 0;
 
 foreach ($dados as $d) {
+    $agenciaIdRow = (int)$d['agencia_id'];
+    $nomeAgenciaRow = $d['nome_agencia'];
+    if ($agenciaIdRow <= 0 || $nomeAgenciaRow === null || trim((string)$nomeAgenciaRow) === '') {
+        $nomeAgenciaRow = 'SEM AGÊNCIA (id=0)';
+    }
     $rows[] = [
         'id_user'       => (int)$d['id_user'],
         'nome_usuario'  => $d['nome_usuario'],
@@ -128,7 +136,8 @@ foreach ($dados as $d) {
         'nome_contrato' => $d['nome_contrato'],
         'nome_municipio' => $d['nome_municipio'],
         'uf'            => $d['uf'],
-        'nome_agencia'  => $d['nome_agencia'],
+        'agencia_id'    => $agenciaIdRow,
+        'nome_agencia'  => $nomeAgenciaRow,
         'nivel_id'      => (int)$d['nivel_id'],
         'nome_regional' => $d['nome_regional'],
         'nome_empresa'  => $d['nome_empresa'],

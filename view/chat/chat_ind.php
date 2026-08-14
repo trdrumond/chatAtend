@@ -29,12 +29,11 @@
         if (!stFilaAtendimentoEncerrado($statusFila)) {
         if ($bkoRespAtual === 0) {
             stFilaEnsureSituacaoAguardando($PDO);
-            $teVal = !empty($infFila['te']) ? $infFila['te'] : ($infFila['te_diff'] ?? '');
-            $sql = 'UPDATE tbl_chat_fila SET status_fila='.ST_FILA_AGUARDANDO_ATENDIMENTO.', bko_resp='.$bkoId
-                .", te='".$teVal."' WHERE id_fila_chat=".$filaIdChat
+            $teVal = (string) (!empty($infFila['te']) ? $infFila['te'] : ($infFila['te_diff'] ?? ''));
+            $sql = 'UPDATE tbl_chat_fila SET status_fila=?, bko_resp=?, te=? WHERE id_fila_chat=?'
                 .' AND (bko_resp IS NULL OR bko_resp=0 OR bko_resp=\'\')';
             $stmt = $PDO->prepare($sql);
-            $stmt->execute();
+            $stmt->execute([ST_FILA_AGUARDANDO_ATENDIMENTO, $bkoId, $teVal, $filaIdChat]);
             if ($stmt->rowCount() > 0) {
                 logAtendimento($PDO, $bkoId, 'Tratamento');
             }
@@ -76,7 +75,7 @@
                 INNER JOIN tbl_chat_info b ON a.chat_id = b.id_chat
                 LEFT JOIN tbl_user u ON u.id_user = a.rem_id
                 LEFT JOIN tbl_user_img_perfil img ON img.user_id = a.rem_id
-                WHERE a.chat_id = ".(int)$chatId."
+                WHERE a.chat_id = ?
                 ORDER BY a.data_hora ASC";
     } else {
     $sql_hist="SELECT 
@@ -102,13 +101,17 @@
                     ON u.id_user = a.rem_id
                 LEFT JOIN tbl_user_img_perfil img 
                     ON img.user_id = a.rem_id
-                WHERE c.protocolo = '".$infFila['protocolo']."'
+                WHERE c.protocolo = ?
                 ORDER BY a.data_hora ASC;";
     }
     //echo "<br>".$sql_hist;
 
     $stmt = $PDO->prepare($sql_hist);
-    $result = $stmt->execute();
+    if (!empty($chatId)) {
+        $result = $stmt->execute([(int) $chatId]);
+    } else {
+        $result = $stmt->execute([(string) ($infFila['protocolo'] ?? '')]);
+    }
     $infoChatMsg_hist = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
     if (!isset($motivoChat) || !is_array($motivoChat)) {
@@ -118,29 +121,30 @@
         $motivoChat['motivo'] = $infFila['motivo'];
     }
     if (($motivoChat['motivo'] ?? '') === '') {
-        $sqlMotivo="SELECT motivo from tbl_chat_fila where protocolo='".$infFila['protocolo']."' LIMIT 1";
+        $sqlMotivo="SELECT motivo from tbl_chat_fila where protocolo=? LIMIT 1";
         $stmt = $PDO->prepare($sqlMotivo);
-        $stmt->execute();
+        $stmt->execute([(string) ($infFila['protocolo'] ?? '')]);
         $motivoChat = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['motivo' => ''];
     }
 
 
 
-    $sql="SELECT a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_id, a.contrato_id, a.rem_id, a.dest_id, a.msg, b.fila_chat_id, a.flag from tbl_chat_msg a, tbl_chat_info b where a.chat_id=b.id_chat and a.flag=".$infoUser['id_user']." and token_chat='".$tokenChat."'";
+    $sql="SELECT a.data_hora, date_format(a.data_hora, '%d/%m/%Y %H:%i') as hora_msg, a.chat_id, a.contrato_id, a.rem_id, a.dest_id, a.msg, b.fila_chat_id, a.flag from tbl_chat_msg a, tbl_chat_info b where a.chat_id=b.id_chat and a.flag=? and token_chat=?";
     //echo "<br>".$sql;
 
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $infoUser['id_user'], (string) $tokenChat]);
     $infoChatMsgSys = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($infoChatMsgSys[0]);
 
     if (!empty($stChatSkipFilasCount)) {
         $infoFilas = ['qtd' => 1];
     } else {
-    $sql="SELECT count(*) as qtd from tbl_config_fila where ativo=1 and contrato_id=".$infoUser['contrato_id'];
+    $contratoIdChatInd = (int) ($infoUser['contrato_id'] ?? $infoUser['id_contrato'] ?? 0);
+    $sql="SELECT count(*) as qtd from tbl_config_fila where ativo=1 and contrato_id=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$contratoIdChatInd]);
     $infoFilas = $stmt->fetch( PDO::FETCH_ASSOC );
     }
 
@@ -253,9 +257,9 @@
             <input type="hidden" name="img_<?=$chatId?>" id="img_<?=$chatId?>" value="<?=$infoUser['img_perfil']?>" />
 
             <?php if($infoUser['nivel_id']==4){
-                $sql="SELECT id_campo, titulo_men, txt from tbl_config_men_ini where ativo=1 and contrato_id=".$infFila['contrato_id']." and (assunto_id=0 or assunto_id=".$infFila['assunto_id'].")";
+                $sql="SELECT id_campo, titulo_men, txt from tbl_config_men_ini where ativo=1 and contrato_id=? and (assunto_id=0 or assunto_id=?)";
                 $stmt = $PDO->prepare($sql);
-                $stmt->execute();
+                $stmt->execute([(int) $infFila['contrato_id'], (int) $infFila['assunto_id']]);
                 $selMen = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } else {
                 $selMen = [];
@@ -450,6 +454,15 @@ if (typeof Notifyer !== 'undefined' && Notifyer.init) {
 }
 if (typeof App !== 'undefined' && App.mostraNotificacao) {
     App.mostraNotificacao("Chat em andamento!");
+}
+
+function stChatEscHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function play_men() {
@@ -1376,7 +1389,7 @@ function loadFileDiv(chatId) {
             chatId
         },
         function(valor) {
-            $(feed).html(valor);
+            $(feed).html(typeof stSafeChatHtml === 'function' ? stSafeChatHtml(valor) : valor);
         });
 
 }
@@ -1471,14 +1484,14 @@ function loadFileDiv(chatId) {
                         data: { star: star, tokenChat: tokenChat }
                     }).done(function(retorno) {
                         if (retorno && retorno.ok) {
-                            $(feed).html('<span class="text-success">' + (retorno.msg || 'Salvo!') + '</span>');
+                            $(feed).html('<span class="text-success">' + stChatEscHtml(retorno.msg || 'Salvo!') + '</span>');
                             if (typeof stChatSolAfterClassSave === 'function') {
                                 setTimeout(function () { stChatSolAfterClassSave(); }, 250);
                             }
                             return;
                         }
                         $btn.prop('disabled', false);
-                        $(feed).html('<span class="text-danger">' + ((retorno && retorno.msg) ? retorno.msg : 'Não foi possível salvar.') + '</span>');
+                        $(feed).html('<span class="text-danger">' + stChatEscHtml((retorno && retorno.msg) ? retorno.msg : 'Não foi possível salvar.') + '</span>');
                     }).fail(function() {
                         $btn.prop('disabled', false);
                         $(feed).html('<span class="text-danger">Falha de comunicação. Tente novamente.</span>');
@@ -1494,10 +1507,10 @@ function loadFileDiv(chatId) {
                     var motivo_situacao = $('#motivo_situacao').val();
                     var tokenChat = '<?=$tokenChat?>';
                     <?php
-                                $sql = "SELECT nome_campo, input_id, (SELECT tipo_input from tbl_forms_pos_input where id_input=input_id) as tipo_input FROM tbl_forms_pos_input_campo where fila_id=".$infFila['fila_id'];
+                                $sql = "SELECT nome_campo, input_id, (SELECT tipo_input from tbl_forms_pos_input where id_input=input_id) as tipo_input FROM tbl_forms_pos_input_campo where fila_id=?";
                                 //echo "<br>".$sql;
                                 $stmt = $PDO->prepare($sql);
-                                $result = $stmt->execute();
+                                $result = $stmt->execute([(int) $infFila['fila_id']]);
                                 $campoScript = $stmt->fetchAll( PDO::FETCH_ASSOC );
                                 if(count($campoScript)>0){
                                     for($num=0;$num<count($campoScript);$num++){
@@ -1732,10 +1745,23 @@ function loadFileDiv(chatId) {
                             <select name="fila_<?=$chatId?>" id="fila_<?=$chatId?>">
                                 <option value="">Selecione uma fila?</option>
                                 <?php
-                            $sql="SELECT id_fila, nome_fila, ativo from tbl_config_fila where ativo=1 and contrato_id in (". $infFila['contrato_id'].") and id_fila<>".$infFila['fila_id']." order by nome_fila asc";
+                            $contratoParts = preg_split('/\s*,\s*/', trim((string) ($infFila['contrato_id'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+                            $contratoIds = [];
+                            foreach ($contratoParts as $contratoPart) {
+                                $cid = (int) $contratoPart;
+                                if ($cid > 0) {
+                                    $contratoIds[$cid] = $cid;
+                                }
+                            }
+                            if ($contratoIds === []) {
+                                $contratoIds = [0];
+                            }
+                            $contratoPlaceholders = implode(',', array_fill(0, count($contratoIds), '?'));
+                            $filaAtualId = (int) ($infFila['fila_id'] ?? 0);
+                            $sql="SELECT id_fila, nome_fila, ativo from tbl_config_fila where ativo=1 and contrato_id in ($contratoPlaceholders) and id_fila<>? order by nome_fila asc";
                             //echo "<br>".$sql;
                             $stmt = $PDO->prepare($sql);
-                            $result = $stmt->execute();
+                            $result = $stmt->execute(array_merge(array_values($contratoIds), [$filaAtualId]));
                             $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
                             for($x=0;$x<count($dados);$x++){
                                 echo '<option value="'.$dados[$x]['id_fila'].'">'.$dados[$x]['nome_fila'].'</option>';
@@ -1781,7 +1807,7 @@ function loadFileDiv(chatId) {
                             fila
                         },
                         function(valor) {
-                            $("#assunto_<?=$chatId?>").html(valor);
+                            $("#assunto_<?=$chatId?>").html(typeof stSafeChatHtml === 'function' ? stSafeChatHtml(valor) : valor);
                         });
                 }
 

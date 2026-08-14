@@ -38,11 +38,11 @@
     $tma = explode(".", $ddTma['tma']);
     if(!$tma[0]){$tma[0]='--:--:--';}
 
-    $sql="SELECT date_format(data_hora, '%Y-%m-%d') as data, count(*) as qtd from tbl_chat_fila_secondary where hora_inicio is not null and bko_resp=".$userId." and date_format(data_hora, '%Y-%m')='".date('Y-m')."' group by date_format(data_hora, '%Y-%m-%d') asc";
+    $sql="SELECT date_format(data_hora, '%Y-%m-%d') as data, count(*) as qtd from tbl_chat_fila_secondary where hora_inicio is not null and bko_resp=? and date_format(data_hora, '%Y-%m')=? group by date_format(data_hora, '%Y-%m-%d') asc";
 
     //echo "<br>".$sql;
     $stmt = $PDO_LOAD->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$userId, date('Y-m')]);
     $ddScore = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($ddScore);
 
@@ -228,11 +228,11 @@ h3 {
             </script>
             <?php
 
-                        $sql="SELECT a.id_msg, a.data_hora, a.chat_id, a.contrato_id, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.dest_id, a.msg, b.fila_chat_id from tbl_chat_msg a, tbl_chat_info b where a.chat_id=b.id_chat and id_chat='".$infoChat[$x]['id_chat']."' ORDER BY a.id_msg ASC";
+                        $sql="SELECT a.id_msg, a.data_hora, a.chat_id, a.contrato_id, a.rem_id, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=rem_id) as nome_rem, (SELECT img from tbl_user_img_perfil where user_id=rem_id) as img, a.dest_id, a.msg, b.fila_chat_id from tbl_chat_msg a, tbl_chat_info b where a.chat_id=b.id_chat and id_chat=? ORDER BY a.id_msg ASC";
                         //echo "<br>".$sql;
 
                         $stmt = $PDO->prepare($sql);
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([(int) $infoChat[$x]['id_chat']]);
                         $infoChatMsg = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
                         $stmtMotivo = $PDO->prepare('SELECT motivo FROM tbl_chat_fila WHERE id_fila_chat = ? LIMIT 1');

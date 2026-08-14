@@ -1,29 +1,25 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$tokenChat = (string) ($_POST['tokenChat'] ?? '');
+$file = (string) ($_POST['file'] ?? '');
+$rem = (string) ($_POST['rem'] ?? '');
+$chatId = (int) ($_POST['chatId'] ?? 0);
 
-$sql = "SELECT count(id_file) as qtd FROM tbl_chat_files where token_chat='".$_POST['tokenChat']."'";
-//echo "<br>".$sql;
-$stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
-$infoQtd = $stmt->fetch( PDO::FETCH_ASSOC );
+$stmt = $PDO->prepare("SELECT count(id_file) as qtd FROM tbl_chat_files where token_chat=?");
+$stmt->execute([$tokenChat]);
+$infoQtd = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$name_file = str_pad($infoQtd['qtd']+1, 3, '0', STR_PAD_LEFT);
+$name_file = str_pad(((int) ($infoQtd['qtd'] ?? 0)) + 1, 3, '0', STR_PAD_LEFT);
 
-$sql="INSERT INTO tbl_chat_files (token_chat, link_file, name_file, resp) VALUES ('".$_POST['tokenChat']."', '".$_POST['file']."', '".$name_file."', '".$_POST['rem']."')";
+$stmt = $PDO->prepare("INSERT INTO tbl_chat_files (token_chat, link_file, name_file, resp) VALUES (?, ?, ?, ?)");
+$result = $stmt->execute([$tokenChat, $file, $name_file, $rem]);
 
-//echo $sql;
-
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-if($result==1){
+if ($result == 1) {
 ?>
 <script>
-    sendFile(<?=$_POST['chatId']?>);
-    name_file = '<?=$name_file; ?>';
+    sendFile(<?= $chatId ?>);
+    name_file = <?= json_encode($name_file, JSON_UNESCAPED_UNICODE) ?>;
     //console.log(name_file);
 
 </script>

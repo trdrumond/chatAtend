@@ -5,16 +5,16 @@ include("../cnf/session.php");
 //depurador($_POST);
 
 if($_POST['fila']){
-    $sqlUpdate = "UPDATE tbl_user SET fila_id=".$_POST['fila']." where id_user=".$_POST['user'];
-    //echo "<br>".$sqlPause;
+    $filaId = (int) $_POST['fila'];
+    $userId = (int) ($_POST['user'] ?? 0);
+    $sqlUpdate = "UPDATE tbl_user SET fila_id=? where id_user=?";
     $stmt = $PDO->prepare( $sqlUpdate );
-    $update = $stmt->execute();
-    $infoUser['fila_id'] = $_POST['fila'];
-    if($result==1){
-        $sql ="SELECT ativo from tbl_config_fila where id_fila=".$infoUser['fila_id'];
-        //echo "<br>".$sql;
+    $update = $stmt->execute([$filaId, $userId]);
+    $infoUser['fila_id'] = $filaId;
+    if($update==1){
+        $sql ="SELECT ativo from tbl_config_fila where id_fila=?";
         $stmt = $PDO->prepare($sql);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $infoUser['fila_id']]);
         $filaBko = $stmt->fetch( PDO::FETCH_ASSOC );
         if($filaBko['ativo']==1){
             $classFila = 'fila_in';

@@ -1,16 +1,20 @@
 <?php
 include("../view//cnf/conn.php");
 
-//depurador($_GET);
+$apiUser = (string) ($_GET['u'] ?? '');
+$dataDe = (string) ($_GET['dd'] ?? '');
+$dataAte = (string) ($_GET['da'] ?? '');
 
-$sql="SELECT nome_user from tbl_api_user where nome_user='".$_GET['u']."'";
+$sql="SELECT nome_user from tbl_api_user where nome_user=?";
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$apiUser]);
 $user = $stmt->fetch( PDO::FETCH_ASSOC );
 
 
-if($user['nome_user']!=''){
-    if($_GET['dd']!='' && $_GET['da']!=''){
+if(is_array($user) && ($user['nome_user'] ?? '')!=''){
+    $deOk = preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataDe);
+    $ateOk = preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataAte);
+    if($deOk && $ateOk){
         $sql="SELECT a.protocolo as Protocolo, a.data_hora as Hora_Registro"
             .", (sec_to_time(time_to_sec(ta)+time_to_sec(te))) as TD"
             .", d.nome_fila as Fila, b.titulo_assunto as Assunto, a.motivo_cancela as Motivo_Cancelamento"
@@ -23,26 +27,19 @@ if($user['nome_user']!=''){
             ." from tbl_chat_fila a, tbl_assunto b, tbl_situacao_chat c, tbl_config_fila d"
             ." where a.assunto_id=b.id_assunto"
             ." and a.status_fila=c.id_situacao"
-            ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN '".$_GET['dd']."' and '".$_GET['da']."'"
-            ." and a.fila_id=d.id_fila";
-            $sql.=" order by a.data_hora asc";
-
-            //echo "<br>".$sql;
+            ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN ? and ?"
+            ." and a.fila_id=d.id_fila"
+            ." order by a.data_hora asc";
 
         $stmt = $PDO->prepare( $sql );
-        $result = $stmt->execute();
+        $result = $stmt->execute([$dataDe, $dataAte]);
         $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
         echo count($dados)." registros";
         echo "<br>";
-        //depurador($dados);
         echo json_encode($dados, JSON_UNESCAPED_UNICODE);
     } else {
         echo '<center><h2>DATAS INVÁLIDAS PARA A CONSULTA</h2></center>';
     }
 } else {echo '<center><h1>USUÁRIO INVÁLIDO</h1></center>';}
-/*
 
-*/
-
-    ?>
-
+?>

@@ -4,10 +4,14 @@ include("cnf/session.php");
 /** @var array<string, mixed> $infoUser */
 /** @var PDO $PDO */
 
-$sql="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te_diff, te, hora_inicio from tbl_chat_fila where ".stFilaSqlAtendimentoAtivo()." and fila_id=".$infoUser['fila_id']." and bko_resp=".$_SESSION['dados']['id_user'];
+$filaId = (int) ($infoUser['fila_id'] ?? 0);
+$bkoId = (int) ($_SESSION['dados']['id_user'] ?? 0);
+$contratoId = (int) ($infoUser['contrato_id'] ?? $infoUser['id_contrato'] ?? 0);
+
+$sql="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te_diff, te, hora_inicio from tbl_chat_fila where ".stFilaSqlAtendimentoAtivo()." and fila_id=? and bko_resp=?";
 //echo "<br>".$sql;
 $st = $PDO->prepare($sql);
-$res = $st->execute();
+$res = $st->execute([$filaId, $bkoId]);
 $infFila = $st->fetch( PDO::FETCH_ASSOC );
 /*
 echo "<br>";
@@ -17,10 +21,10 @@ echo "<br>";
 //depurador($infFila);
 
 if($infFila['id_fila_chat']==''){
-    $sqlVer="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te_diff, te from tbl_chat_fila where status_fila=1 and fila_id=".$infoUser['fila_id']." and bko_resp is null order by id_fila_chat asc limit 1";
+    $sqlVer="SELECT id_fila_chat, protocolo, status_fila, ate_resp, bko_resp, hora_inicio, fila_id, assunto_id, contrato_id, timediff(now(), data_hora) as te_diff, te from tbl_chat_fila where status_fila=1 and fila_id=? and bko_resp is null order by id_fila_chat asc limit 1";
     //echo "<br>".$sqlVer;
     $stmt = $PDO->prepare($sqlVer);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$filaId]);
     $infFila = $stmt->fetch( PDO::FETCH_ASSOC );
     if($infFila['te']==''){$infFila['te']=$infFila['te_diff'];}
     //echo "<br>".$infFila['te'];
@@ -34,9 +38,10 @@ if($infFila['id_fila_chat']==''){
 
     if($infFila['bko_resp']==''){
         stFilaEnsureSituacaoAguardando($PDO);
-        $sql="UPDATE tbl_chat_fila SET status_fila=".ST_FILA_AGUARDANDO_ATENDIMENTO.", bko_resp=".$infoUser['id_user'].", te='".$infFila['te']."' where id_fila_chat=".$infFila['id_fila_chat'];
+        $teVal = (string) ($infFila['te'] ?? '');
+        $sql="UPDATE tbl_chat_fila SET status_fila=?, bko_resp=?, te=? where id_fila_chat=?";
         $stmt = $PDO->prepare( $sql );
-        $stmt->execute();
+        $stmt->execute([ST_FILA_AGUARDANDO_ATENDIMENTO, (int) $infoUser['id_user'], $teVal, (int) $infFila['id_fila_chat']]);
         logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Tratamento');
         $infFila['status_fila'] = ST_FILA_AGUARDANDO_ATENDIMENTO;
         $infFila['bko_resp'] = $infoUser['id_user'];
@@ -57,9 +62,9 @@ if($infFila['id_fila_chat']==''){
     ." AND a.uf_id=e.id_estado"
     ." AND a.regional_id=f.id_regional"
     ." AND a.nivel_id=g.id_nivel"
-    ." AND a.id_user=".$infFila['ate_resp'];
+    ." AND a.id_user=?";
     $stmt = $PDO->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([(int) $infFila['ate_resp']]);
     $dados_ate = $stmt->fetch(PDO::FETCH_ASSOC);
 
 ?>
@@ -113,12 +118,12 @@ if($infFila['id_fila_chat']==''){
                     $userDestinatario = $infFila['ate_resp'];
                     //echo "<br>".$userDestinatario;
 
-                    $sql="SELECT id_chat, token_chat, status_chat, fila_chat_id from tbl_chat_info where status_chat=1 and contrato_id=".$infoUser['contrato_id']." and rem_chat=".$infoUser['id_user']." and dest_chat=".$userDestinatario;
+                    $sql="SELECT id_chat, token_chat, status_chat, fila_chat_id from tbl_chat_info where status_chat=1 and contrato_id=? and rem_chat=? and dest_chat=?";
 
                     //echo "<br>".$sql;
 
                     $stmt = $PDO->prepare($sql);
-                    $result = $stmt->execute();
+                    $result = $stmt->execute([$contratoId, (int) $infoUser['id_user'], (int) $userDestinatario]);
                     $infoChat = $stmt->fetch( PDO::FETCH_ASSOC );
                     //depurador($infoChat);
                     if($infoChat!=''){
@@ -127,33 +132,46 @@ if($infFila['id_fila_chat']==''){
                         $stringToken = $userDestinatario . date('YmdHis');
                         $tokenChat = md5($stringToken);
                         if($infoUser['nivel_id']==4){
-                            $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, assunto_id, fila_id, rem_chat, dest_chat, status_chat, fila_chat_id) VALUES ('".$infFila['contrato_id']."', '".$tokenChat."', '".$infFila['assunto_id']."', '".$infFila['fila_id']."', '".$infoUser['id_user']."', '".$userDestinatario."', 1, '".$infFila['id_fila_chat']."')";
+                            $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, assunto_id, fila_id, rem_chat, dest_chat, status_chat, fila_chat_id) VALUES (?, ?, ?, ?, ?, ?, 1, ?)";
 
                             //echo "<br>".$sql;
                             $stmt = $PDO->prepare( $sql );
-                            $result = $stmt->execute();
+                            $result = $stmt->execute([
+                                (int) $infFila['contrato_id'],
+                                $tokenChat,
+                                (int) $infFila['assunto_id'],
+                                (int) $infFila['fila_id'],
+                                (int) $infoUser['id_user'],
+                                (int) $userDestinatario,
+                                (int) $infFila['id_fila_chat'],
+                            ]);
                         }
                     }
 
                         if($infoChat['id_chat']==''){
-                            $sql="SELECT id_chat, token_chat, status_chat, fila_chat_id from tbl_chat_info where token_chat='".$tokenChat."'";
+                            $sql="SELECT id_chat, token_chat, status_chat, fila_chat_id from tbl_chat_info where token_chat=?";
                             $stmt = $PDO->prepare( $sql );
-                            $result = $stmt->execute();
+                            $result = $stmt->execute([$tokenChat]);
                             $infoChat = $stmt->fetch( PDO::FETCH_ASSOC );
                         }
 
 
-                        $sql="SELECT id from tbl_tma_atend where fila_chat_id is null and resp_id=".$infoUser['id_user'];
+                        $sql="SELECT id from tbl_tma_atend where fila_chat_id is null and resp_id=?";
                         //echo "<br>".$sql;
                         $stmt = $PDO->prepare( $sql );
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([(int) $infoUser['id_user']]);
                         $infoAtend = $stmt->fetch( PDO::FETCH_ASSOC );
 
                         if($infoAtend['id']!=''){
-                            $sql="UPDATE tbl_tma_atend SET fila_chat_id=".$infFila['id_fila_chat'].", chat_id=".$infoChat['id_chat'].", fila_id=".$infFila['fila_id'].", date_in=now() where id=".$infoAtend['id'];
+                            $sql="UPDATE tbl_tma_atend SET fila_chat_id=?, chat_id=?, fila_id=?, date_in=now() where id=?";
                             //echo "<br>".$sql;
                             $stmt = $PDO->prepare( $sql );
-                            $result = $stmt->execute();
+                            $result = $stmt->execute([
+                                (int) $infFila['id_fila_chat'],
+                                (int) $infoChat['id_chat'],
+                                (int) $infFila['fila_id'],
+                                (int) $infoAtend['id'],
+                            ]);
                         }
 
 
@@ -185,9 +203,9 @@ if($infFila['id_fila_chat']==''){
             <div class="tab-content st-chat-side__content" id="myTabContent">
                 <div class="tab-pane fade show active st-chat-pane" id="proc" role="tabpanel" aria-labelledby="proc-tab">
                     <?php
-                        $sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=".$infFila['assunto_id'];
+                        $sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=?";
                         $stmt = $PDO->prepare($sql);
-                        $stmt->execute();
+                        $stmt->execute([(int) $infFila['assunto_id']]);
                         $infoAssunto = $stmt->fetch(PDO::FETCH_ASSOC);
                         $data_ver = date('Y-m-d', strtotime('+5 days', strtotime($infoAssunto['data_ver'])));
                         $badge = (date('Y-m-d') > $data_ver) ? 'secondary' : 'danger';

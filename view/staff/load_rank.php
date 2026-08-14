@@ -3,23 +3,26 @@ include("../cnf/session.php");
 
 
                             $day = 5;
+                            $filaId = (int) ($_POST['fila'] ?? 0);
 
                             $sql="SELECT id_user, nome_completo, fila_id, nome_fila, qtd, tma, star from rank_atual";
-                            if($_POST['fila']!=0){
-                                $sql .=" where fila_id=".$_POST['fila'];
+                            $params = [];
+                            if($filaId != 0){
+                                $sql .=" where fila_id=?";
+                                $params[] = $filaId;
                             }
                             $sql .= " order by qtd desc";
 
                             //echo $sql;
                             $stmt = $PDO->prepare( $sql );
-                            $result = $stmt->execute();
+                            $result = $stmt->execute($params);
                             $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
                         ?>
-<center><button id="btn_atualiza_rank_<?=$_POST['fila']?>" title="Atualizar Ranking" class="btn_atualizar"
-        onclick="loadRank(<?=$_POST['fila']?>);"> <i class="fas fa-sync-alt"></i> </button></center>
+<center><button id="btn_atualiza_rank_<?=$filaId?>" title="Atualizar Ranking" class="btn_atualizar"
+        onclick="loadRank(<?=$filaId?>);"> <i class="fas fa-sync-alt"></i> </button></center>
 
-<table class="table table-hover" id="table_rank_<?=$_POST['fila'];?>_<?=time();?>">
+<table class="table table-hover" id="table_rank_<?=$filaId;?>_<?=time();?>">
     <thead>
         <tr>
             <th>BACKOFFICE</th>
@@ -58,7 +61,7 @@ include("../cnf/session.php");
 </table>
 <script>
 $(document).ready(function() {
-    $('#table_rank_<?=$_POST['fila'];?>_<?=time();?>').DataTable({
+    $('#table_rank_<?=$filaId;?>_<?=time();?>').DataTable({
         "order": [
             [2, "desc"]
         ],

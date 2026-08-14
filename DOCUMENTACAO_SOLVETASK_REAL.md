@@ -41,7 +41,7 @@ solvetask/piloto/
 - **Host**: localhost
 - **Database**: web_chatlogos_piloto
 - **Usuário**: acesso.sistemas
-- **Senha**: tDHMpeXVTzQAZsGD
+- **Senha**: <SENHA_DB_LOCAL>
 
 ### 2.2 Configurações do Sistema
 **Arquivo**: `view/cnf/config.php`

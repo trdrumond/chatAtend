@@ -1,24 +1,11 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$id = (int) ($_POST['id'] ?? 0);
+$status = (($_POST['status'] ?? '') !== '') ? 1 : 0;
 
-if($_POST['status']!=''){
-    $status=1;
-} else {
-    $status=0;
-}
-
-$sql="UPDATE tbl_forms_mon_input_campo_cnf SET obg=$status where campo_id=".$_POST['id'];
-
-//echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-/*
-if($result==1){
-    echo "gravado";
-}
-*/
+$sql = "UPDATE tbl_forms_mon_input_campo_cnf SET obg=? where campo_id=?";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$status, $id]);
 
 ?>

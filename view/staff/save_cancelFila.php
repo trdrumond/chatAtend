@@ -1,55 +1,41 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$idFila = (int) ($_POST['id_fila'] ?? 0);
 
-$sql="SELECT id_chat, rem_chat, dest_chat, indice, contrato_id, token_chat from tbl_chat_info where fila_chat_id=".$_POST['id_fila'];
-//echo "<br>".$sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-$info = $stmt->fetch( PDO::FETCH_ASSOC );
+$stmt = $PDO->prepare("SELECT id_chat, rem_chat, dest_chat, indice, contrato_id, token_chat from tbl_chat_info where fila_chat_id=?");
+$stmt->execute([$idFila]);
+$info = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-
-
-if($info['id_chat']!=''){
-
+if (is_array($info) && ($info['id_chat'] ?? '') != '') {
+    $chatId = (int) $info['id_chat'];
+    $remChat = htmlspecialchars((string) $info['rem_chat'], ENT_QUOTES, 'UTF-8');
+    $destChat = htmlspecialchars((string) $info['dest_chat'], ENT_QUOTES, 'UTF-8');
+    $tokenChat = htmlspecialchars((string) $info['token_chat'], ENT_QUOTES, 'UTF-8');
+    $contratoId = (int) $info['contrato_id'];
+    $indice = (int) $info['indice'];
     ?>
-    <input type="hidden" id="id_user_remetente_<?=$chatId?>" name="id_user_remetente_<?=$chatId?>" value="<?=$info['rem_chat'];?>">
-    <input type="hidden" id="id_user_destinatario_<?=$chatId?>" name="id_user_destinatario_<?=$chatId?>" value="<?=$info['dest_chat'];?>">
+    <input type="hidden" id="id_user_remetente_<?= $chatId ?>" name="id_user_remetente_<?= $chatId ?>" value="<?= $remChat ?>">
+    <input type="hidden" id="id_user_destinatario_<?= $chatId ?>" name="id_user_destinatario_<?= $chatId ?>" value="<?= $destChat ?>">
     <script>
-        var remetente = '<?=$info['rem_chat'];?>';
-        var destinatario = '<?=$info['dest_chat'];?>';
+        var remetente = <?= json_encode((string) $info['rem_chat'], JSON_UNESCAPED_UNICODE) ?>;
+        var destinatario = <?= json_encode((string) $info['dest_chat'], JSON_UNESCAPED_UNICODE) ?>;
         var mensagem = 'Atendimento encerrado pelo Gestor';
-        var chatId = '<?=$chatId?>';
-        var indice = $('#indice_'+<?=$info['indice'];?>).val();
-        chatFim(chatId, destinatario, <?=$info['contrato_id']?>, '<?=$info['token_chat'];?>', mensagem, indice);
-        //chatFim(chatId, remetente, <?=$info['contrato_id']?>, '<?=$info['token_chat'];?>', mensagem, indice);
+        var chatId = <?= json_encode((string) $chatId) ?>;
+        var indice = $('#indice_'+<?= $indice ?>).val();
+        chatFim(chatId, destinatario, <?= $contratoId ?>, <?= json_encode((string) $info['token_chat']) ?>, mensagem, indice);
     </script>
     <?php
-    $chatId=$info['id_chat'];
-    $update="UPDATE tbl_chat_info SET status_chat=9 where fila_chat_id=".$_POST['id_fila'];
-    //echo "<br>".$update;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $stmt = $PDO->prepare("UPDATE tbl_chat_info SET status_chat=9 where fila_chat_id=?");
+    $stmt->execute([$idFila]);
 }
 
+$stmt = $PDO->prepare("UPDATE tbl_chat_fila SET status_fila=9 where id_fila_chat=?");
+$result = $stmt->execute([$idFila]);
 
-$update="UPDATE tbl_chat_fila SET status_fila=9 where id_fila_chat=".$_POST['id_fila'];
-//echo "<br>".$update;
-$stmt = $PDO->prepare( $update );
-$result = $stmt->execute();
+$stmt = $PDO->prepare("DELETE FROM tbl_tma_atend where fila_chat_id=?");
+$stmt->execute([$idFila]);
 
-$delete="DELETE FROM tbl_tma_atend where fila_chat_id=".$_POST['id_fila'];
-//echo "<br>".$update;
-$stmt = $PDO->prepare( $delete );
-$result = $stmt->execute();
-
-
-//echo "<br>".$result;
-
-if($result){
+if ($result) {
     echo '<i class="fas fa-check-circle fa-2x" style="color: green"></i>';
 }
-
-

@@ -1,13 +1,11 @@
 <?php
 include("../cnf/session.php");
 //depurador($_POST);
-if($_POST['id_fila']==''){
-    $_POST['id_fila'] = 0;
-}
+$idFila = (int) ($_POST['id_fila'] ?? 0);
 ?>
 <!-- GRAFICO 1 -->
 <style>
-#graf_1_<?=$_POST['id_fila'];
+#graf_1_<?=$idFila;
 
 ?> {
     width: 100%;
@@ -34,18 +32,22 @@ $data_ant = date('Y-m-d', strtotime('-5 days', strtotime(date('Y-m-d'))));
 
 
 
-if($_POST['id_fila']!=0){
-    $sqlQuery = " where fila_id=".$_POST['id_fila'];
-    $sqlQuery_ = " and fila_id=".$_POST['id_fila'];
+if($idFila != 0){
+    $sqlQuery = " where fila_id=?";
+    $sqlQuery_ = " and fila_id=?";
+    $grafParams = [$idFila];
+    $grafParams2 = [$idFila];
 } else {
     $sqlQuery = "";
     $sqlQuery_ = "";
+    $grafParams = [];
+    $grafParams2 = [];
 }
 
 $sql="SELECT date_format(data_hora, '%d/%m') as dia, count(*) as qtd from tbl_chat_fila $sqlQuery group by date_format(data_hora, '%Y-%m-%d') order by date_format(data_hora, '%Y-%m-%d') desc limit 10";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($grafParams);
 $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($dados);
 
@@ -55,7 +57,7 @@ $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
     <h7>Estatísticas de hoje (<?=date('d/m/Y')?>)</h7>
 </div>
 
-<div id="graf_1_<?=$_POST['id_fila'];?>">
+<div id="graf_1_<?=$idFila;?>">
     <div class="quadro">
         <div class="tit_info">Em Fila</div>
         <div class="info"></div>
@@ -92,7 +94,7 @@ $sql="SELECT count(*) as qtd, status_fila, (SELECT nome_situacao from tbl_situac
 
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($grafParams2);
 $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($ddChats_2);
 
@@ -115,7 +117,7 @@ $ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
     }
     </style>
 
-    <div id="graf_2_<?php echo $_POST['id_fila']; ?>" class="chartdiv"></div>
+    <div id="graf_2_<?php echo $idFila; ?>" class="chartdiv"></div>
 </div>
 
 
@@ -178,7 +180,7 @@ function drawChart() {
 
     };
 
-    var chart = new google.visualization.PieChart(document.getElementById('graf_2_<?php echo $_POST['id_fila']; ?>'));
+    var chart = new google.visualization.PieChart(document.getElementById('graf_2_<?php echo $idFila; ?>'));
 
     chart
         .draw(data, options);

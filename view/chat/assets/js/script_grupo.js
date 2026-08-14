@@ -1,5 +1,26 @@
 
 
+function stSafeChatHtml(html) {
+    if (typeof window.stSafeChatHtml === 'function' && window.stSafeChatHtml !== stSafeChatHtml) {
+        return window.stSafeChatHtml(html);
+    }
+    var tmp = document.createElement('div');
+    tmp.innerHTML = String(html || '');
+    tmp.querySelectorAll('script,iframe,object,embed,link,meta,style').forEach(function (n) {
+        n.remove();
+    });
+    tmp.querySelectorAll('*').forEach(function (el) {
+        Array.from(el.attributes).forEach(function (attr) {
+            var name = String(attr.name || '');
+            var val = String(attr.value || '');
+            if (/^on/i.test(name) || ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(val))) {
+                el.removeAttribute(name);
+            }
+        });
+    });
+    return tmp.innerHTML;
+}
+
             conn.onmessage = function (e) {
                 data = JSON.parse(e.data);
                 //console.log(data);
@@ -48,7 +69,7 @@
                         msg, rem, com, nome, img, tk
                     },
                     function (valor) {
-                        $(feed).html(valor);
+                        $(feed).html(stSafeChatHtml(valor));
                     });
                 }
             }
@@ -158,7 +179,7 @@
                             },
                             function (valor) {
                                 if(valor.indexOf("Ratchet")<0){
-                                    $('#'+elMsg).html(valor);
+                                    $('#'+elMsg).html(stSafeChatHtml(valor));
                                 } else {
                                     location.reload();
                                 }

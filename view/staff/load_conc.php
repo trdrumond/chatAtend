@@ -1,56 +1,66 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
+$formId = (int) ($_POST['id_form'] ?? 0);
+$contratoId = (int) ($_POST['id_contrato'] ?? 0);
+$tableDem = 'tbl_in_dem_' . $formId . '_' . $contratoId;
 
-$sql="SELECT count(a.id_form_dem) as qtd, a.situacao_id from tbl_in_dem_".$_POST['id_form']."_".$_POST['id_contrato']." a where date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.situacao_id order by qtd desc";
-//echo "<br>".$sql;
+if (!preg_match('/^tbl_in_dem_\d+_\d+$/', $tableDem)) {
+    return;
+}
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+    return;
+}
+
+$qtd_aberto = 0;
+$qtd_tratamento = 0;
+$qtd_pendente = 0;
+$qtd_concluido = 0;
+
+$sql = "SELECT count(a.id_form_dem) as qtd, a.situacao_id from {$tableDem} a where date_format(a.data_hora, '%Y-%m')=date_format(curdate(), '%Y-%m') group by a.situacao_id order by qtd desc";
 $stmt = $PDO->prepare($sql);
 $result = $stmt->execute();
-$ddChats_2 = $stmt->fetchAll( PDO::FETCH_ASSOC );
-//depurador($ddChats_2);
-for($y=0;$y<count($ddChats_2);$y++){
-    $ls=$ddChats_2[$y];
+$ddChats_2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if($ls['situacao_id']==1){
+for ($y = 0; $y < count($ddChats_2); $y++) {
+    $ls = $ddChats_2[$y];
+
+    if ($ls['situacao_id'] == 1) {
         $qtd_aberto = $qtd_aberto + $ls['qtd'];
     }
-    if($ls['situacao_id']==2){
+    if ($ls['situacao_id'] == 2) {
         $qtd_tratamento = $qtd_tratamento + $ls['qtd'];
     }
-    if($ls['situacao_id']==3){
+    if ($ls['situacao_id'] == 3) {
         $qtd_pendente = $qtd_pendente + $ls['qtd'];
     }
-    if($ls['situacao_id']==4){
+    if ($ls['situacao_id'] == 4) {
         $qtd_concluido = $qtd_concluido + $ls['qtd'];
     }
 }
-$qtd_concluido = ($qtd_concluido=='') ? 0 : $qtd_concluido;
-$qtd_aberto = ($qtd_aberto=='') ? 0 : $qtd_aberto;
-$qtd_tratamento = ($qtd_tratamento=='') ? 0 : $qtd_tratamento;
-$qtd_pendente = ($qtd_pendente=='') ? 0 : $qtd_pendente;
+$qtd_concluido = ($qtd_concluido == '') ? 0 : $qtd_concluido;
+$qtd_aberto = ($qtd_aberto == '') ? 0 : $qtd_aberto;
+$qtd_tratamento = ($qtd_tratamento == '') ? 0 : $qtd_tratamento;
+$qtd_pendente = ($qtd_pendente == '') ? 0 : $qtd_pendente;
 $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
 
-//echo "<br>Geral: ".$qtd_total;
-//echo "<br>Concluído: ".$qtd_concluido;
+$chartKey = $formId . '_' . $contratoId;
 
 ?>
    <script>
         am4core.ready(function() {
 
-        // Themes begin
         am4core.useTheme(am4themes_animated);
-        // Themes end
 
-        var chart = am4core.create("chart_2_<?php echo $_POST['id_form']. '_'.$_POST['id_contrato']; ?>", am4charts.PieChart);
-        chart.hiddenState.properties.opacity = 0; // this creates initial fade-in
+        var chart = am4core.create("chart_2_<?= $chartKey ?>", am4charts.PieChart);
+        chart.hiddenState.properties.opacity = 0;
 
         chart.data = [
         {
             country: "Entrada",
-            value: <?php echo $qtd_total-$qtd_concluido; ?>
+            value: <?php echo $qtd_total - $qtd_concluido; ?>
         }
-        <?php if($qtd_concluido>0){ ?>
+        <?php if ($qtd_concluido > 0) { ?>
         ,{
             country: "Concluído",
             value: <?php echo $qtd_concluido; ?>
@@ -75,10 +85,9 @@ $qtd_total = $qtd_aberto + $qtd_tratamento + $qtd_pendente + $qtd_concluido;
         series.hiddenState.properties.startAngle = 90;
         series.hiddenState.properties.endAngle = 90;
 
-        //chart.legend = new am4charts.Legend();
-
-        }); // end am4core.ready()
+        });
     </script>
     <div class="chart-100">
-        <div id="chart_2_<?php echo $_POST['id_form']. '_'.$_POST['id_contrato']; ?>" class="chartdiv"></div>
+        <div id="chart_2_<?= $chartKey ?>" class="chartdiv"></div>
     </div>
+

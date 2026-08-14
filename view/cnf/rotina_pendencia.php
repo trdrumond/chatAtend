@@ -11,27 +11,31 @@ $pend_info = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($pend_info);
 //echo "<br>";
 for($x=0;$x<count($pend_info);$x++){
-    $sql="UPDATE tbl_chat_fila SET status_fila=5, ta='00:00:00', te='00:00:00' where id_fila_chat=".$pend_info[$x]['id_fila_chat'];
+    $filaChatId = (int) ($pend_info[$x]['id_fila_chat'] ?? 0);
+    if ($filaChatId <= 0) {
+        continue;
+    }
+    $sql="UPDATE tbl_chat_fila SET status_fila=5, ta='00:00:00', te='00:00:00' where id_fila_chat=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$filaChatId]);
 
-    $sql="UPDATE tbl_chat_fila_secondary SET status_fila=5, ta='00:00:00', te='00:00:00' where id_fila_chat=".$pend_info[$x]['id_fila_chat'];
+    $sql="UPDATE tbl_chat_fila_secondary SET status_fila=5, ta='00:00:00', te='00:00:00' where id_fila_chat=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$filaChatId]);
 
-    $sql="UPDATE tbl_chat_info_secondary SET status_chat=5 where fila_chat_id=".$pend_info[$x]['id_fila_chat'];
+    $sql="UPDATE tbl_chat_info_secondary SET status_chat=5 where fila_chat_id=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$filaChatId]);
 
-    $sql="UPDATE tbl_chat_info_secondary SET status_chat=5 where fila_chat_id=".$pend_info[$x]['id_fila_chat'];
+    $sql="UPDATE tbl_chat_info_secondary SET status_chat=5 where fila_chat_id=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$filaChatId]);
 
-    $sql="DELETE FROM tbl_tma_atend where fila_chat_id=".$pend_info[$x]['id_fila_chat'];
+    $sql="DELETE FROM tbl_tma_atend where fila_chat_id=?";
     //echo "<br>".$sql;
     //$stmt = $PDO->prepare($sql);
     //$result = $stmt->execute();

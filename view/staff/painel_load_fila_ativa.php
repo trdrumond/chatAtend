@@ -4,8 +4,7 @@ include("../cnf/conn.php");
 
 //depurador($_POST);
 
-
-
+$filaId = (int) ($_POST['fila'] ?? 0);
 
 $sql="SELECT a.id_fila_chat, a.protocolo, date_format(a.data_hora, '%H:%i:%s') as hora_registro, timediff(curtime(), date_format(a.data_hora, '%H:%i:%s')) as tempo_decorrido, d.nome_fila, b.titulo_assunto"
     .", (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=ate_resp) as nome_ate"
@@ -16,8 +15,10 @@ $sql="SELECT a.id_fila_chat, a.protocolo, date_format(a.data_hora, '%H:%i:%s') a
     ." and a.status_fila=c.id_situacao"
     ." and a.fila_id=d.id_fila"
     ." and a.status_fila = 1";
-    if($_POST['fila']!=0){
-        $sql .=" and a.fila_id=".$_POST['fila'];
+    $sqlParams = [];
+    if($filaId != 0){
+        $sql .=" and a.fila_id=?";
+        $sqlParams[] = $filaId;
     }
 
     $sql .=" order by a.data_hora asc";
@@ -26,7 +27,7 @@ $sql="SELECT a.id_fila_chat, a.protocolo, date_format(a.data_hora, '%H:%i:%s') a
 
 //echo $sql;
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute($sqlParams);
 $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($dados);
 if(count($dados)>0){
@@ -47,31 +48,26 @@ if(count($dados)>0){
     <tbody>
         <?php
             for($x=0;$x<count($dados);$x++){
+                $idFilaChat = (int) $dados[$x]['id_fila_chat'];
+                $horaRegJs = json_encode((string) $dados[$x]['hora_registro'], JSON_UNESCAPED_UNICODE);
                 ?>
                 <script>
-                    var tempo_fila_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>;
-                    clearInterval(tempo_fila_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>);
+                    var tempo_fila_<?= $filaId ?>_<?= $idFilaChat ?>;
+                    clearInterval(tempo_fila_<?= $filaId ?>_<?= $idFilaChat ?>);
                 </script>
                 <?php
                 echo '<tr>';
-                    echo '<td>'.$dados[$x]['protocolo'].'</td>';
-                    //echo '<td><center>'.$dados[$x]['nome_situacao'].'</center></td>';
-                    //echo '<td><center>'.$dados[$x]['nome_fila'].'</center></td>';
-                    echo '<td><center><div id="tempo_'.$_POST['fila'].'_'.$dados[$x]['id_fila_chat'].'">'.$dados[$x]['tempo_decorrido'].'</div></center></td>';
-                    //echo '<td><center>'.$dados[$x]['nome_fila'].'</center></td>';
-                    //echo '<td><center>'.$dados[$x]['titulo_assunto'].'</center></td>';
-                    //echo '<td><center>'.$dados[$x]['nome_ate'].'</center></td>';
+                    echo '<td>'.stHtml($dados[$x]['protocolo']).'</td>';
+                    echo '<td><center><div id="tempo_'.$filaId.'_'.$idFilaChat.'">'.stHtml($dados[$x]['tempo_decorrido']).'</div></center></td>';
                 echo '</tr>';
                 ?>
                 <script>
-                    clearInterval(tempo_fila_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>);
+                    clearInterval(tempo_fila_<?= $filaId ?>_<?= $idFilaChat ?>);
 
-                    //timeDiff_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>('<?php echo $dados[$x]['hora_registro']; ?>')
+                    tempo_fila_<?= $filaId ?>_<?= $idFilaChat ?> = setInterval(function(){ timeDiff_<?= $filaId ?>_<?= $idFilaChat ?>(<?= $horaRegJs ?>) }, 30000);
 
-                    tempo_fila_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?> = setInterval(function(){ timeDiff_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>('<?php echo $dados[$x]['hora_registro']; ?>') }, 30000);
-
-                    function timeDiff_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>(horario){
-                        $.post("staff/tempo_atend_fila.php",  { horario  },  function (valor) { $("#tempo_<?php echo $_POST['fila']; ?>_<?php echo $dados[$x]['id_fila_chat']; ?>").html(valor);  });
+                    function timeDiff_<?= $filaId ?>_<?= $idFilaChat ?>(horario){
+                        $.post("staff/tempo_atend_fila.php",  { horario  },  function (valor) { $("#tempo_<?= $filaId ?>_<?= $idFilaChat ?>").html(valor);  });
                     }
                 </script>
 

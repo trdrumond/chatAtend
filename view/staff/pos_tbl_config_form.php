@@ -6,15 +6,17 @@
     if (file_exists($file)) {include($file);} else {include("../".$file);}
     //echo "<br>TESTE 1";
     if(!isset($dados_form['id_fila'])){
-        $dados_form['id_fila'] = $_POST['id_filas'];
+        $dados_form['id_fila'] = (int) ($_POST['id_filas'] ?? 0);
+    } else {
+        $dados_form['id_fila'] = (int) $dados_form['id_fila'];
     }
     //echo "<br>TESTE 2";
 
 
-    $sql="SELECT a.campo_id as id_campo, a.fila_id as id_fila, b.nome_fila, a.input_id, c.nome_input, c.tipo_input, d.desc_campo, d.nome_campo, a.ativo, a.date_time, a.ordem, a.obg FROM tbl_forms_pos_input_campo_cnf a, tbl_config_fila b, tbl_forms_pos_input c, tbl_forms_pos_input_campo d where a.fila_id=".$dados_form['id_fila']." and a.fila_id=b.id_fila and a.input_id=c.id_input and a.campo_id=d.id_campo order by ordem asc";
+    $sql="SELECT a.campo_id as id_campo, a.fila_id as id_fila, b.nome_fila, a.input_id, c.nome_input, c.tipo_input, d.desc_campo, d.nome_campo, a.ativo, a.date_time, a.ordem, a.obg FROM tbl_forms_pos_input_campo_cnf a, tbl_config_fila b, tbl_forms_pos_input c, tbl_forms_pos_input_campo d where a.fila_id=? and a.fila_id=b.id_fila and a.input_id=c.id_input and a.campo_id=d.id_campo order by ordem asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $dados_form['id_fila']]);
     $info = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($info);
 if(count($info)>0){
@@ -49,8 +51,8 @@ if(count($info)>0){
                 $tbl_color = ($y % 2 == 0) ? 'tbl-white':'tbl-red';
                 echo "<div class='row'>";
                     echo "<div class='col-1 $tbl_color'>".$sel_ordem."</div>";
-                    echo "<div class='col-5 $tbl_color'>".$info[$y]['desc_campo']."</div>";
-                    echo "<div class='col-3 $tbl_color'>".$info[$y]['nome_input']."</div>";
+                    echo "<div class='col-5 $tbl_color'>".stHtml($info[$y]['desc_campo'])."</div>";
+                    echo "<div class='col-3 $tbl_color'>".stHtml($info[$y]['nome_input'])."</div>";
                     /*
                     echo "<div class='col-3 $tbl_color'><center>";
                             echo "<div class='switch'>

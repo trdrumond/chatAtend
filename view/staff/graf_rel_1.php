@@ -3,10 +3,10 @@ include("../cnf/session.php");
 
 //depurador($_POST);
 
-    $sql ="SELECT ativo from tbl_config_fila where id_fila=".$infoUser['fila_id'];
+    $sql ="SELECT ativo from tbl_config_fila where id_fila=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $infoUser['fila_id']]);
     $filaBko = $stmt->fetch( PDO::FETCH_ASSOC );
 
 ?>

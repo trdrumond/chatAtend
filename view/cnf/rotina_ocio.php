@@ -14,18 +14,15 @@ $infoFila = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
 if(count($infoFila)>0){
     for($x=0;$x<count($infoFila);$x++){
-        //echo "<br>".$infoFila[$x]['id_chat'];
-        $sqlInsLog="UPDATE tbl_chat_info_secondary SET status_chat=5 where id_chat=".$infoFila[$x]['id_chat'];
+        $chatIdOcio = (int) ($infoFila[$x]['id_chat'] ?? 0);
+        if ($chatIdOcio <= 0) {
+            continue;
+        }
+        //echo "<br>".$chatIdOcio;
+        $sqlInsLog="UPDATE tbl_chat_info_secondary SET status_chat=5 where id_chat=?";
         //echo "<br>".$sqlInsLog;
         $stmt = $PDO->prepare( $sqlInsLog );
-        $execInsLog = $stmt->execute();
-        //var_dump($execInsLog);
-        //echo "<br>";
-
-        $sqlInsLog="UPDATE tbl_chat_info_secondary SET status_chat=5 where id_chat=".$infoFila[$x]['id_chat'];
-        //echo "<br>".$sqlInsLog;
-        $stmt = $PDO->prepare( $sqlInsLog );
-        $execInsLog = $stmt->execute();
+        $execInsLog = $stmt->execute([$chatIdOcio]);
         //var_dump($execInsLog);
         //echo "<br>";
     }

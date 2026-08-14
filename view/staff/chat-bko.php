@@ -123,10 +123,10 @@ if (empty($infoChat['id_chat'])) {
     ." FROM tbl_user a, tbl_user_img_perfil b, tbl_agencia d"
     ." WHERE a.agencia_id=d.id_agencia"
     ." and a.id_user=b.user_id"
-    ." AND a.id_user=".$infFila['ate_resp'];
+    ." AND a.id_user=?";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $infFila['ate_resp']]);
     $dados_ate = $stmt->fetch( PDO::FETCH_ASSOC );
 
     //if($dados_ate['email']!=''){ $mail = '('.$dados_ate['email'].')';} else {$mail='';}
@@ -151,23 +151,28 @@ if (empty($infoChat['id_chat'])) {
         $infoChat['fila_chat_id'] = $infFila['id_fila_chat'];
     }
 
-        $sql="SELECT id from tbl_tma_atend where fila_chat_id is null and resp_id=".$infoUser['id_user'];
+        $sql="SELECT id from tbl_tma_atend where fila_chat_id is null and resp_id=?";
         //echo "<br>".$sql;
         $stmt = $PDO->prepare( $sql );
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $infoUser['id_user']]);
         $infoAtend = $stmt->fetch( PDO::FETCH_ASSOC );
 
         if($infoAtend['id']!=''){
-            $sql="UPDATE tbl_tma_atend SET fila_chat_id=".$infFila['id_fila_chat'].", chat_id=".$infoChat['id_chat'].", fila_id=".$infFila['fila_id']." where id=".$infoAtend['id'];
+            $sql="UPDATE tbl_tma_atend SET fila_chat_id=?, chat_id=?, fila_id=? where id=?";
             //echo "<br>".$sql;
             $stmt = $PDO->prepare( $sql );
-            $result = $stmt->execute();
+            $result = $stmt->execute([
+                (int) $infFila['id_fila_chat'],
+                (int) $infoChat['id_chat'],
+                (int) $infFila['fila_id'],
+                (int) $infoAtend['id'],
+            ]);
         }
 
-    $sql="SELECT id_faq, titulo_faq, txt from tbl_faq where fila_id=".$infFila['fila_id']." and (assunto_id=0 or assunto_id=".$infFila['assunto_id'].")";
+    $sql="SELECT id_faq, titulo_faq, txt from tbl_faq where fila_id=? and (assunto_id=0 or assunto_id=?)";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $infFila['fila_id'], (int) $infFila['assunto_id']]);
     $infoFaq = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($infoFaq);
 
@@ -209,7 +214,7 @@ if (empty($infoChat['id_chat'])) {
             </div>
         </div>
         <div id="div_tempo_<?=$chatId;?>" class="st-chat-bko-timers div_tempo">
-            <div id="div_te_<?=$_POST['indice'];?>" class="st-chat-timer div_te"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
+            <div id="div_te_<?= $indDiv ?>" class="st-chat-timer div_te"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
             <div id="div_ta_<?=$infoChat['id_chat'];?>" class="st-chat-timer st-chat-timer--ta div_te"></div>
         </div>
     </header>
@@ -255,10 +260,10 @@ if (empty($infoChat['id_chat'])) {
             <div class="tab-pane fade show active st-chat-pane" id="proc_<?=$chatId;?>" role="tabpanel"
                 aria-labelledby="proc-tab_<?=$chatId;?>">
                 <?php
-                        $sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=".$infFila['assunto_id'];
+                        $sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=?";
                         //echo "<br>".$sql;
                         $stmt = $PDO->prepare($sql);
-                        $result = $stmt->execute();
+                        $result = $stmt->execute([(int) $infFila['assunto_id']]);
                         $infoAssunto = $stmt->fetch( PDO::FETCH_ASSOC );
                         if($infoAssunto['procedimento']==''){$infoAssunto['procedimento'] = '<br><br><center><h6>Sem informações de procedimento no sistema.<h6></center>';}
 

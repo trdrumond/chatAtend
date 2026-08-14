@@ -7,58 +7,74 @@ if (!isset($infoUserConfig) || !is_array($infoUserConfig)) {
     $infoUserConfig = ['contrato_id' => '0'];
 }
 
-$contratoIn = $infoUserConfig['contrato_id'];
-$qryContrato = ($infoUser['nivel_id'] > 0) ? " AND contrato_id IN ($contratoIn)" : '';
-$qryUser     = ($infoUser['nivel_id'] > 0) ? " AND contrato_id IN ($contratoIn)" : '';
-$qryFila     = ($infoUser['nivel_id'] > 0) ? " AND contrato_id IN ($contratoIn)" : '';
-$qryAssunto  = ($infoUser['nivel_id'] > 0) ? " AND contrato_id IN ($contratoIn)" : '';
-$qryFaq      = ($infoUser['nivel_id'] > 0) ? " AND contrato_id IN ($contratoIn)" : '';
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$filterCtt = ((int) ($infoUser['nivel_id'] ?? 0) > 0);
+$cttParams = $filterCtt ? $cttIn['ids'] : [];
+$qryContrato = $filterCtt ? ' AND contrato_id IN (' . $cttIn['ph'] . ')' : '';
+$qryIdContrato = $filterCtt ? ' AND id_contrato IN (' . $cttIn['ph'] . ')' : '';
 
-function cnfDashScalar(PDO $pdo, string $sql): int
+function cnfDashScalar(PDO $pdo, string $sql, array $params = []): int
 {
     $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+    $stmt->execute($params);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return (int) ($row['total'] ?? 0);
 }
 
-$total_bko = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=4 $qryUser");
-$total_sol = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=5 $qryUser");
-$total_aco = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=2 $qryUser");
-$total_adm = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id IN (0,1,3) $qryUser");
-$total_usuarios = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 $qryUser");
-$total_dia = cnfDashScalar($PDO, "SELECT COUNT(DISTINCT user_id) AS total FROM tbl_log_diario WHERE data_log=CURDATE() $qryContrato");
-$total_online_bko = cnfDashScalar($PDO, "SELECT COUNT(DISTINCT user_id) AS total FROM tbl_log_diario WHERE data_log=CURDATE() AND date_out IS NULL AND nivel_id=4 $qryContrato");
+function cnfDashAll(PDO $pdo, string $sql, array $params = []): array
+{
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
 
-$total_fila_ativa   = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_config_fila WHERE ativo=1 $qryFila");
-$total_fila_inativa = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_config_fila WHERE ativo=0 $qryFila");
-$total_contratos    = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_contrato WHERE ativo=1" . ($infoUser['nivel_id'] > 0 ? " AND id_contrato IN ($contratoIn)" : ''));
-$total_assuntos     = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_assunto WHERE ativo=1 $qryAssunto");
-$total_faqs         = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_faq WHERE ativo=1 $qryFaq");
-$total_agencias     = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_agencia WHERE ativo=1" . ($infoUser['nivel_id'] > 0 ? " AND contrato_id IN ($contratoIn)" : ''));
+function cnfDashRow(PDO $pdo, string $sql, array $params = []): array
+{
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
 
-$ops_hoje = $PDO->query(
+$total_bko = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=4 $qryContrato", $cttParams);
+$total_sol = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=5 $qryContrato", $cttParams);
+$total_aco = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id=2 $qryContrato", $cttParams);
+$total_adm = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 AND nivel_id IN (0,1,3) $qryContrato", $cttParams);
+$total_usuarios = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_user WHERE ativo=1 $qryContrato", $cttParams);
+$total_dia = cnfDashScalar($PDO, "SELECT COUNT(DISTINCT user_id) AS total FROM tbl_log_diario WHERE data_log=CURDATE() $qryContrato", $cttParams);
+$total_online_bko = cnfDashScalar($PDO, "SELECT COUNT(DISTINCT user_id) AS total FROM tbl_log_diario WHERE data_log=CURDATE() AND date_out IS NULL AND nivel_id=4 $qryContrato", $cttParams);
+
+$total_fila_ativa   = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_config_fila WHERE ativo=1 $qryContrato", $cttParams);
+$total_fila_inativa = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_config_fila WHERE ativo=0 $qryContrato", $cttParams);
+$total_contratos    = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_contrato WHERE ativo=1 $qryIdContrato", $cttParams);
+$total_assuntos     = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_assunto WHERE ativo=1 $qryContrato", $cttParams);
+$total_faqs         = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_faq WHERE ativo=1 $qryContrato", $cttParams);
+$total_agencias     = cnfDashScalar($PDO, "SELECT COUNT(*) AS total FROM tbl_agencia WHERE ativo=1 $qryContrato", $cttParams);
+
+$opsParams = $cttParams === [] ? [] : array_merge($cttParams, $cttParams, $cttParams);
+$ops_hoje = cnfDashRow(
+    $PDO,
     "SELECT
         (SELECT COUNT(*) FROM tbl_chat_fila WHERE status_fila=" . ST_FILA_NA_FILA . " $qryContrato) AS em_fila,
         (SELECT COUNT(*) FROM tbl_chat_fila WHERE " . stFilaSqlAtendimentoAtivo() . " $qryContrato) AS em_atend,
         (SELECT COUNT(*) FROM tbl_chat_fila WHERE status_fila>=" . ST_FILA_CONCLUIDO . " AND hora_inicio>=CURDATE() AND hora_inicio<DATE_ADD(CURDATE(), INTERVAL 1 DAY) $qryContrato) AS concluidos,
-        (SELECT COUNT(*) FROM tbl_pend_info WHERE situacao_id=3 AND data_hora_fim IS NULL AND data_hora>=CURDATE() AND data_hora<DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AS pendencias"
-)->fetch(PDO::FETCH_ASSOC);
+        (SELECT COUNT(*) FROM tbl_pend_info WHERE situacao_id=3 AND data_hora_fim IS NULL AND data_hora>=CURDATE() AND data_hora<DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AS pendencias",
+    $opsParams
+);
 
 $sqlNiveis = "SELECT n.nome_nivel, COUNT(u.id_user) AS total
     FROM tbl_user u
     INNER JOIN tbl_nivel n ON n.id_nivel = u.nivel_id
-    WHERE u.ativo=1 $qryUser
+    WHERE u.ativo=1 $qryContrato
     GROUP BY u.nivel_id, n.nome_nivel
     ORDER BY total DESC";
-$porNivel = $PDO->query($sqlNiveis)->fetchAll(PDO::FETCH_ASSOC);
+$porNivel = cnfDashAll($PDO, $sqlNiveis, $cttParams);
 
 $sqlLogins = "SELECT DATE(data_log) AS dia, COUNT(DISTINCT user_id) AS total
     FROM tbl_log_diario
     WHERE data_log >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) $qryContrato
     GROUP BY DATE(data_log)
     ORDER BY dia ASC";
-$logins7d = $PDO->query($sqlLogins)->fetchAll(PDO::FETCH_ASSOC);
+$logins7d = cnfDashAll($PDO, $sqlLogins, $cttParams);
 
 $sqlChats = "SELECT DATE(hora_inicio) AS dia, COUNT(*) AS total
     FROM tbl_chat_fila
@@ -68,7 +84,7 @@ $sqlChats = "SELECT DATE(hora_inicio) AS dia, COUNT(*) AS total
       $qryContrato
     GROUP BY DATE(hora_inicio)
     ORDER BY dia ASC";
-$chats7d = $PDO->query($sqlChats)->fetchAll(PDO::FETCH_ASSOC);
+$chats7d = cnfDashAll($PDO, $sqlChats, $cttParams);
 
 $sqlTopFilas = "SELECT f.nome_fila, COUNT(c.id_fila_chat) AS qtd
     FROM tbl_chat_fila c
@@ -79,7 +95,7 @@ $sqlTopFilas = "SELECT f.nome_fila, COUNT(c.id_fila_chat) AS qtd
     GROUP BY c.fila_id, f.nome_fila
     ORDER BY qtd DESC
     LIMIT 6";
-$topFilas = $PDO->query($sqlTopFilas)->fetchAll(PDO::FETCH_ASSOC);
+$topFilas = cnfDashAll($PDO, $sqlTopFilas, $cttParams);
 
 $sqlUltimos = "SELECT DISTINCT l.user_id,
         (SELECT CONCAT(nome, ' ', sobrenome) FROM tbl_user WHERE id_user=l.user_id) AS nome,
@@ -89,7 +105,7 @@ $sqlUltimos = "SELECT DISTINCT l.user_id,
     WHERE l.data_log = CURDATE() $qryContrato
     ORDER BY l.date_up DESC
     LIMIT 8";
-$ultimosAcessos = $PDO->query($sqlUltimos)->fetchAll(PDO::FETCH_ASSOC);
+$ultimosAcessos = cnfDashAll($PDO, $sqlUltimos, $cttParams);
 
 $chartNivel = [];
 foreach ($porNivel as $row) {

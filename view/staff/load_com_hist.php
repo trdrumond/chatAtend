@@ -34,19 +34,18 @@ include("../cnf/session.php");
 //depurador($_POST);
 
 
-$sql="SELECT id_com, contrato_id, data_hora, rem_chat, (SELECT concat(nome, ' ', sobrenome) as nome_user from tbl_user where id_user=rem_chat) as rem_nome, dest_chat, (SELECT concat(nome, ' ', sobrenome) as nome_user from tbl_user where id_user=dest_chat) as dest_nome, grupo_com, grupo_nome from tbl_com_info where id_com=".$_POST['id_com'];
-//echo "<br>".$sql;
+$sql="SELECT id_com, contrato_id, data_hora, rem_chat, (SELECT concat(nome, ' ', sobrenome) as nome_user from tbl_user where id_user=rem_chat) as rem_nome, dest_chat, (SELECT concat(nome, ' ', sobrenome) as nome_user from tbl_user where id_user=dest_chat) as dest_nome, grupo_com, grupo_nome from tbl_com_info where id_com=?";
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([(int) ($_POST['id_com'] ?? 0)]);
 $info = $stmt->fetch( PDO::FETCH_ASSOC );
 //depurador($info);
 
 $type="";
 
 if($info['grupo_com']!=''){
-        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=".$info['id_com'];
+        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=?";
         $stmt = $PDO->prepare($sqlGroupConfig);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $info['id_com']]);
         $infoConfigGrupo = $stmt->fetch( PDO::FETCH_ASSOC );
        // var_dump($infoConfigGrupo);
         if($infoConfigGrupo['cols']==''){

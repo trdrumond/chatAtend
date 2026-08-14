@@ -2,14 +2,17 @@
 require_once __DIR__ . '/../../../cnf/session.php';
 require_once __DIR__ . '/_cnf_ui.php';
 
+$cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+$listParams = [];
 if ($infoUser['nivel_id'] > 2) {
-    $qry = ' and id_contrato in (' . $infoUserConfig['contrato_id'] . ')';
+    $qry = ' and id_contrato in (' . $cttIn['ph'] . ')';
+    $listParams = $cttIn['ids'];
 } else {
     $qry = '';
 }
 $sql = "SELECT id_assunto, titulo_assunto, procedimento, contrato_id, (SELECT concat(nome_contrato, ' - ', uf) from tbl_contrato where id_contrato=contrato_id) as nome_contrato, date_format(data_hora, '%Y-%m-%d') as data_cad, date_format(data_alt, '%Y-%m-%d') as data_alt, date_format(data_alt, '%H:%i:%s') as hora_alt, ativo from tbl_assunto where id_assunto<>'' $qry" . cnf_sql_order_ativo_nome('titulo_assunto');
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($listParams);
 $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $count = count($dados);
 
@@ -75,9 +78,9 @@ echo cnf_datatable_init('tabela', [
 cnf_modal_shell_open('new_registro', '<i class="fas fa-plus-circle"></i> Novo assunto', 'xl');
 cnf_form_section_open('Dados do assunto');
 $cttOpts = '<option value="">Selecione...</option>';
-$sql = 'SELECT id_contrato, nome_contrato, uf from tbl_contrato where ativo=1 and id_contrato in (' . $infoUserConfig['contrato_id'] . ') order by nome_contrato';
+$sql = 'SELECT id_contrato, nome_contrato, uf from tbl_contrato where ativo=1 and id_contrato in (' . $cttIn['ph'] . ') order by nome_contrato';
 $stmt = $PDO->prepare($sql);
-$stmt->execute();
+$stmt->execute($cttIn['ids']);
 $ctts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($ctts as $row) {
     $cttOpts .= '<option value="' . $row['id_contrato'] . '">' . htmlspecialchars($row['nome_contrato'] . ' - ' . $row['uf']) . '</option>';

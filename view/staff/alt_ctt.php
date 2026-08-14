@@ -1,35 +1,27 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
-
-if($_POST['status']!=''){
-    $status=1;
-} else {
-    $status=0;
+$id = (int) ($_POST['id'] ?? 0);
+if ($id < 1 || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $id)) {
+    return;
 }
+$status = (($_POST['status'] ?? '') !== '') ? 1 : 0;
 
-//echo "<br>".$status;
+$stmt = $PDO->prepare("UPDATE tbl_contrato SET ativo=? where id_contrato=?");
+$result = $stmt->execute([$status, $id]);
 
-$sql="UPDATE tbl_contrato SET ativo=$status where id_contrato=".$_POST['id'];
-
-//echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
+if ($result == 1) {
+    $modalId = json_encode((string) $id);
 ?>
 <script>
 
-    $("#modal_alt_<?php echo $_POST['id']; ?>").modal('hide');
+    $("#modal_alt_" + <?= $modalId ?>).modal('hide');
     actionPage('cad-ctt', 'cnf');
 
 
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

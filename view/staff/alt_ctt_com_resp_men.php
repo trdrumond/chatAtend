@@ -2,32 +2,21 @@
 include("../cnf/session.php");
 require_once __DIR__ . '/../cnf/cache_layout.php';
 
-//var_dump($_POST);
+$id = (int) ($_POST['id'] ?? 0);
+if ($id < 1 || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $id)) {
+    return;
+}
+$status = (($_POST['status'] ?? '') !== '') ? 1 : 0;
 
-if($_POST['status']!=''){ $status=1; } else { $status=0; }
+$stmt = $PDO->prepare("UPDATE tbl_contrato SET resp_men=? where id_contrato=?");
+$result = $stmt->execute([$status, $id]);
 
-//echo "<br>".$status;
-
-$sql="UPDATE tbl_contrato SET resp_men=$status where id_contrato=".$_POST['id'];
-
-//echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
-    clearLayoutCacheByContrato($PDO, (int) $_POST['id']);
+if ($result == 1) {
+    clearLayoutCacheByContrato($PDO, $id);
 ?>
 <script>
-
-    //$("#modal_com_<?php echo $_POST['id']; ?>").modal('hide');
-    //actionPage('cad-ctt', 'cnf');
-
-
-
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec
@@ -36,8 +25,6 @@ if($result==1){
             $("#action-page").html(valor);
         });
     }
-
-
 </script>
 <?php
     }

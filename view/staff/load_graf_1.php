@@ -1,15 +1,14 @@
 <?php
 include("../cnf/session.php");
 //depurador($_POST);
-if ($_POST['id_fila'] == '') {
+if (($_POST['id_fila'] ?? '') == '') {
     $_POST['id_fila'] = 0;
 }
+$idFilaCss = (int) ($_POST['id_fila'] ?? 0);
 ?>
 <!-- GRAFICO 1 -->
 <style>
-#graf_1_<?=$_POST['id_fila'];
-
-?> {
+#graf_1_<?= $idFilaCss ?> {
     width: 100%;
     max-height: 130px;
     height: 130px;
@@ -42,22 +41,36 @@ if ($_POST['id_fila'] == '') {
 <?php
 
 
-// Normaliza listas de IDs para evitar lixo em IN() e melhorar plano de execução
+// Normaliza listas de IDs para cláusula IN com placeholders
 $idContratoPost = isset($_POST['id_contrato']) ? $_POST['id_contrato'] : 0;
 $idFilaPost     = isset($_POST['id_fila']) ? $_POST['id_fila'] : 0;
 
+$sqlParams = [];
+$qryContrato = '';
+$qryFila = '';
+
 if ($idContratoPost != 0) {
-    $contratos = array_filter(array_map('intval', explode(',', $idContratoPost)));
-    $filas     = array_filter(array_map('intval', explode(',', $idFilaPost)));
+    $cttIds = array_values(array_filter(array_map('intval', explode(',', (string) $idContratoPost))));
+    if ((int) ($infoUser['nivel_id'] ?? 0) !== 0) {
+        $allowed = stParseIdCsv($infoUserConfig['contrato_id'] ?? '');
+        $cttIds = array_values(array_intersect($cttIds, $allowed));
+    }
+    $filaIds = array_values(array_filter(array_map('intval', explode(',', (string) $idFilaPost))));
+    $cttBind = stSqlInBind($cttIds);
+    $filaBind = stSqlInBind($filaIds);
 
-    $listaContratos = $contratos ? implode(',', $contratos) : '0';
-    $listaFilas     = $filas ? implode(',', $filas) : '0';
+    $qryContrato = ' and contrato_id in (' . $cttBind['ph'] . ')';
+    $qryFila = ' and fila_id IN (' . $filaBind['ph'] . ')';
 
-    $qryContrato = " and contrato_id in (" . $listaContratos . ")";
-    $qryFila = " and fila_id IN (" . $listaFilas . ")";
-} else {
-    $qryContrato = '';
-    $qryFila = "";
+    $sqlParams = array_merge(
+        $filaBind['params'],
+        $cttBind['params'],
+        $filaBind['params'],
+        $cttBind['params'],
+        $filaBind['params'],
+        $cttBind['params'],
+        $filaBind['params']
+    );
 }
 
 //$statusFila = "status_fila IN (4, 6, 7, 10)";
@@ -93,7 +106,7 @@ $sql = "SELECT count(*) as qtd_concluido,"
 //echo "<br>".$sql;
 
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute($sqlParams);
 $dadosHoje = $stmt->fetch(PDO::FETCH_ASSOC);
 //depurador($dados);
 
@@ -122,7 +135,7 @@ if ($dadosHoje['qtd_pend'] == 0) {
     <h7><strong>Hoje (<?= date('d/m/Y') ?>)</strong></h7>
 </div>
 
-<div id="graf_1_<?= $_POST['id_fila']; ?>">
+<div id="graf_1_<?= $idFilaCss ?>">
     <!--
     <div class="quadro info2">
         <div class="tit_info">Em Fila</div>
@@ -186,7 +199,7 @@ $ddChats_2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     </style>
 
-    <div id="graf_2_<?php echo $_POST['id_fila']; ?>" class="chartdiv"></div>
+    <div id="graf_2_<?= $idFilaCss ?>" class="chartdiv"></div>
 </div>
 
 
@@ -249,7 +262,7 @@ function drawChart() {
 
     };
 
-    var chart = new google.visualization.PieChart(document.getElementById('graf_2_<?php echo $_POST['id_fila']; ?>'));
+    var chart = new google.visualization.PieChart(document.getElementById('graf_2_<?= $idFilaCss ?>'));
 
     chart
         .draw(data, options);

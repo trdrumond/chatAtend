@@ -4,7 +4,7 @@ $file = 'cnf/conn.php';
 if (file_exists($file)) {include($file);} else {include("../".$file);}
     //$dados_form['id_fila'] = ($dados_form['id_fila']=='') ? $_POST['id_fila'] : $dados_form['id_fila'];
     if(!isset($dados_form['id_fila'])){
-        $dados_form['id_fila'] = $_POST['id_fila'];
+        $dados_form['id_fila'] = (int) ($_POST['id_fila'] ?? 0);
     }
 
     //depurador($dados_form);
@@ -53,7 +53,7 @@ if (file_exists($file)) {include($file);} else {include("../".$file);}
                                                     $result = $stmt->execute();
                                                     $info = $stmt->fetchAll( PDO::FETCH_ASSOC );
                                                     for($y=0;$y<count($info);$y++){
-                                                        echo '<option value="'.$info[$y]['id_input'].'">'.$info[$y]['nome_input'].'</option>';
+                                                        echo '<option value="'.(int) $info[$y]['id_input'].'">'.stHtml($info[$y]['nome_input']).'</option>';
                                                     }
                                                 ?>
                                             </select>

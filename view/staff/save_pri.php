@@ -1,13 +1,17 @@
 <?php
 include("../cnf/session.php");
 
-$sql="INSERT INTO tbl_prioridade (nome_prioridade, peso) VALUES ('".$_POST['nome']."', '".$_POST['peso']."')";
-//echo $sql;
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$nome = (string) ($_POST['nome'] ?? '');
+$peso = (int) ($_POST['peso'] ?? 0);
 
+if (trim($nome) === '') {
+    return;
+}
 
-if($result==1){
+$stmt = $PDO->prepare("INSERT INTO tbl_prioridade (nome_prioridade, peso) VALUES (?, ?)");
+$result = $stmt->execute([$nome, $peso]);
+
+if ($result == 1) {
 ?>
 
 <script>
@@ -23,7 +27,6 @@ if($result==1){
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

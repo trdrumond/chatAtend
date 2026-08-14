@@ -11,12 +11,13 @@ $infoFile = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
 if(count($infoFile)>0){
     for($x=0;$x<count($infoFile);$x++){
+        $fileId = (int) ($infoFile[$x]['id_file'] ?? 0);
         $file = "view/".$infoFile[$x]['link_file'];
-        $sqlDel="DELETE FROM tbl_chat_files where id_file=".$infoFile[$x]['id_file'];
+        $sqlDel="DELETE FROM tbl_chat_files where id_file=?";
         if(file_exists($file)){
             if(unlink($file)){
                 $stmt = $PDO->prepare( $sqlDel );
-                $execDel = $stmt->execute();
+                $execDel = $stmt->execute([$fileId]);
             }
         }
     }

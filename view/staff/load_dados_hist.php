@@ -32,8 +32,20 @@
     //depurador($_POST);
     //depurador($_SESSION["dados"]);
 
+    $contrato = (int) ($_POST['contrato'] ?? 0);
+    $de = preg_replace('/[^0-9\-]/', '', (string) ($_POST['de'] ?? ''));
+    $ate = preg_replace('/[^0-9\-]/', '', (string) ($_POST['ate'] ?? ''));
+    $fila = (int) ($_POST['fila'] ?? 0);
+    if ($de === '' || $ate === '') {
+        $de = date('Y-m-d');
+        $ate = date('Y-m-d');
+    }
+    if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contrato)) {
+        echo '<p class="text-danger">Contrato não autorizado.</p>';
+        return;
+    }
+
     $sql="SELECT a.id_fila_chat, e.id_chat, a.protocolo, date_format(a.data_hora, '%d/%m/%Y %H:%i:%s') as hora_registro, a.fila_id, d.nome_fila, b.titulo_assunto"
-    //.", (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=ate_resp) as nome_ate"
     .", (concat(f.nome, ' ', f.sobrenome)) as nome_ate"
     .", (SELECT a.nome_empresa from tbl_empresa a, tbl_user b where b.id_user=ate_resp and a.id_empresa=b.empresa_id) as empresa_ate"
     .", (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=bko_resp) as nome_bko"
@@ -44,26 +56,30 @@
     ." and a.ate_resp=f.id_user"
     ." and a.fila_id=d.id_fila"
     ." and a.id_fila_chat=e.fila_chat_id"
-    ." and a.contrato_id=".$_POST['contrato']
-    ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN '".$_POST['de']."' AND  '".$_POST['ate']."'";
+    ." and a.contrato_id=?"
+    ." and date_format(a.data_hora, '%Y-%m-%d') BETWEEN ? AND ?";
+
+    $params = [$contrato, $de, $ate];
 
     if($_SESSION["dados"]['nivel_id']=="5"){
-        $sql.=" and a.ate_resp=".$_SESSION["dados"]['id_user'];
+        $sql.=" and a.ate_resp=?";
+        $params[] = (int) $_SESSION["dados"]['id_user'];
     }
 
     if($_SESSION["dados"]['nivel_id']=="4"){
-        $sql.=" and a.bko_resp=".$_SESSION["dados"]['id_user'];
+        $sql.=" and a.bko_resp=?";
+        $params[] = (int) $_SESSION["dados"]['id_user'];
     }
 
-    if($_POST['fila']!=''){
-        $sql.=" and a.fila_id=".$_POST['fila'];
+    if($fila > 0){
+        $sql.=" and a.fila_id=?";
+        $params[] = $fila;
     }
 
     $sql.=" order by a.data_hora asc";
 
-    //echo $sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute($params);
     $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($dados);
 ?>
@@ -103,25 +119,32 @@
         <tbody>
             <?php
                     for($x=0;$x<count($dados);$x++){
-                        $sql = "SELECT id_mon from tbl_in_mon_".$dados[$x]['fila_id']."_".$_POST['contrato']." where chat_id=".$dados[$x]['id_chat'];
-                        //echo "<br>".$sql;
-                        $stmt = $PDO->prepare($sql);
-                        $result = $stmt->execute();
-                        $dadosMon = $stmt->fetch( PDO::FETCH_ASSOC );
-                        $monit = ($dadosMon['id_mon']=='') ? '<i class="far fa-times-circle" style="color: red;"></i>' : '<i class="far fa-check-circle" style="color: green"></i>';
+                        $tableMon = 'tbl_in_mon_' . (int) $dados[$x]['fila_id'] . '_' . $contrato;
+                        if (preg_match('/^tbl_in_mon_\d+_\d+$/', $tableMon)) {
+                            $sql = "SELECT id_mon from {$tableMon} where chat_id=?";
+                            $stmt = $PDO->prepare($sql);
+                            $stmt->execute([(int) $dados[$x]['id_chat']]);
+                            $dadosMon = $stmt->fetch(PDO::FETCH_ASSOC);
+                        } else {
+                            $dadosMon = [];
+                        }
+                        if (!is_array($dadosMon)) {
+                            $dadosMon = [];
+                        }
+                        $monit = (($dadosMon['id_mon'] ?? '')=='') ? '<i class="far fa-times-circle" style="color: red;"></i>' : '<i class="far fa-check-circle" style="color: green"></i>';
 
-                        echo '<tr id="tr_'.$dados[$x]['id_chat'].'">';
-                            echo '<td>'.$dados[$x]['protocolo'].'</td>';
-                            echo '<td><center>'.$dados[$x]['nome_situacao'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['hora_registro'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['titulo_assunto'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['empresa_ate'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['nome_ate'].'</center></td>';
-                            echo '<td><center>'.$dados[$x]['nome_bko'].'</center></td>';
+                        echo '<tr id="tr_'.(int) $dados[$x]['id_chat'].'">';
+                            echo '<td>'.stHtml($dados[$x]['protocolo']).'</td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_situacao']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['hora_registro']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['titulo_assunto']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['empresa_ate']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_ate']).'</center></td>';
+                            echo '<td><center>'.stHtml($dados[$x]['nome_bko']).'</center></td>';
                             if($infoUser['nivel_id']<=4){
                                 echo '<td><center>'.$monit.'</center></td>';
                             }
-                            echo '<td><center><i class="fas fa-info-circle fa-2x pointer" onclick="abreDetail('.$dados[$x]['id_chat'].')"></i></center></td>';
+                            echo '<td><center><i class="fas fa-info-circle fa-2x pointer" onclick="abreDetail('.(int) $dados[$x]['id_chat'].')"></i></center></td>';
                         echo '</tr>';
                     }
                 ?>

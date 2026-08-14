@@ -36,60 +36,64 @@
 }
 </style>
 
-<div class="titulo_mon">
-    <div class="titulo">
-        <h5>Pendência</h5>
-    </div>
-    <div class="close_mon">
-        <button type="button" class="btn-close" onclick="closePend(<?=$_POST['id_chat']; ?>)"></button>
-    </div>
-</div>
-
 <?php
     include("../cnf/session.php");
     include_once("../cnf/func_input.php");
     include('../cnf/rotina_pendencia.php');
 
-    $sql="SELECT a.id_pend, a.fila_id, a.chat_id, a.ate_resp, a.bko_resp, a.data_hora, a.motivo, b.fila_chat_id from tbl_pend_info a, tbl_chat_info_secondary b where a.chat_id=b.fila_chat_id and b.id_chat=".$_POST['id_chat'];
-    //echo "<br>".$sql;
+    $idChat = (int) ($_POST['id_chat'] ?? 0);
+    $contratoPost = (int) ($_POST['contrato'] ?? 0);
+    if ($contratoPost > 0 && !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoPost)) {
+        echo '<p class="text-danger">Contrato não autorizado.</p>';
+        return;
+    }
+
+    $sql="SELECT a.id_pend, a.fila_id, a.chat_id, a.ate_resp, a.bko_resp, a.data_hora, a.motivo, b.fila_chat_id from tbl_pend_info a, tbl_chat_info_secondary b where a.chat_id=b.fila_chat_id and b.id_chat=?";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([$idChat]);
     $infoPend = $stmt->fetch( PDO::FETCH_ASSOC );
+    if (!is_array($infoPend)) {
+        echo '<p class="text-warning">Pendência não encontrada.</p>';
+        return;
+    }
 
-    $infoPend['motivo'] = ($infoPend['motivo']=='') ? 'Motivo não informado' : $infoPend['motivo'];
-
-    //depurador($infoPend);
+    $infoPend['motivo'] = (($infoPend['motivo'] ?? '')=='') ? 'Motivo não informado' : $infoPend['motivo'];
+    $filaChatId = (int) ($infoPend['fila_chat_id'] ?? 0);
+    $chatPendId = (int) ($infoPend['chat_id'] ?? 0);
 ?>
-<div class="cont_pend" id="conteudo_pend_<?=$infoPend['fila_chat_id'];?>">
+<div class="titulo_mon">
+    <div class="titulo">
+        <h5>Pendência</h5>
+    </div>
+    <div class="close_mon">
+        <button type="button" class="btn-close" onclick="closePend(<?= $idChat ?>)"></button>
+    </div>
+</div>
+<div class="cont_pend" id="conteudo_pend_<?= $filaChatId ?>">
 
     <div class="cont_pend">
         <div class="titulo_pend">Motivo da Pendência:</div>
-        <div class="motivo_pend"><?=$infoPend['motivo'];?></div>
+        <div class="motivo_pend"><?= stHtml($infoPend['motivo']) ?></div>
     </div>
 
     <div class="cont_pend">
         <div class="titulo_pend">Informação da Pendência</div>
         <div class="content-10-line">
             <div class="input-container">
-                <textarea id="txt_pend_<?=$infoPend['fila_chat_id'];?>" rows="3"></textarea>
+                <textarea id="txt_pend_<?= $filaChatId ?>" rows="3"></textarea>
 
             </div>
         </div>
     </div>
 
-    <button class="btn btn-success" id="save_pend_<?=$infoPend['fila_chat_id'];?>" type="button">Finalizar
+    <button class="btn btn-success" id="save_pend_<?= $filaChatId ?>" type="button">Finalizar
         Pendência</button>
 
 </div>
 
 <script>
-//detail('.$dados[$x]['id_chat'].')
 function savePend(id_chat, id_fila_chat, txt_pend) {
-    console.log(id_chat);
-    console.log(id_fila_chat);
-    console.log(txt_pend);
-
-    var div_pend = '#conteudo_pend_' + id_chat;
+    var div_pend = '#conteudo_pend_<?= $filaChatId ?>';
 
     $(div_pend).html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="50"></div>');
 
@@ -99,18 +103,16 @@ function savePend(id_chat, id_fila_chat, txt_pend) {
             txt_pend
         },
         function(valor) {
-            //console.log(valor);
-            $(div_pend).html(valor);
-            abreDetail('<?=$_POST['id_chat'];?>');
+            $(div_pend).html(typeof stSafeChatHtml === 'function' ? stSafeChatHtml(valor) : valor);
+            abreDetail(<?= $idChat ?>);
         });
 }
 
-$('#save_pend_<?=$infoPend['fila_chat_id'];?>').click(function() {
-    console.log('clicou no botão de salvar pendencia');
-    var id_chat = '<?=$_POST['id_chat'];?>';
-    var id_fila_chat = '<?=$infoPend['chat_id'];?>';
-    var txt_pend = $('#txt_pend_<?=$infoPend['fila_chat_id'];?>').val();
-    $('#save_pend_<?=$infoPend['fila_chat_id'];?>').html(
+$('#save_pend_<?= $filaChatId ?>').click(function() {
+    var id_chat = <?= $idChat ?>;
+    var id_fila_chat = <?= $chatPendId ?>;
+    var txt_pend = $('#txt_pend_<?= $filaChatId ?>').val();
+    $('#save_pend_<?= $filaChatId ?>').html(
         '<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="50"></div>');
     savePend(id_chat, id_fila_chat, txt_pend);
 });

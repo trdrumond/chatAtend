@@ -37,18 +37,18 @@ $filaPadrao = 0;
 $cttOpts = '<option value="">Todos os contratos</option>';
 
 $sqlCtt = 'SELECT id_contrato, nome_contrato, uf FROM tbl_contrato WHERE ativo = 1';
-
+$cttParams = [];
 if ($nivelLogin > 0) {
-
-    $sqlCtt .= ' AND id_contrato IN (' . $infoUserConfig['contrato_id'] . ')';
-
+    $cttIn = stSqlInBind(stParseIdCsv($infoUserConfig['contrato_id'] ?? ''));
+    $sqlCtt .= ' AND id_contrato IN (' . $cttIn['ph'] . ')';
+    $cttParams = $cttIn['ids'];
 }
 
 $sqlCtt .= ' ORDER BY nome_contrato';
 
 $stmt = $PDO->prepare($sqlCtt);
 
-$stmt->execute();
+$stmt->execute($cttParams);
 
 $listaContratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

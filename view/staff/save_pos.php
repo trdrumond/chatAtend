@@ -1,159 +1,166 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_SESSION);
-//depurador($infoUser);
-//depurador($_POST);
+$filaIdPost = (int) ($_POST['fila_id'] ?? 0);
+$situacaoDem = (int) ($_POST['situacao_dem'] ?? 0);
+$motivoSituacao = (string) ($_POST['motivo_situacao'] ?? '');
+$tokenChat = (string) ($_POST['tokenChat'] ?? '');
+$pausa = (int) ($_POST['pausa'] ?? 0);
+$indice = (int) ($_POST['indice'] ?? 0);
+$assunto = (int) ($_POST['assunto'] ?? 0);
+$confirmaAssunto = (int) ($_POST['confirma_assunto'] ?? 0);
 
-if($_POST['pausa']==1){
-    $sqlPause = "INSERT INTO tbl_pause (user_id, hora_in, pause_id) VALUES ('".$_SESSION['dados']['id_user']."', now(), 1)";
-    //echo "<br>".$sqlPause;
-    $stmt = $PDO->prepare( $sqlPause );
-    $resultDem = $stmt->execute();
+if ($pausa === 1) {
+    $stmt = $PDO->prepare("INSERT INTO tbl_pause (user_id, hora_in, pause_id) VALUES (?, now(), 1)");
+    $stmt->execute([(int) $_SESSION['dados']['id_user']]);
     logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Pausa');
 }
 
+if ($tokenChat === '') {
+    return;
+}
 
+$stmt = $PDO->prepare(
+    "SELECT id_chat, fila_chat_id, rem_chat, dest_chat, contrato_id from tbl_chat_info a where token_chat=?"
+);
+$stmt->execute([$tokenChat]);
+$infoChat = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!is_array($infoChat) || empty($infoChat['fila_chat_id'])) {
+    return;
+}
 
-$sql="SELECT id_chat, fila_chat_id, rem_chat, dest_chat, contrato_id  from tbl_chat_info a where token_chat='".$_POST['tokenChat']."'";
-$stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
-$infoChat = $stmt->fetch( PDO::FETCH_ASSOC );
+$filaChatId = (int) $infoChat['fila_chat_id'];
+$idChat = (int) $infoChat['id_chat'];
+$bkoId = (int) $_SESSION['dados']['id_user'];
 
+$stmt = $PDO->prepare("SELECT timediff(now(), hora_fim) as tp from tbl_chat_fila where id_fila_chat=?");
+$stmt->execute([$filaChatId]);
+$tp = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['tp' => '00:00:00'];
 
-
-$stm = $PDO->query("SELECT timediff(now(), hora_fim) as tp from tbl_chat_fila where id_fila_chat=".$infoChat['fila_chat_id']);
-$tp = $stm->fetch(PDO::FETCH_ASSOC);
-
-
-if($_POST['situacao_dem']==3 || $_POST['situacao_dem']==7){
-
-    $infoChat['fila_chat_id'];
-    $bkoId = (int) $_SESSION['dados']['id_user'];
-    $motivoSit = addslashes((string) $_POST['motivo_situacao']);
+if ($situacaoDem === 3 || $situacaoDem === 7) {
     $sql = 'UPDATE tbl_chat_fila SET'
-        .' status_fila='.(int) $_POST['situacao_dem'].','
+        .' status_fila=?,'
         .' hora_fim = IF(hora_fim IS NULL OR hora_fim = \'\' OR hora_fim = \'0000-00-00 00:00:00\', NOW(), hora_fim),'
         .' hora_inicio = IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio),'
         .' ta = IF(ta IS NULL OR ta = \'\' OR ta = \'00:00:00\', TIMEDIFF(NOW(), IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio)), ta),'
         .' te = IF(te IS NULL OR te = \'\' OR te = \'00:00:00\', TIMEDIFF(IF(hora_inicio IS NULL OR hora_inicio = \'\' OR hora_inicio = \'0000-00-00 00:00:00\', NOW(), hora_inicio), data_hora), te),'
-        .' bko_resp = IF(bko_resp IS NULL OR bko_resp = 0 OR bko_resp = \'\', '.$bkoId.', bko_resp),'
-        .' motivo = \''.$motivoSit.'\''
-        .' WHERE id_fila_chat='.(int) $infoChat['fila_chat_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+        .' bko_resp = IF(bko_resp IS NULL OR bko_resp = 0 OR bko_resp = \'\', ?, bko_resp),'
+        .' motivo = ?'
+        .' WHERE id_fila_chat=?';
+    $stmt = $PDO->prepare($sql);
+    $stmt->execute([$situacaoDem, $bkoId, $motivoSituacao, $filaChatId]);
 
-    $sql="UPDATE tbl_chat_info SET status_chat=".$_POST['situacao_dem']." where fila_chat_id=".$infoChat['fila_chat_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $stmt = $PDO->prepare("UPDATE tbl_chat_info SET status_chat=? where fila_chat_id=?");
+    $stmt->execute([$situacaoDem, $filaChatId]);
 
-    $stm = $PDO->query("SELECT nome_situacao from tbl_situacao_chat where id_situacao=".$_POST['situacao_dem']);
-    $sit = $stm->fetch(PDO::FETCH_ASSOC);
+    $stmt = $PDO->prepare("SELECT nome_situacao from tbl_situacao_chat where id_situacao=?");
+    $stmt->execute([$situacaoDem]);
+    $sit = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['nome_situacao' => ''];
 
-    $msg = $sit['nome_situacao'] . ' - '. $_POST['motivo_situacao'];
+    $msg = $sit['nome_situacao'] . ' - ' . $motivoSituacao;
 
-    $sqlMsg = "INSERT INTO tbl_chat_msg (chat_id, contrato_id, rem_id, dest_id, msg) VALUES ('".$infoChat['id_chat']."', '".$infoChat['contrato_id']."', 0, 0, '".$msg."')";
-    //echo "<br>".$sqlMsg;
-    $stmt = $PDO->prepare( $sqlMsg );
-    $resultMeg = $stmt->execute();
+    $stmt = $PDO->prepare(
+        "INSERT INTO tbl_chat_msg (chat_id, contrato_id, rem_id, dest_id, msg) VALUES (?, ?, 0, 0, ?)"
+    );
+    $stmt->execute([$idChat, $infoChat['contrato_id'], $msg]);
 }
 
-if($_POST['situacao_dem']==3){
-        $sqlPend = "INSERT INTO tbl_pend_info (fila_id, chat_id, ate_resp, bko_resp, situacao_id, motivo) VALUES ('".$_POST['fila_id']."', '".$infoChat['fila_chat_id']."', '".$infoChat['dest_chat']."', '".$_SESSION['dados']['id_user']."', '".$_POST['situacao_dem']."', '".$_POST['motivo_situacao']."')";
-        //echo "<br>".$sqlPend;
-        $stmt = $PDO->prepare( $sqlPend );
-        $resultPend = $stmt->execute();
+if ($situacaoDem === 3) {
+    $stmt = $PDO->prepare(
+        "INSERT INTO tbl_pend_info (fila_id, chat_id, ate_resp, bko_resp, situacao_id, motivo) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->execute([
+        $filaIdPost,
+        $filaChatId,
+        $infoChat['dest_chat'],
+        $bkoId,
+        $situacaoDem,
+        $motivoSituacao,
+    ]);
+}
+
+$stmt = $PDO->prepare("SELECT count(*) as qtd from tbl_forms_pos_input_campo where fila_id=?");
+$stmt->execute([$filaIdPost]);
+$fila = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['qtd' => 0];
+
+$contratoId = (int) ($infoUser['contrato_id'] ?? 0);
+
+if ((int) $fila['qtd'] < 1) {
+    $stmt = $PDO->prepare("UPDATE tbl_chat_fila SET assunto_id=? where id_fila_chat=?");
+    $stmt->execute([$assunto, $filaChatId]);
+
+    $tablePos = 'tbl_in_pos_' . $filaIdPost . '_' . $contratoId;
+    if (!preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+        return;
     }
 
-$stm = $PDO->query("SELECT count(*) as qtd from tbl_forms_pos_input_campo where fila_id=".$_POST['fila_id']);
-$fila = $stm->fetch(PDO::FETCH_ASSOC);
-if($fila['qtd']<1){
-    $sql="UPDATE tbl_chat_fila SET assunto_id=".$_POST['assunto']." where id_fila_chat=".$infoChat['fila_chat_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $sqlAlterDados = "INSERT INTO {$tablePos} (data_hora, situacao_id, fila_id, chat_id, tp) VALUES (now(), 4, ?, ?, ?)";
+    $stmt = $PDO->prepare($sqlAlterDados);
+    $resultDados = $stmt->execute([$filaIdPost, $filaChatId, $tp['tp']]);
 
-    $sqlAlterDados ="INSERT INTO tbl_in_pos_".$_POST['fila_id']."_".$infoUser['contrato_id'];
-    $sqlAlterDados .=" (data_hora, situacao_id, fila_id, chat_id, tp";
-    $sqlAlterDados .=") VALUES (now(), 4, '".$_POST['fila_id']."', '".$infoChat['fila_chat_id']."', '".$tp['tp']."'";
-    $sqlAlterDados .=")";
+    if ($pausa !== 1) {
+        logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Disponivel');
+    }
 
-
-    //echo "<br><br>".$sqlAlterDados;
-    $stmt = $PDO->prepare( $sqlAlterDados );
-    $resultDados = $stmt->execute();
-
-    if($_POST['pausa']!=1){logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Disponivel');}
-
-    if($resultDados){
+    if ($resultDados) {
         ?>
 <script>
-clearInterval(time_<?=$infoChat['id_chat']?>);
-//$('#close').click();
-//location.reload();
-//console.log('save pos');
+clearInterval(time_<?= $idChat ?>);
 setTimeout(function() {
-    fechaAba(<?=$_POST['indice']?>);
+    fechaAba(<?= $indice ?>);
 }, 100);
 </script>
 <?php
     }
 } else {
-    //echo 'Grava personalizado';
-    $sql = "SELECT nome_campo FROM tbl_forms_pos_input_campo where fila_id=".$_POST['fila_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
-    $campo = $stmt->fetchAll( PDO::FETCH_ASSOC );
-    //depurador($campo);
+    $stmt = $PDO->prepare("SELECT nome_campo FROM tbl_forms_pos_input_campo where fila_id=?");
+    $stmt->execute([$filaIdPost]);
+    $campo = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql="UPDATE tbl_chat_fila SET assunto_id=".$_POST['confirma_assunto']." where id_fila_chat=".$infoChat['fila_chat_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $stmt = $PDO->prepare("UPDATE tbl_chat_fila SET assunto_id=? where id_fila_chat=?");
+    $stmt->execute([$confirmaAssunto, $filaChatId]);
 
-    $sql="UPDATE tbl_chat_info SET assunto_id=".$_POST['confirma_assunto']." where fila_chat_id=".$infoChat['fila_chat_id'];
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $stmt = $PDO->prepare("UPDATE tbl_chat_info SET assunto_id=? where fila_chat_id=?");
+    $stmt->execute([$confirmaAssunto, $filaChatId]);
 
+    $tablePos = 'tbl_in_pos_' . $filaIdPost . '_' . $contratoId;
+    if (!preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+        return;
+    }
 
+    $colNames = [];
+    $placeholders = [];
+    $params = [$filaIdPost, $filaChatId, $tp['tp']];
 
-    $sqlAlterDados ="INSERT INTO tbl_in_pos_".$_POST['fila_id']."_".$infoUser['contrato_id'];
-    $sqlAlterDados .=" (data_hora, situacao_id, fila_id, chat_id, tp";
-    for($x=0;$x<count($campo);$x++){ $sqlAlterDados.= ", ".$campo[$x]['nome_campo'].""; }
-    $sqlAlterDados .=") VALUES (now(), 4, '".$_POST['fila_id']."', '".$infoChat['fila_chat_id']."', '".$tp['tp']."'";
-    for($x=0;$x<count($campo);$x++){ $sqlAlterDados.= ",'".$_POST[$campo[$x]['nome_campo']]."'"; }
-    $sqlAlterDados .=")";
+    foreach ($campo as $c) {
+        $nome = (string) ($c['nome_campo'] ?? '');
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $nome)) {
+            continue;
+        }
+        $colNames[] = $nome;
+        $placeholders[] = '?';
+        $params[] = (string) ($_POST[$nome] ?? '');
+    }
 
+    if ($colNames !== []) {
+        $sqlAlterDados = 'INSERT INTO ' . $tablePos
+            . ' (data_hora, situacao_id, fila_id, chat_id, tp, ' . implode(', ', $colNames) . ')'
+            . ' VALUES (now(), 4, ?, ?, ?, ' . implode(', ', $placeholders) . ')';
+        $stmt = $PDO->prepare($sqlAlterDados);
+        $resultDados = $stmt->execute($params);
 
-    //echo "<br><br>".$sqlAlterDados;
-    $stmt = $PDO->prepare( $sqlAlterDados );
-    $resultDados = $stmt->execute();
-    //echo $resultDados;
-
-    if($resultDados==1){
-        ?>
+        if ($resultDados == 1) {
+            ?>
 <script>
-clearInterval(time_<?=$infoChat['id_chat']?>);
-//$('#close').click();
-//location.reload();
-//console.log('save pos');
+clearInterval(time_<?= $idChat ?>);
 setTimeout(function() {
-    fechaAba(<?=$_POST['indice']?>);
+    fechaAba(<?= $indice ?>);
 }, 100);
 </script>
 <?php
-
+        }
     }
-
-
 }
-
-
-
 
 ?>

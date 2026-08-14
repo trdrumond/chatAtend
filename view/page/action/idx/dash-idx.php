@@ -32,10 +32,11 @@ include('cnf/rotina_pendencia.php');
         //$result = $stmt->execute();
         //$serv = $stmt->fetch( PDO::FETCH_ASSOC );
 
-        $sqlVer="SELECT user_id, pause_id, hora_in from tbl_pause where hora_out is null and date_format(hora_in, '%Y-%m-%d')=curdate() and user_id=".$_SESSION['dados']['id_user'];
+        $userIdIdx = (int) ($_SESSION['dados']['id_user'] ?? 0);
+        $sqlVer="SELECT user_id, pause_id, hora_in from tbl_pause where hora_out is null and date_format(hora_in, '%Y-%m-%d')=curdate() and user_id=?";
         //echo "<br>".$sqlVer;
         $stmt = $PDO->prepare($sqlVer);
-        $result = $stmt->execute();
+        $result = $stmt->execute([$userIdIdx]);
         $ver = $stmt->fetch( PDO::FETCH_ASSOC );
         if($ver['user_id']!=''){
             //echo "<br>ETAPA 1";
@@ -43,10 +44,10 @@ include('cnf/rotina_pendencia.php');
         } else {
             //echo "<br>ETAPA 2";
 
-            $sql="SELECT dem_id from tbl_tma_atend where resp_id=".$idu." and date_out is null";
+            $sql="SELECT dem_id from tbl_tma_atend where resp_id=? and date_out is null";
             //echo "<br>".$sql;
             $stmt = $PDO->prepare($sql);
-            $result = $stmt->execute();
+            $result = $stmt->execute([$idu]);
             $form_tma = $stmt->fetch( PDO::FETCH_ASSOC );
 
             if($form_tma['dem_id']!=''){
@@ -54,11 +55,17 @@ include('cnf/rotina_pendencia.php');
                 echo "<script>setTimeout(function(){ actionPage('dash-trt', 'idx'); }, 2000);</script>";
             } else {
                 //echo "<br>ETAPA 4";
-                $sql="SELECT id_form_dem, situacao_id from tbl_in_dem_".$infoUser['id_form']."_".$infoUser['id_contrato']." where (situacao_id=1 AND resp_id is null) or (situacao_id=2 AND resp_id=".$idu.")   order by situacao_id desc, id_form_dem asc limit 1";
-                //echo "<br>".$sql;
-                $stmt = $PDO->prepare($sql);
-                $result = $stmt->execute();
-                $formDem = $stmt->fetch( PDO::FETCH_ASSOC );
+                $formIdIdx = (int) ($infoUser['id_form'] ?? 0);
+                $contratoIdIdx = (int) ($infoUser['id_contrato'] ?? 0);
+                $demTable = 'tbl_in_dem_' . $formIdIdx . '_' . $contratoIdIdx;
+                $formDem = [];
+                if (preg_match('/^tbl_in_dem_\d+_\d+$/', $demTable)) {
+                    $sql="SELECT id_form_dem, situacao_id from {$demTable} where (situacao_id=1 AND resp_id is null) or (situacao_id=2 AND resp_id=?)   order by situacao_id desc, id_form_dem asc limit 1";
+                    //echo "<br>".$sql;
+                    $stmt = $PDO->prepare($sql);
+                    $result = $stmt->execute([$idu]);
+                    $formDem = $stmt->fetch( PDO::FETCH_ASSOC ) ?: [];
+                }
                 //depurador($formDem);
                 if($formDem['id_form_dem']!=''){
                     //echo "<br>ETAPA 5";

@@ -7,11 +7,16 @@ include("../cnf/session.php");
 
 //depurador($_POST);
 
-$contrato = isset($_POST['contrato']) ? trim($_POST['contrato']) : '';
-$fila = isset($_POST['fila']) ? trim($_POST['fila']) : '';
+$contrato = isset($_POST['contrato']) ? (int) $_POST['contrato'] : 0;
+$fila = isset($_POST['fila']) ? trim((string) $_POST['fila']) : '';
 
-if ($contrato === '') {
+if ($contrato <= 0) {
     echo '<p class="text-warning">Selecione um contrato para carregar a fila.</p>';
+    return;
+}
+
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contrato)) {
+    echo '<p class="text-danger">Contrato não autorizado.</p>';
     return;
 }
 
@@ -83,14 +88,14 @@ $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
                 echo '<tr>';
-                    echo '<td>'.$dados[$x]['protocolo'].'</td>';
-                    echo '<td><center>'.$dados[$x]['nome_situacao'].'</center></td>';
-                    echo '<td><center>'.$dados[$x]['hora_registro'].'</center></td>';
-                    echo '<td><center>'.$dados[$x]['te'].'</center></td>';
-                    echo '<td><center>'.$dados[$x]['nome_fila'].'</center></td>';
-                    echo '<td><center>'.$dados[$x]['titulo_assunto'].'</center></td>';
-                    echo '<td><center>'.ucwords(strtolower($dados[$x]['nome_ate'])).'</center></td>';
-                    echo '<td><center>'.ucwords(strtolower($dados[$x]['nome_bko'])).'</center></td>';
+                    echo '<td>'.stHtml($dados[$x]['protocolo']).'</td>';
+                    echo '<td><center>'.stHtml($dados[$x]['nome_situacao']).'</center></td>';
+                    echo '<td><center>'.stHtml($dados[$x]['hora_registro']).'</center></td>';
+                    echo '<td><center>'.stHtml($dados[$x]['te']).'</center></td>';
+                    echo '<td><center>'.stHtml($dados[$x]['nome_fila']).'</center></td>';
+                    echo '<td><center>'.stHtml($dados[$x]['titulo_assunto']).'</center></td>';
+                    echo '<td><center>'.stHtml(ucwords(strtolower((string) $dados[$x]['nome_ate']))).'</center></td>';
+                    echo '<td><center>'.stHtml(ucwords(strtolower((string) $dados[$x]['nome_bko']))).'</center></td>';
                     if($infoUser['nivel_id']==0){
                         echo '<td><center><div id="fin_'.$dados[$x]['id_fila_chat'].'"><button id="btn_fin_'.$dados[$x]['id_fila_chat'].'" class="btn btn-danger" title="Finalizar atendimento"><i class="fas fa-times-circle"></i></button></div></center></td>';
                     }
@@ -117,7 +122,7 @@ function cancelFila(id_fila) {
             id_fila
         },
         function(valor) {
-            $(div).html(valor);
+            $(div).html(typeof stSafeChatHtml === 'function' ? stSafeChatHtml(valor) : valor);
         });
 }
 
@@ -128,7 +133,7 @@ $('#btn_fin_fila').click(function() {
             id
         },
         function(valor) {
-            $(div).html(valor);
+            $(div).html(typeof stSafeChatHtml === 'function' ? stSafeChatHtml(valor) : valor);
             sendAtend();
             sendBko();
         });

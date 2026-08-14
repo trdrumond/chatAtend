@@ -1,6 +1,8 @@
-<script>userRem = <?=$infoUser['id_user']?>;</script>
+<script>userRem = <?=(int) $infoUser['id_user']?>;</script>
 <?php
 
+  $userIdChat = (int) ($infoUser['id_user'] ?? 0);
+  $contratoIdChat = (int) ($infoUser['contrato_id'] ?? $infoUser['id_contrato'] ?? 0);
 
   if($infoUser['nivel_id']<=2){
     $qyer = " and nivel_id>2";
@@ -8,14 +10,10 @@
     $qyer = " and nivel_id<=2";
   }
 
-
-
-
-
-  $sql="SELECT id_user, concat(nome, ' ', sobrenome) as nome_completo, token from tbl_user where id_user<>".$infoUser['id_user']." and ativo=1 $qyer order by nome_completo";
+  $sql="SELECT id_user, concat(nome, ' ', sobrenome) as nome_completo, token from tbl_user where id_user<>? and ativo=1 $qyer order by nome_completo";
   //echo "<br>".$sql;
   $stmt = $PDO->prepare($sql);
-  $result = $stmt->execute();
+  $result = $stmt->execute([$userIdChat]);
   $ddConversa = $stmt->fetchAll( PDO::FETCH_ASSOC );
   //depurador($ddConversa);
 
@@ -45,12 +43,12 @@
             $userDestinatario = 0;
 
 
-            $sql="SELECT token_chat from tbl_chat_info where status_chat=1 and contrato_id=".$infoUser['contrato_id']." and dest_chat=".$userDestinatario;
+            $sql="SELECT token_chat from tbl_chat_info where status_chat=1 and contrato_id=? and dest_chat=?";
             //echo "<br>".$sql;
 
 
             $stmt = $PDO->prepare($sql);
-            $result = $stmt->execute();
+            $result = $stmt->execute([$contratoIdChat, $userDestinatario]);
             $infoChat = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($infoChat);
 
@@ -61,10 +59,10 @@
             else {
                 $stringToken = $userDestinatario . date('YmdHis');
                 $tokenChat = md5($stringToken);
-                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, dest_chat, status_chat) VALUES ('".$infoUser['contrato_id']."', '".$tokenChat."', '".$userDestinatario."', 1)";
+                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, dest_chat, status_chat) VALUES (?, ?, ?, 1)";
                 //echo "<br>".$sql;
                 $stmt = $PDO->prepare( $sql );
-                $result = $stmt->execute();
+                $result = $stmt->execute([$contratoIdChat, $tokenChat, $userDestinatario]);
             }
             */
 
@@ -76,19 +74,23 @@
     <div class="tab-pane fade" id="user_<?=$ddConversa[$x]['id_user']?>" role="tabpanel" aria-labelledby="user-tab_<?=$ddConversa[$x]['id_user']?>">
 
       <?php
-        $userDestinatario = $ddConversa[$x]['id_user'];
+        $userDestinatario = (int) $ddConversa[$x]['id_user'];
         //echo "<br>".$userDestinatario;
 
         if($infoUser['nivel_id']<2){
-            $sql="SELECT id_chat, token_chat, status_chat from tbl_chat_info where status_chat=1 and contrato_id=".$infoUser['contrato_id']." and rem_chat=".$infoUser['id_user']." and dest_chat=".$userDestinatario;
+            $sql="SELECT id_chat, token_chat, status_chat from tbl_chat_info where status_chat=1 and contrato_id=? and rem_chat=? and dest_chat=?";
         } else {
-            $sql="SELECT id_chat, token_chat, status_chat from tbl_chat_info where status_chat=1 and contrato_id=".$infoUser['contrato_id']." and rem_chat=".$userDestinatario." and dest_chat=".$infoUser['id_user'];
+            $sql="SELECT id_chat, token_chat, status_chat from tbl_chat_info where status_chat=1 and contrato_id=? and rem_chat=? and dest_chat=?";
         }
 
         //echo "<br>".$sql;
 
         $stmt = $PDO->prepare($sql);
-        $result = $stmt->execute();
+        if($infoUser['nivel_id']<2){
+            $result = $stmt->execute([$contratoIdChat, $userIdChat, $userDestinatario]);
+        } else {
+            $result = $stmt->execute([$contratoIdChat, $userDestinatario, $userIdChat]);
+        }
         $infoChat = $stmt->fetch( PDO::FETCH_ASSOC );
         //depurador($infoChat);
         if($infoChat!=''){
@@ -99,14 +101,18 @@
             $stringToken = $userDestinatario . date('YmdHis');
             $tokenChat = md5($stringToken);
             if($infoUser['nivel_id']<2){
-                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, rem_chat, dest_chat, status_chat) VALUES ('".$infoUser['contrato_id']."', '".$tokenChat."', '".$infoUser['id_user']."', '".$userDestinatario."', 1)";
+                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, rem_chat, dest_chat, status_chat) VALUES (?, ?, ?, ?, 1)";
             } else {
-                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, rem_chat, dest_chat, status_chat) VALUES ('".$infoUser['contrato_id']."', '".$tokenChat."', '".$userDestinatario."', '".$infoUser['id_user']."', 1)";
+                $sql = "INSERT INTO tbl_chat_info (contrato_id, token_chat, rem_chat, dest_chat, status_chat) VALUES (?, ?, ?, ?, 1)";
             }
 
             //echo "<br>".$sql;
             $stmt = $PDO->prepare( $sql );
-            $result = $stmt->execute();
+            if($infoUser['nivel_id']<2){
+                $result = $stmt->execute([$contratoIdChat, $tokenChat, $userIdChat, $userDestinatario]);
+            } else {
+                $result = $stmt->execute([$contratoIdChat, $tokenChat, $userDestinatario, $userIdChat]);
+            }
         }
         */
 

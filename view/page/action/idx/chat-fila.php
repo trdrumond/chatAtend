@@ -6,20 +6,30 @@ require_once __DIR__ . '/../../../cnf/session.php';
 
 $tmpDash=10000;
 
-$stm = $PDO->query("SELECT id_fila_chat, protocolo, data_hora, fila_id, bko_resp, fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=fila_id) as nome_fila, assunto_id, (SELECT titulo_assunto from tbl_assunto where id_assunto=assunto_id) as nome_assunto from tbl_chat_fila where status_fila=1 and ate_resp=".$infoUser['id_user']);
-$infoFila = $stm->fetch(PDO::FETCH_ASSOC);
+$idAte = (int) $infoUser['id_user'];
 
-$sql="SELECT id_faq, titulo_faq, txt from tbl_faq where fila_id=".$infoFila['fila_id']." and (assunto_id=0 or assunto_id=".$infoFila['assunto_id'].")";
+$stmt = $PDO->prepare("SELECT id_fila_chat, protocolo, data_hora, fila_id, bko_resp, fila_id, (SELECT nome_fila from tbl_config_fila where id_fila=fila_id) as nome_fila, assunto_id, (SELECT titulo_assunto from tbl_assunto where id_assunto=assunto_id) as nome_assunto from tbl_chat_fila where status_fila=1 and ate_resp=?");
+$stmt->execute([$idAte]);
+$infoFila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!is_array($infoFila)) {
+    $infoFila = [];
+}
+
+$filaIdChat = (int) ($infoFila['fila_id'] ?? 0);
+$assuntoIdChat = (int) ($infoFila['assunto_id'] ?? 0);
+
+$sql="SELECT id_faq, titulo_faq, txt from tbl_faq where fila_id=? and (assunto_id=0 or assunto_id=?)";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$filaIdChat, $assuntoIdChat]);
 $infoFaq = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($infoFaq);
 
-$sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=".$infoFila['assunto_id'];
+$sql="SELECT titulo_assunto, procedimento, date_format(data_alt, '%d/%m/%Y %H:%i:%s') as data_alt, date_format(data_alt, '%Y-%m-%d') as data_ver from tbl_assunto where id_assunto=?";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([$assuntoIdChat]);
 $infoAssunto = $stmt->fetch( PDO::FETCH_ASSOC );
 
 if($infoAssunto['procedimento']=='' && count($infoFaq)>0){
@@ -770,6 +780,9 @@ function registraAbandonoFila(idFila, fila) {
     dados.append('fila', fila);
     dados.append('motivo_cancela', motivo_cancela);
     dados.append('auto_abandono', '1');
+    if (window.ST_CSRF) {
+        dados.append('st_csrf', window.ST_CSRF);
+    }
 
     if (navigator.sendBeacon) {
         navigator.sendBeacon('staff/load_cancel_fila.php', dados);

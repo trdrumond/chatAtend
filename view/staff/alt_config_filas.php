@@ -3,24 +3,27 @@ include("../cnf/session.php");
 
 //var_dump($_POST);
 
-$sql="SELECT id_user, fila_id, (SELECT filas from tbl_user_filas where user_id=id_user) as filas, contrato_id from tbl_user where id_user=".$_POST['id'];
-    //echo "<br>".$sql;
+$sql="SELECT id_user, fila_id, (SELECT filas from tbl_user_filas where user_id=id_user) as filas, contrato_id from tbl_user where id_user=?";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) ($_POST['id'] ?? 0)]);
     $dados = $stmt->fetch( PDO::FETCH_ASSOC );
+    if (!is_array($dados) || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], (int) ($dados['contrato_id'] ?? 0))) {
+        return;
+    }
 
-    $filas = ($dados['filas']=='') ? $dados['fila_id'] : $dados['filas'];
-    $filas = explode(',', $filas);
+    $filas = (($dados['filas'] ?? '')=='') ? ($dados['fila_id'] ?? '') : $dados['filas'];
+    $filas = explode(',', (string) $filas);
 
 
-    //var_dump($filas);
-
-
-    $sql="SELECT id_fila, nome_fila from tbl_config_fila where ativo=1 and contrato_id in (". $dados['contrato_id'].") order by id_fila asc";
-    //echo "<br>".$sql;
-    $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
-    $ddFilas = $stmt->fetchAll( PDO::FETCH_ASSOC );
+    $contratoIds = array_values(array_filter(array_map('intval', explode(',', (string) ($dados['contrato_id'] ?? '')))));
+    $ddFilas = [];
+    if (count($contratoIds) > 0) {
+        $ph = implode(',', array_fill(0, count($contratoIds), '?'));
+        $sql="SELECT id_fila, nome_fila from tbl_config_fila where ativo=1 and contrato_id in (".$ph.") order by id_fila asc";
+        $stmt = $PDO->prepare($sql);
+        $result = $stmt->execute($contratoIds);
+        $ddFilas = $stmt->fetchAll( PDO::FETCH_ASSOC );
+    }
 
 ?>
 
@@ -36,7 +39,7 @@ $sql="SELECT id_user, fila_id, (SELECT filas from tbl_user_filas where user_id=i
                     if(in_array($ddFilas[$x]['id_fila'], $filas)!=0){
                         $sel = 'selected';
                     } else {$sel = '';}
-                    echo '<option value="'.$ddFilas[$x]['id_fila'].'" '.$sel.'>'.$ddFilas[$x]['nome_fila'].'</option>';
+                    echo '<option value="'.(int) $ddFilas[$x]['id_fila'].'" '.$sel.'>'.stHtml($ddFilas[$x]['nome_fila']).'</option>';
                 }
                 ?>
             </select>
@@ -57,7 +60,7 @@ $(document).ready(function() {
 
 
     $("#save_fil").click(function() {
-        var id = <?php echo $dados['id_user']; ?>;
+        var id = <?= (int) ($dados['id_user'] ?? 0) ?>;
         var filas = $('#filas_config').val();
         filUser(id, filas);
     });

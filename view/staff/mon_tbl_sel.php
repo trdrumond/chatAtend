@@ -9,20 +9,26 @@
     //depurador($_POST);
 
     if(!isset($info['fila_id'])){
-        $info['fila_id'] = $_POST['id_fila'];
+        $info['fila_id'] = (int) ($_POST['id_fila'] ?? 0);
+    } else {
+        $info['fila_id'] = (int) $info['fila_id'];
     }
     if(!isset($info['campo_id'])){
-        $info['campo_id'] = $_POST['id_campo'];
+        $info['campo_id'] = (int) ($_POST['id_campo'] ?? 0);
+    } else {
+        $info['campo_id'] = (int) $info['campo_id'];
     }
     if(!isset($info['input_id'])){
-        $info['input_id'] = $_POST['id_input'];
+        $info['input_id'] = (int) ($_POST['id_input'] ?? 0);
+    } else {
+        $info['input_id'] = (int) $info['input_id'];
     }
 
 
-    $sql="SELECT id_option, fila_id, campo_id, desc_option, referencia, value_option, ativo, valor_mon_option from tbl_forms_mon_input_option where fila_id=".$info['fila_id']." and campo_id=".$info['campo_id']." and input_id=".$info['input_id']." order by desc_option asc";
+    $sql="SELECT id_option, fila_id, campo_id, desc_option, referencia, value_option, ativo, valor_mon_option from tbl_forms_mon_input_option where fila_id=? and campo_id=? and input_id=? order by desc_option asc";
     //echo "<br>".$sql;
     $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
+    $result = $stmt->execute([(int) $info['fila_id'], (int) $info['campo_id'], (int) $info['input_id']]);
     $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
     //depurador($info);
     if(count($dados)>0){

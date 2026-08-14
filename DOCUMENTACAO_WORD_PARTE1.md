@@ -73,7 +73,7 @@ Estrutura de Diretórios:
 | **Porta** | 3306 |
 | **Database** | web_chatlogos_piloto |
 | **Usuário** | acesso.sistemas |
-| **Senha** | tDHMpeXVTzQAZsGD |
+| **Senha** | <SENHA_DB_LOCAL> |
 | **Charset** | utf8 |
 
 #### 2.2.2 Arquivo de Configuração
@@ -87,7 +87,7 @@ date_default_timezone_set('America/Fortaleza');
 
 $host = 'localhost';
 $usuario = 'acesso.sistemas';
-$senha = 'tDHMpeXVTzQAZsGD';
+$senha = '<SENHA_DB_LOCAL>';
 $banco = 'web_chatlogos_piloto';
 
 $dsn = "mysql:host={$host};port=3306;dbname={$banco};charset=utf8";

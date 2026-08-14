@@ -1,50 +1,79 @@
 <?php
 include("../cnf/session.php");
 
-//depurador($_POST);
-$cols="'1'";
-if($infoUser['id_user']!=1){
-    $cols.=",'".$infoUser['id_user']."'";
+if ((int) ($infoUser['nivel_id'] ?? 99) >= 1 || (int) ($infoUser['grupos'] ?? 0) !== 1) {
+    return;
 }
 
-for($x=0; $x<count($_POST['col']);$x++){
-    $cols.=",'".$_POST['col'][$x]."'";
+$contratoSessao = (int) ($infoUser['contrato_id'] ?? 0);
+if ($contratoSessao < 1) {
+    return;
+}
+if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoSessao)) {
+    return;
 }
 
+$colsIds = [1];
+$userId = (int) ($infoUser['id_user'] ?? 0);
+if ($userId != 1) {
+    $colsIds[] = $userId;
+}
 
-//echo "<br>".$cols;
+$colPost = $_POST['col'] ?? [];
+if (!is_array($colPost)) {
+    $colPost = [$colPost];
+}
 
-//$sql="INSERT INTO tbl_com_info (contrato_id, rem_chat, dest_chat, grupo_com, grupo_nome) VALUES ('".$infoUser['contrato_id']."', '".$infoUser['id_user']."', '".$_POST['col']."', '".$_POST['grupo_com']."', '".$_POST['grupo_nome']."')";
+$stmtDest = $PDO->prepare("SELECT id_user, contrato_id FROM tbl_user WHERE id_user=?");
+$included = array_flip($colsIds);
+for ($x = 0; $x < count($colPost); $x++) {
+    $colId = (int) $colPost[$x];
+    if ($colId < 1 || $colId === $userId || isset($included[$colId])) {
+        continue;
+    }
+    $stmtDest->execute([$colId]);
+    $destUser = $stmtDest->fetch(PDO::FETCH_ASSOC);
+    if (!is_array($destUser) || empty($destUser['id_user'])) {
+        continue;
+    }
+    $contratoDest = (int) ($destUser['contrato_id'] ?? 0);
+    if ($contratoDest < 1) {
+        continue;
+    }
+    if (!stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoDest)) {
+        continue;
+    }
+    $colsIds[] = $colId;
+    $included[$colId] = true;
+}
+$cols = "'" . implode("','", $colsIds) . "'";
 
 $stmt = $PDO->prepare("SELECT count(grupo_com) as qtd from tbl_com_info where grupo_com<>''");
 $result = $stmt->execute();
-$qtd_group = $stmt->fetch( PDO::FETCH_ASSOC );
-$qtd_group = $qtd_group['qtd'] + 1;
+$qtd_group = $stmt->fetch(PDO::FETCH_ASSOC);
+$qtd_group = ($qtd_group['qtd'] ?? 0) + 1;
 
-$sql='INSERT INTO tbl_com_info (contrato_id, rem_chat, dest_chat, grupo_com, grupo_nome) VALUES ("'.$infoUser['contrato_id'].'", "0", "0", "'.$qtd_group.'", "'.$_POST['nome_grupo'].'")';
+$sql = 'INSERT INTO tbl_com_info (contrato_id, rem_chat, dest_chat, grupo_com, grupo_nome) VALUES (?, ?, ?, ?, ?)';
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([
+    $contratoSessao,
+    0,
+    0,
+    $qtd_group,
+    (string) ($_POST['nome_grupo'] ?? ''),
+]);
 
-//echo "<br>".$sql;
+if ($result == 1) {
+    $stmt = $PDO->prepare("SELECT id_com from tbl_com_info where grupo_com=?");
+    $result = $stmt->execute([$qtd_group]);
+    $com_group = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    $sql = 'INSERT INTO tbl_com_config (grupo_com_id, cols) VALUES (?, ?)';
+    $stmt = $PDO->prepare($sql);
+    $result = $stmt->execute([$com_group['id_com'] ?? 0, $cols]);
 
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-if($result==1){
-    $stmt = $PDO->prepare("SELECT id_com from tbl_com_info where grupo_com=".$qtd_group);
-    $result = $stmt->execute();
-    $com_group = $stmt->fetch( PDO::FETCH_ASSOC );
-
-    $sql='INSERT INTO tbl_com_config (grupo_com_id, cols) VALUES ("'.$com_group['id_com'].'", "'.$cols.'")';
-    $stmt = $PDO->prepare( $sql );
-    $result = $stmt->execute();
-    //echo "<br>".$sql;
-
-    if($result==1){
-
-
-
-
-    ?>
+    if ($result == 1) {
+?>
     <script>
 
         Swal.fire({
@@ -61,7 +90,6 @@ if($result==1){
 
         function actionPage(action, sec){
             $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-            //console.log('A ação é: ' + action);
             $.post("action.php",
             {
                 action: action, sec: sec

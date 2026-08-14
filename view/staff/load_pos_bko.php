@@ -40,11 +40,11 @@ if ($fila['qtd'] >= 1) {
     $sql = "SELECT a.campo_id AS id_campo, a.fila_id, b.nome_fila, a.input_id, c.nome_input, c.tipo_input,"
         . " d.desc_campo, d.nome_campo, a.ativo, a.date_time, a.ordem, a.obg"
         . " FROM tbl_forms_pos_input_campo_cnf a, tbl_config_fila b, tbl_forms_pos_input c, tbl_forms_pos_input_campo d"
-        . " WHERE b.id_fila = " . $filaId . " AND b.id_fila = a.fila_id AND a.ativo = 1"
+        . " WHERE b.id_fila = ? AND b.id_fila = a.fila_id AND a.ativo = 1"
         . " AND a.fila_id = b.id_fila AND a.input_id = c.id_input AND a.campo_id = d.id_campo"
         . " ORDER BY ordem ASC";
     $stmt = $PDO->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([$filaId]);
     $campoConfig = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($campoConfig as $cfg) {
@@ -59,11 +59,11 @@ if ($fila['qtd'] >= 1) {
         $idsCampo = array_unique(array_map(static function ($c) {
             return (int)$c['id_campo'];
         }, $campoConfig));
-        $idsIn = implode(',', $idsCampo);
+        $optBind = stSqlInBind(array_values($idsCampo));
         $sqlOpt = "SELECT id_option, campo_id, desc_option, referencia, value_option, ativo"
-            . " FROM tbl_forms_pos_input_option WHERE campo_id IN (" . $idsIn . ")";
+            . " FROM tbl_forms_pos_input_option WHERE campo_id IN (" . $optBind['ph'] . ")";
         $stmtOpt = $PDO->prepare($sqlOpt);
-        $stmtOpt->execute();
+        $stmtOpt->execute($optBind['params']);
         while ($rowOpt = $stmtOpt->fetch(PDO::FETCH_ASSOC)) {
             $cid = (int)$rowOpt['campo_id'];
             if (!isset($optionsByCampo[$cid])) {
@@ -75,12 +75,15 @@ if ($fila['qtd'] >= 1) {
 }
 
 $assuntoOpts = '';
-$assuntosIn = preg_replace('/[^0-9,]/', '', (string) ($fil['assuntos'] ?? ''));
-if ($assuntosIn !== '') {
-    $ass = $PDO->query(
+$assuntosIds = stParseIdCsv((string) ($fil['assuntos'] ?? ''));
+if ($assuntosIds !== []) {
+    $assBind = stSqlInBind($assuntosIds);
+    $stmtAss = $PDO->prepare(
         'SELECT id_assunto, titulo_assunto FROM tbl_assunto'
-        . ' WHERE ativo = 1 AND id_assunto IN (' . $assuntosIn . ') ORDER BY titulo_assunto ASC'
-    )->fetchAll(PDO::FETCH_ASSOC);
+        . ' WHERE ativo = 1 AND id_assunto IN (' . $assBind['ph'] . ') ORDER BY titulo_assunto ASC'
+    );
+    $stmtAss->execute($assBind['params']);
+    $ass = $stmtAss->fetchAll(PDO::FETCH_ASSOC);
     foreach ($ass as $row) {
         $sel = ((int) $row['id_assunto'] === (int) $fil['assunto_id']) ? ' selected' : '';
         $assuntoOpts .= '<option value="' . (int) $row['id_assunto'] . '"' . $sel . '>'
@@ -114,10 +117,12 @@ if ($assuntosIn !== '') {
             echo '</div>';
             $assuntoOptions = [];
             if (count($ex) > 0) {
-                $idsIn = implode(',', $ex);
-                $assuntoOptions = $PDO->query(
-                    'SELECT id_assunto, titulo_assunto FROM tbl_assunto WHERE id_assunto IN (' . $idsIn . ') ORDER BY titulo_assunto ASC'
-                )->fetchAll(PDO::FETCH_ASSOC);
+                $ass2Bind = stSqlInBind(array_values($ex));
+                $stmtAss2 = $PDO->prepare(
+                    'SELECT id_assunto, titulo_assunto FROM tbl_assunto WHERE id_assunto IN (' . $ass2Bind['ph'] . ') ORDER BY titulo_assunto ASC'
+                );
+                $stmtAss2->execute($ass2Bind['params']);
+                $assuntoOptions = $stmtAss2->fetchAll(PDO::FETCH_ASSOC);
             }
             $radioPairClass = count($assuntoOptions) === 2 ? ' st-radio-group--pair' : '';
             echo '<div class="st-pos-question__answers st-radio-group cnf-field-full' . $radioPairClass . '">';

@@ -48,7 +48,8 @@ if ($deDt > $ultimoDia) {
 }
 
 if ($idContrato > 0 && $nivelUsu > 0) {
-    if (strpos($infoUserConfig['contrato_id'], (string) $idContrato) === false) {
+    $allowed = stParseIdCsv($infoUserConfig['contrato_id'] ?? '');
+    if (!in_array($idContrato, $allowed, true)) {
         http_response_code(403);
         echo json_encode(['ok' => false, 'error' => 'Contrato não permitido']);
         exit;

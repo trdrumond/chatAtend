@@ -1,19 +1,19 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$nome = (string) ($_POST['nome'] ?? '');
+$contratoId = (int) ($_POST['contrato'] ?? 0);
 
-$sql="INSERT INTO tbl_servicos (nome_servico, contrato_id) VALUES ('".$_POST['nome']."', '".$_POST['contrato']."')";
+if ($nome === '' || $contratoId < 1 || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contratoId)) {
+    return;
+}
 
-//echo $sql;
+$sql = "INSERT INTO tbl_servicos (nome_servico, contrato_id) VALUES (?, ?)";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$nome, $contratoId]);
 
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
-?>
-
+if ($result == 1) {
+    ?>
 <script>
     Swal.fire({
         position: 'bottom-start',
@@ -25,11 +25,8 @@ if($result==1){
     $("#new_registro").modal('hide');
     actionPage('cad-ser', 'cnf');
 
-
-
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec
@@ -38,9 +35,7 @@ if($result==1){
             $("#action-page").html(valor);
         });
     }
-
-
 </script>
 <?php
-    }
-?>
+}
+

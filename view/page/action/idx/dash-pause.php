@@ -3,10 +3,12 @@ include_once('cnf/rotina_pendencia.php');
 
 
 
-$sql="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl_log_atendimento where user_id=".$infoUser['id_user']." order by data_hora desc limit 1";
+$userIdPause = (int) ($_SESSION['dados']['id_user'] ?? 0);
+
+$sql="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl_log_atendimento where user_id=? order by data_hora desc limit 1";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$userIdPause]);
 $infoLog = $stmt->fetch( PDO::FETCH_ASSOC );
 if($infoLog['acao']!='Pausa'){
     logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Pausa');
@@ -35,10 +37,10 @@ if($infoLog['acao']!='Pausa'){
 
 //echo "<br>Teste";
 
-$sql="SELECT date_format(hora_in, '%Y-%m-%d %H:%i:%s') as hora_in, date_format(now(), '%Y-%m-%d %H:%i:%s') as server_now from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=".$_SESSION['dados']['id_user'];
+$sql="SELECT date_format(hora_in, '%Y-%m-%d %H:%i:%s') as hora_in, date_format(now(), '%Y-%m-%d %H:%i:%s') as server_now from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=?";
 //echo "<br>".$sql;
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([$userIdPause]);
 $pausa = $stmt->fetch( PDO::FETCH_ASSOC );
 //depurador($pausa);
 $horaInPausaJs = isset($pausa['hora_in']) ? $pausa['hora_in'] : '';

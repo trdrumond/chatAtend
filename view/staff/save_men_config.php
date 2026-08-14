@@ -1,19 +1,18 @@
 <?php
 include("../cnf/session.php");
 
-//var_dump($_POST);
+$assunto = ($_POST['assunto'] ?? '') === '' ? 0 : (int) $_POST['assunto'];
+$titulo = (string) ($_POST['titulo'] ?? '');
+$mensagem = (string) ($_POST['mensagem'] ?? '');
+$contrato = (int) ($_POST['contrato'] ?? 0);
+if ($contrato < 1 || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], $contrato)) {
+    return;
+}
 
-$_POST['assunto'] = ($_POST['assunto']=='') ? 0 : $_POST['assunto'];
+$stmt = $PDO->prepare("INSERT INTO tbl_config_men_ini (titulo_men, txt, contrato_id, assunto_id) VALUES (?, ?, ?, ?)");
+$result = $stmt->execute([$titulo, $mensagem, $contrato, $assunto]);
 
-$sql="INSERT INTO tbl_config_men_ini (titulo_men, txt, contrato_id, assunto_id) VALUES ('".$_POST['titulo']."', '".$_POST['mensagem']."', '".$_POST['contrato']."', '".$_POST['assunto']."')";
-
-//echo $sql;
-
-$stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
-
-
-if($result==1){
+if ($result == 1) {
 ?>
 
 <script>
@@ -31,7 +30,6 @@ if($result==1){
 
     function actionPage(action, sec){
         $("#action-page").html('<div id="load_gif"><img src="img/loading.gif" alt="Carregando..." width="100"></div>');
-        //console.log('A ação é: ' + action);
         $.post("action.php",
         {
             action: action, sec: sec

@@ -8,17 +8,35 @@ session_start();
 
   //var_dump($_SESSION);
 
-  $idu = $_SESSION['dados']['id_user'];
+  if (!empty($_SESSION['dados']['id_user'])) {
+      if (empty($_SESSION['st_csrf'])) {
+          $_SESSION['st_csrf'] = bin2hex(random_bytes(16));
+      }
+      $stCsrf = (string) $_SESSION['st_csrf'];
+      $stMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+      if ($stMethod === 'POST' || $stMethod === 'PUT' || $stMethod === 'PATCH' || $stMethod === 'DELETE') {
+          $stCsrfHdr = (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+          $stCsrfPost = (string) ($_POST['st_csrf'] ?? '');
+          $stCsrfSent = $stCsrfHdr !== '' ? $stCsrfHdr : $stCsrfPost;
+          if ($stCsrfSent === '' || !hash_equals($stCsrf, $stCsrfSent)) {
+              http_response_code(403);
+              header('Content-Type: text/plain; charset=utf-8');
+              echo 'CSRF inválido';
+              exit;
+          }
+      }
+  }
 
+  $idu = (int) ($_SESSION['dados']['id_user'] ?? 0);
   $nome = ucwords(str_replace('.', ' ', $_SESSION['dados']['nome_usuario']));
   $id_usuario = $_SESSION['dados']['id_user'];
   $nivel_usu = $_SESSION['dados']['nivel_id'];
 
-  $sql ="SELECT id_user, nome_usuario, nome, sobrenome, concat(nome, ' ', sobrenome) as nome_completo, contrato_id, contrato_id as id_contrato, (SELECT nome_contrato from tbl_contrato where id_contrato=contrato_id) as contrato, municipio_id, (SELECT nome_municipio from tbl_municipio where id_municipio=municipio_id) as municipio, agencia_id, regional_id, (SELECT nome_agencia from tbl_agencia where id_agencia=agencia_id) as agencia, uf_id, (SELECT nome_estado from tbl_estado where id_estado=uf_id) as uf, (SELECT uf from tbl_estado where id_estado=uf_id) as ufd, token, nivel_id, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, (SELECT icon from tbl_nivel where id_nivel=nivel_id) as icon, (SELECT img from tbl_user_img_perfil where user_id=id_user) as img_perfil, fila_id, (SELECT multichat from tbl_config_fila where id_fila=fila_id) as multichat, (SELECT com from tbl_contrato where id_contrato=contrato_id) as comunicacao, (SELECT new_conv from tbl_contrato where id_contrato=contrato_id) as new_conv, (SELECT grupos from tbl_contrato where id_contrato=contrato_id) as grupos, (SELECT men_massa from tbl_contrato where id_contrato=contrato_id) as men_massa, (SELECT resp_men from tbl_contrato where id_contrato=contrato_id) as resp_men from tbl_user where id_user=".$idu;
+  $sql ="SELECT id_user, nome_usuario, nome, sobrenome, concat(nome, ' ', sobrenome) as nome_completo, contrato_id, contrato_id as id_contrato, (SELECT nome_contrato from tbl_contrato where id_contrato=contrato_id) as contrato, municipio_id, (SELECT nome_municipio from tbl_municipio where id_municipio=municipio_id) as municipio, agencia_id, regional_id, (SELECT nome_agencia from tbl_agencia where id_agencia=agencia_id) as agencia, uf_id, (SELECT nome_estado from tbl_estado where id_estado=uf_id) as uf, (SELECT uf from tbl_estado where id_estado=uf_id) as ufd, token, nivel_id, (SELECT nome_nivel from tbl_nivel where id_nivel=nivel_id) as nivel, (SELECT idx from tbl_nivel where id_nivel=nivel_id) as idx, (SELECT icon from tbl_nivel where id_nivel=nivel_id) as icon, (SELECT img from tbl_user_img_perfil where user_id=id_user) as img_perfil, fila_id, (SELECT multichat from tbl_config_fila where id_fila=fila_id) as multichat, (SELECT com from tbl_contrato where id_contrato=contrato_id) as comunicacao, (SELECT new_conv from tbl_contrato where id_contrato=contrato_id) as new_conv, (SELECT grupos from tbl_contrato where id_contrato=contrato_id) as grupos, (SELECT men_massa from tbl_contrato where id_contrato=contrato_id) as men_massa, (SELECT resp_men from tbl_contrato where id_contrato=contrato_id) as resp_men from tbl_user where id_user=?";
 
   //echo "<br>".$sql;
   $stmt = $PDO->prepare($sql);
-  $result = $stmt->execute();
+  $result = $stmt->execute([$idu]);
   $infoUser = $stmt->fetch( PDO::FETCH_ASSOC );
   //depurador($infoUser);
 
@@ -28,10 +46,10 @@ session_start();
 
   $infoUser['img_perfil'] = ($infoUser['img_perfil']=='') ? 'img/perfil.fw.png' : $infoUser['img_perfil'];
 
-  $sql ="SELECT * from tbl_permissao where user_id=".$idu;
+  $sql ="SELECT * from tbl_permissao where user_id=?";
   //echo "<br>".$sql;
   $stmt = $PDO->prepare($sql);
-  $result = $stmt->execute();
+  $result = $stmt->execute([$idu]);
   $userPermiss = $stmt->fetch( PDO::FETCH_ASSOC );
 
 
@@ -43,19 +61,40 @@ session_start();
 
   */
   $infoUser['fila_id'] = ($infoUser['fila_id']=='') ? 0 : $infoUser['fila_id'];
-  $sqlLog ="SELECT user_id  from tbl_log_diario where data_log=curdate() and user_id=".$idu;
+  $sqlLog ="SELECT user_id  from tbl_log_diario where data_log=curdate() and user_id=?";
   //echo "<br>".$sqlLog;
   $stmt = $PDO->prepare($sqlLog);
-  $result = $stmt->execute();
+  $result = $stmt->execute([$idu]);
   $infoLog = $stmt->fetch( PDO::FETCH_ASSOC );
-  if($infoLog['user_id']==''){
-    $sqlInsLog="INSERT tbl_log_diario (user_id, data_log, ip, date_up, contrato_id, fila_id, municipio_id, regional_id, agencia_id, uf_id, nivel_id) VALUES ('".$idu."', now(), '".$_SERVER['REMOTE_ADDR']."', now(), '".$infoUser['contrato_id']."', '".$infoUser['fila_id']."', '".$infoUser['municipio_id']."', '".$infoUser['regional_id']."', '".$infoUser['agencia_id']."', '".$infoUser['uf_id']."', '".$infoUser['nivel_id']."')";
+  if(!is_array($infoLog) || ($infoLog['user_id'] ?? '')==''){
+    $sqlInsLog="INSERT tbl_log_diario (user_id, data_log, ip, date_up, contrato_id, fila_id, municipio_id, regional_id, agencia_id, uf_id, nivel_id) VALUES (?, now(), ?, now(), ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $PDO->prepare( $sqlInsLog );
+    $execInsLog = $stmt->execute([
+        $idu,
+        (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        $infoUser['contrato_id'],
+        $infoUser['fila_id'],
+        $infoUser['municipio_id'],
+        $infoUser['regional_id'],
+        $infoUser['agencia_id'],
+        $infoUser['uf_id'],
+        $infoUser['nivel_id'],
+    ]);
   } else {
-    $sqlInsLog="UPDATE tbl_log_diario SET ip='".$_SERVER['REMOTE_ADDR']."', date_up=now(), date_out = null, contrato_id='".$infoUser['contrato_id']."', fila_id='".$infoUser['fila_id']."', municipio_id='".$infoUser['municipio_id']."', regional_id='".$infoUser['regional_id']."', agencia_id='".$infoUser['agencia_id']."', uf_id='".$infoUser['uf_id']."', nivel_id='".$infoUser['nivel_id']."'  where user_id=".$idu." and data_log=curdate()";
+    $sqlInsLog="UPDATE tbl_log_diario SET ip=?, date_up=now(), date_out = null, contrato_id=?, fila_id=?, municipio_id=?, regional_id=?, agencia_id=?, uf_id=?, nivel_id=?  where user_id=? and data_log=curdate()";
+    $stmt = $PDO->prepare( $sqlInsLog );
+    $execInsLog = $stmt->execute([
+        (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        $infoUser['contrato_id'],
+        $infoUser['fila_id'],
+        $infoUser['municipio_id'],
+        $infoUser['regional_id'],
+        $infoUser['agencia_id'],
+        $infoUser['uf_id'],
+        $infoUser['nivel_id'],
+        $idu,
+    ]);
   }
-  //echo "<br>".$sqlInsLog;
-  $stmt = $PDO->prepare( $sqlInsLog );
-  $execInsLog = $stmt->execute();
 
 
     if((date('H')>5) && date('H')<12){ $men ="Bom dia"; } else

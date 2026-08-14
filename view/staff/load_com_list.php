@@ -4,10 +4,9 @@ include("../cnf/session.php");
 //depurador($_POST);
 
 
-$sql="SELECT id_com, rem_chat, (SELECT concat(nome, ' ', sobrenome) as nome from tbl_user where id_user=rem_chat) as rem_nome, dest_chat, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=dest_chat) as dest_nome, grupo_com, grupo_nome from tbl_com_info where grupo_com<>'' or rem_chat=".$infoUser['id_user']." or dest_chat=".$infoUser['id_user']." order by dt_update desc";
-//echo "<br>".$sql;
+$sql="SELECT id_com, rem_chat, (SELECT concat(nome, ' ', sobrenome) as nome from tbl_user where id_user=rem_chat) as rem_nome, dest_chat, (SELECT concat(nome, ' ', sobrenome) from tbl_user where id_user=dest_chat) as dest_nome, grupo_com, grupo_nome from tbl_com_info where grupo_com<>'' or rem_chat=? or dest_chat=? order by dt_update desc";
 $stmt = $PDO->prepare($sql);
-$result = $stmt->execute();
+$result = $stmt->execute([(int) $infoUser['id_user'], (int) $infoUser['id_user']]);
 $dados = $stmt->fetchAll( PDO::FETCH_ASSOC );
 $countCom='';
 for($x=0;$x<count($dados);$x++){
@@ -19,10 +18,9 @@ for($x=0;$x<count($dados);$x++){
         //echo "<br>Com: ".$dados[$x]['id_com'];
 
         $configGrupo=0;
-        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=".$dados[$x]['id_com'];
-        //echo "<br>".$sqlGroupConfig;
+        $sqlGroupConfig="SELECT equipe_adm, equipe_bko, equipe_ate, cols from tbl_com_config where grupo_com_id=?";
         $stmt = $PDO->prepare($sqlGroupConfig);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $dados[$x]['id_com']]);
         $infoConfigGrupo = $stmt->fetch( PDO::FETCH_ASSOC );
         //depurador($infoConfigGrupo);
         if($infoConfigGrupo['cols']==''){
@@ -36,8 +34,7 @@ for($x=0;$x<count($dados);$x++){
                 $configGrupo = $infoConfigGrupo['equipe_ate'];
             }
         } else {
-            $stringUser = "'".$infoUser['id_user']."'";
-            if (strpos($infoConfigGrupo['cols'], $stringUser) !== false) {
+            if (stComColsHasUser($infoConfigGrupo['cols'] ?? '', (int) $infoUser['id_user'])) {
                 $configGrupo=1;
 
             }
@@ -46,17 +43,15 @@ for($x=0;$x<count($dados);$x++){
         //echo "<br>".$configGrupo;
 
         if($configGrupo==1){
-            $sql="SELECT dt_view from tbl_com_msg_group_view where group_chat=".$dados[$x]['id_com']." and user_id=".$infoUser['id_user'];
-            //echo "<br>".$sql;
+            $sql="SELECT dt_view from tbl_com_msg_group_view where group_chat=? and user_id=?";
             $stmt = $PDO->prepare($sql);
-            $result = $stmt->execute();
+            $result = $stmt->execute([(int) $dados[$x]['id_com'], (int) $infoUser['id_user']]);
             $infoView = $stmt->fetch( PDO::FETCH_ASSOC );
             //depurador($infoView);
             if($infoView['dt_view']==''){
-                $sqlMsg="SELECT count(id_msg) as qtd from tbl_com_msg_group where chat_group=".$dados[$x]['id_com']." and rem_id<>".$infoUser['id_user'];
-                //echo '<br>'.$sqlMsg;
+                $sqlMsg="SELECT count(id_msg) as qtd from tbl_com_msg_group where chat_group=? and rem_id<>?";
                 $stmt = $PDO->prepare($sqlMsg);
-                $result = $stmt->execute();
+                $result = $stmt->execute([(int) $dados[$x]['id_com'], (int) $infoUser['id_user']]);
                 $count = $stmt->fetch( PDO::FETCH_ASSOC );
                 if($count['qtd']>0){
                     $blink = ' blink_me';
@@ -66,10 +61,9 @@ for($x=0;$x<count($dados);$x++){
                     $span='';
                 }
             } else {
-                $sqlMsg="SELECT count(id_msg) as qtd from tbl_com_msg_group where chat_group=".$dados[$x]['id_com']." and rem_id<>".$infoUser['id_user']." and data_hora > '".$infoView['dt_view']."'";
-                //echo '<br>'.$sqlMsg;
+                $sqlMsg="SELECT count(id_msg) as qtd from tbl_com_msg_group where chat_group=? and rem_id<>? and data_hora > ?";
                 $stmt = $PDO->prepare($sqlMsg);
-                $result = $stmt->execute();
+                $result = $stmt->execute([(int) $dados[$x]['id_com'], (int) $infoUser['id_user'], $infoView['dt_view']]);
                 $count = $stmt->fetch( PDO::FETCH_ASSOC );
                 if($count['qtd']>0){
                     $blink = ' blink_me';
@@ -96,10 +90,9 @@ for($x=0;$x<count($dados);$x++){
 
     }
     if($dados[$x]['rem_chat']==$infoUser['id_user']){
-        $sqlVisual="SELECT count(id_msg) as qtd from tbl_com_msg where dt_visual is null and com_id=".$dados[$x]['id_com']." and dest_id=".$infoUser['id_user'];
-        //echo '<br>'.$sqlVisual;
+        $sqlVisual="SELECT count(id_msg) as qtd from tbl_com_msg where dt_visual is null and com_id=? and dest_id=?";
         $stmt = $PDO->prepare($sqlVisual);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $dados[$x]['id_com'], (int) $infoUser['id_user']]);
         $count = $stmt->fetch( PDO::FETCH_ASSOC );
         if($count['qtd']>0){
             $blink = ' blink_me';
@@ -119,10 +112,9 @@ for($x=0;$x<count($dados);$x++){
         echo '<div class="tab'.$active.''.$blink.'" id="title-'.$indice.'"  onclick="selAbaCom('.$indice.','.$dados[$x]['id_com'].')">'.ucwords(strtolower($dados[$x]['dest_nome'])).''.$span.'</div>';
     }
     if($dados[$x]['dest_chat']==$infoUser['id_user']){
-        $sqlVisual="SELECT count(id_msg) as qtd from tbl_com_msg where dt_visual is null and com_id=".$dados[$x]['id_com']." and dest_id=".$infoUser['id_user'];
-        //echo '<br>'.$sqlVisual;
+        $sqlVisual="SELECT count(id_msg) as qtd from tbl_com_msg where dt_visual is null and com_id=? and dest_id=?";
         $stmt = $PDO->prepare($sqlVisual);
-        $result = $stmt->execute();
+        $result = $stmt->execute([(int) $dados[$x]['id_com'], (int) $infoUser['id_user']]);
         $count = $stmt->fetch( PDO::FETCH_ASSOC );
         if($count['qtd']>0){
             $blink = ' blink_me';

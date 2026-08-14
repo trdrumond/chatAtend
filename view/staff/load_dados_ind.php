@@ -60,10 +60,9 @@
     include("../cnf/session.php");
 
     //depurador($_POST);
-    $date=date_create($_POST['dia']);
-    //echo date_format($date,"Y/m/d H:i:s");
-
-    $dia = date_format($date,"d/m/Y");
+    $diaPost = preg_replace('/[^0-9\-]/', '', (string) ($_POST['dia'] ?? ''));
+    $date=date_create($diaPost);
+    $dia = $date ? date_format($date,"d/m/Y") : $diaPost;
 
     $sql="SELECT count(*) as qtd_entradas, date_format(data_hora, '%Y-%m-%d') AS dia,
         (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as qtd_atendido,
@@ -71,10 +70,9 @@
         (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=2 or status_fila=3 or status_fila=4 or status_fila=6 or status_fila=7 or status_fila=10)) as tme_atend,
         (SELECT COUNT(*) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as qtd_abandono,
         (SELECT sec_to_time(avg(time_to_sec(te))) from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=dia and (status_fila=5 or status_fila=8 or status_fila=9)) as tme_aband
-        from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')='".$_POST['dia']."'";
-    //echo "<br>".$sql;
+        from tbl_chat_fila_secondary where date_format(data_hora, '%Y-%m-%d')=?";
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $stmt->execute([$diaPost]);
     $infoInd = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $porc_atendido = number_format((($infoInd['qtd_atendido']*100)/$infoInd['qtd_entradas']), 2);
@@ -94,11 +92,10 @@
         count(*) as qtd_atendimento, sec_to_time(sum(time_to_sec(ta))) as ta_total,
         sec_to_time(avg(time_to_sec(ta))) as ta_medio
         from tbl_chat_fila_secondary
-        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')='".$_POST['dia']."'
+        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')=?
          group by assunto_id order by qtd_atendimento desc limit 10";
-    //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $stmt->execute([$diaPost]);
     $infoSvc = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -108,11 +105,10 @@
         count(*) as qtd_atendimento, sec_to_time(sum(time_to_sec(ta))) as ta_total,
         sec_to_time(avg(time_to_sec(ta))) as ta_medio
         from tbl_chat_fila_secondary
-        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')='".$_POST['dia']."'
+        where (bko_resp is not null and bko_resp<>0) and date_format(data_hora, '%Y-%m-%d')=?
          group by bko_resp order by qtd_atendimento asc";
-    //echo "<br>".$sql;
     $stmt = $PDO->prepare($sql);
-    $result = $stmt->execute();
+    $stmt->execute([$diaPost]);
     $infoBack = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -121,7 +117,7 @@
 <div id="bloco_indicadores">
 
     <?php if($infoInd['qtd_entradas']>0){?>
-    <center><a href="staff/exportPdf.php?dia=<?=$_POST['dia']?>" target="_blank" class="btn btn-secondary">Exportar Relatório</a></center>
+    <center><a href="staff/exportPdf.php?dia=<?= stHtml($diaPost) ?>" target="_blank" class="btn btn-secondary">Exportar Relatório</a></center>
     <div id="bloco_1">
         <center><h4>RESUMO CONSOLIDADO DO DIA</h4></center>
         <div id="bloco_dados_1">

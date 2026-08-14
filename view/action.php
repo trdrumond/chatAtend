@@ -6,7 +6,6 @@
         $infoUser = [];
     }
 
-        //var_dump($_POST);
         if(!isset($_POST['sec'])){
             $_POST['sec']=$_GET['sec'];
         }
@@ -30,17 +29,38 @@
                 $_POST['action']='cnf-dash';
             }
         }
-        //var_dump($_POST);
 
-        if($infoUser['id_user']==1){
-            //var_dump($_POST);
+        $sec = basename((string) ($_POST['sec'] ?? ''));
+        $action = basename((string) ($_POST['action'] ?? ''));
+        $allowedActions = [
+            'idx' => [
+                'chat-ate', 'chat-bko', 'chat-fila', 'com-idx', 'com-idx-list',
+                'dash-ate', 'dash-ava', 'dash-cha', 'dash-chat', 'dash-fila',
+                'dash-idx', 'dash-inicio', 'dash-pause', 'dash-scor',
+                'gov-analytics', 'help', 'hist-dash', 'hist-pend', 'ia-insights',
+                'new-dem', 'rel-dash', 'rel-fila', 'rel-ind',
+            ],
+            'cnf' => [
+                'cad-age', 'cad-ass', 'cad-ctt', 'cad-emp', 'cad-faq', 'cad-fil',
+                'cad-men', 'cad-pri', 'cad-reg', 'cad-usu', 'cnf-dash', 'cnf-ia',
+                'log-acess-cnf', 'res-base',
+            ],
+            'usu' => ['pass'],
+        ];
+        if (!isset($allowedActions[$sec]) || !in_array($action, $allowedActions[$sec], true)) {
+            http_response_code(400);
+            echo 'Ação inválida.';
+            return;
         }
-
-
-
-
-
-        include("page/action/".$_POST['sec']."/".$_POST['action'].".php");
+        $actionFile = __DIR__ . '/page/action/' . $sec . '/' . $action . '.php';
+        $actionReal = realpath($actionFile);
+        $actionBase = realpath(__DIR__ . '/page/action/' . $sec);
+        if ($actionReal === false || $actionBase === false || strpos($actionReal, $actionBase) !== 0) {
+            http_response_code(400);
+            echo 'Ação inválida.';
+            return;
+        }
+        include $actionReal;
     ?>
 
 

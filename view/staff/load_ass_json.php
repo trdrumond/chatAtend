@@ -12,11 +12,16 @@ if ($filaId <= 0) {
     exit;
 }
 
-$stm = $PDO->prepare('SELECT assuntos_id FROM tbl_config_fila WHERE id_fila = ? AND ativo = 1 LIMIT 1');
+$stm = $PDO->prepare('SELECT assuntos_id, contrato_id FROM tbl_config_fila WHERE id_fila = ? AND ativo = 1 LIMIT 1');
 $stm->execute([$filaId]);
 $ass = $stm->fetch(PDO::FETCH_ASSOC);
 
-if (!$ass || trim((string) ($ass['assuntos_id'] ?? '')) === '') {
+if (!$ass || !stContratoAllowed($infoUser ?? [], $infoUserConfig ?? [], (int) ($ass['contrato_id'] ?? 0))) {
+    echo json_encode(['ok' => false, 'assuntos' => [], 'msg' => 'Fila inválida.']);
+    exit;
+}
+
+if (trim((string) ($ass['assuntos_id'] ?? '')) === '') {
     echo json_encode(['ok' => true, 'assuntos' => []]);
     exit;
 }

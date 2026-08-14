@@ -1,10 +1,11 @@
 <?php
 /**
  * Cron / processamento manual — gera análises diárias D+1.
- * Agendar: 1x/dia (ex.: 02:00) via Task Scheduler ou curl.
+ * Agendar: 1x/dia (ex.: 02:00) via Task Scheduler (CLI) ou HTTP com token.
  *
- * Uso: staff/cron_ia_analise_diaria.php?token=SEU_TOKEN
- * Token opcional: variável de ambiente ST_IA_CRON_TOKEN ou tbl_config_sis (futuro).
+ * HTTP: staff/cron_ia_analise_diaria.php?token=SEU_TOKEN
+ * Token: ST_IA_CRON_TOKEN ou view/cnf/cron.local.php
+ * CLI: php cron_ia_analise_diaria.php (token não exigido)
  */
 declare(strict_types=1);
 
@@ -13,12 +14,23 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../cnf/conexao.php';
 require_once __DIR__ . '/../cnf/st_ia_analytics.php';
 
-$tokenEnv = getenv('ST_IA_CRON_TOKEN') ?: '';
+$tokenEnv = (string) (getenv('ST_IA_CRON_TOKEN') ?: '');
+$local = __DIR__ . '/../cnf/cron.local.php';
+if ($tokenEnv === '' && is_file($local)) {
+    $loaded = require $local;
+    if (is_array($loaded)) {
+        $tokenEnv = (string) ($loaded['token'] ?? '');
+    }
+}
 $tokenReq = (string) ($_GET['token'] ?? $_POST['token'] ?? '');
-if ($tokenEnv !== '' && !hash_equals($tokenEnv, $tokenReq)) {
-    http_response_code(403);
-    echo json_encode(['ok' => false, 'error' => 'Token inválido']);
-    exit;
+$isCli = (PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg');
+
+if (!$isCli) {
+    if ($tokenEnv === '' || $tokenReq === '' || !hash_equals($tokenEnv, $tokenReq)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Token inválido']);
+        exit;
+    }
 }
 
 if (!stIaSchemaReady($PDO)) {

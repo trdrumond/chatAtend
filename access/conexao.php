@@ -1,12 +1,13 @@
 <?php
 include_once("../access/conn_config.php");
 
-$sql = "SELECT host, usuario, senha, banco, pref from config where value='".$_POST['contrato']."' and ativo=1";
-//echo "<br>".$sql;
+$sql = "SELECT host, usuario, senha, banco, pref from config where value=? and ativo=1";
 $stmt = $PDO_CONF->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([(string) ($_POST['contrato'] ?? '')]);
 $dados = $stmt->fetch( PDO::FETCH_ASSOC );
-//var_dump($dados);
+if (!is_array($dados) || empty($dados['host'])) {
+    die('Contrato inválido.');
+}
 
 $host = $dados['host'];
 $usuario = $dados['usuario'];
@@ -18,7 +19,10 @@ $dsn = "mysql:host={$host};port=3306;dbname={$banco};charset=utf8";
 try {
     $PDO = new PDO($dsn, $usuario, $senha);
     //if($PDO){echo '<br>banco conectado';}
-} catch (PDOException $e) {  die($e->getMessage()); }
+} catch (PDOException $e) {
+    error_log('piloto_2.0 access conexao: ' . $e->getMessage());
+    die('Falha ao conectar ao banco de dados.');
+}
 
 
 ?>

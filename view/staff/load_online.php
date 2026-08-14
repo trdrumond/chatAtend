@@ -8,14 +8,8 @@ include("../cnf/session.php");
 $idFila     = isset($_POST['id_fila']) ? (int)$_POST['id_fila'] : 0;
 $idContrato = isset($_POST['id_contrato']) ? (int)$_POST['id_contrato'] : 0;
 
-if($idFila!=0){
-    $sql_fila = "and fila_id=".$idFila." and contrato_id=".$idContrato;
-} else {
-    $sql_fila = '';
-}
-
-// Usa filtros por faixa de data para permitir uso de índice em data_hora
-$sql = "SELECT id_user,
+if ($idFila != 0) {
+    $sql = "SELECT id_user,
                nome,
                sobrenome,
                (SELECT img
@@ -38,11 +32,39 @@ $sql = "SELECT id_user,
           FROM tbl_user
          WHERE ativo = 1
            AND nivel_id = 4
-           $sql_fila
+           AND fila_id = ?
+           AND contrato_id = ?
       ORDER BY nome ASC";
-//echo "<br><br>".$sql."<br>";
-$stmt = $PDO_LOAD->prepare($sql);
-$result = $stmt->execute();
+    $stmt = $PDO_LOAD->prepare($sql);
+    $result = $stmt->execute([$idFila, $idContrato]);
+} else {
+    $sql = "SELECT id_user,
+               nome,
+               sobrenome,
+               (SELECT img
+                  FROM tbl_user_img_perfil
+                 WHERE user_id = id_user) AS img,
+               (SELECT IF(acao<>'Logout', data_hora, '') AS data_hora
+                  FROM tbl_log_atendimento
+                 WHERE user_id = id_user
+                   AND data_hora >= CURDATE()
+                   AND data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                 ORDER BY data_hora DESC
+                 LIMIT 1) AS date_disp,
+               (SELECT IF(acao<>'Logout', acao, '') AS acao
+                  FROM tbl_log_atendimento
+                 WHERE user_id = id_user
+                   AND data_hora >= CURDATE()
+                   AND data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                 ORDER BY data_hora DESC
+                 LIMIT 1) AS acao
+          FROM tbl_user
+         WHERE ativo = 1
+           AND nivel_id = 4
+      ORDER BY nome ASC";
+    $stmt = $PDO_LOAD->prepare($sql);
+    $result = $stmt->execute();
+}
 $dds = $stmt->fetchAll( PDO::FETCH_ASSOC );
 //depurador($dds);
 
@@ -54,16 +76,15 @@ if(count($dds) > 0){
         $userIds[] = (int)$dds[$i]['id_user'];
     }
     $userIds = array_unique($userIds);
-    $idsIn   = implode(',', $userIds);
+    $placeholders = implode(',', array_fill(0, count($userIds), '?'));
 
-    // 1) Log diário (online/offline)
     $onlineMap = array();
     $sqlOnlineLote = "SELECT user_id, date_out, date_up
                         FROM tbl_log_diario
                        WHERE data_log = CURDATE()
-                         AND user_id IN (".$idsIn.")";
+                         AND user_id IN (".$placeholders.")";
     $stmt = $PDO_LOAD->prepare($sqlOnlineLote);
-    $stmt->execute();
+    $stmt->execute($userIds);
     $rowsOnline = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rowsOnline as $row){
         // se houver mais de um registro por usuário, considera o último lido
@@ -75,10 +96,10 @@ if(count($dds) > 0){
     $sqlAtendimentoLote ="SELECT bko_resp, COUNT(id_fila_chat) AS qtd
                             FROM tbl_chat_fila
                            WHERE ".stFilaSqlAtendimentoAtivo()."
-                             AND bko_resp IN (".$idsIn.")
+                             AND bko_resp IN (".$placeholders.")
                         GROUP BY bko_resp";
     $stmt = $PDO_LOAD->prepare($sqlAtendimentoLote);
-    $stmt->execute();
+    $stmt->execute($userIds);
     $rowsQtd = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rowsQtd as $row){
         $qtdAtendMap[$row['bko_resp']] = $row['qtd'];
@@ -92,10 +113,10 @@ if(count($dds) > 0){
                  . "WHERE star IS NOT NULL AND star <> '' "
                  . "AND data_hora >= '0001-01-01' "
                  . "AND data_hora < DATE_SUB(CURDATE(), INTERVAL $day DAY) "
-                 . "AND ate IN (".$idsIn.") "
+                 . "AND ate IN (".$placeholders.") "
                  . "GROUP BY ate";
     $stmt = $PDO->prepare($sqlStarLote);
-    $stmt->execute();
+    $stmt->execute($userIds);
     $rowsStar = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rowsStar as $row){
         $starMap[$row['ate']] = $row['star'];
@@ -108,7 +129,7 @@ if(count($dds) > 0){
                      JOIN (
                              SELECT user_id, MAX(data_hora) AS data_hora
                                FROM tbl_log_atendimento
-                              WHERE user_id IN (".$idsIn.")
+                              WHERE user_id IN (".$placeholders.")
                                 AND data_hora >= CURDATE()
                                 AND data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
                                 AND acao IN ('Login', 'Disponivel', 'Indisponivel', 'Tratamento', 'Logout', 'Pausa', 'Pos')
@@ -117,7 +138,7 @@ if(count($dds) > 0){
                        ON ult.user_id = t.user_id
                       AND ult.data_hora = t.data_hora";
     $stmt = $PDO_LOAD->prepare($sqlLogLote);
-    $stmt->execute();
+    $stmt->execute($userIds);
     $rowsLogLote = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($rowsLogLote as $row){
         $logAtendMap[$row['user_id']] = $row;
@@ -218,7 +239,7 @@ if(count($dds) > 0){
 
     echo '<div class="dash-users-grid">';
     foreach ($tiles as $tile) {
-        $load = "loadInfoUser('".$tile['id_user']."', '".$_POST['id_contrato']."', '".$_POST['id_fila']."')";
+        $load = "loadInfoUser('".$tile['id_user']."', '".$idContrato."', '".$idFila."')";
         echo '<div class="dash-user-tile div_user pointer" onClick="'.$load.'">';
         if ($tile['qtd'] > 0) {
             echo '<span class="dash-user-tile__badge badge-count">'.$tile['qtd'].'</span>';

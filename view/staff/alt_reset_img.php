@@ -6,12 +6,10 @@ require_once __DIR__ . '/../cnf/cache_layout.php';
 //depurador($_POST);
 
 
-$sql="UPDATE tbl_user_img_perfil SET img='".$img_vazio."' where user_id=".$_POST['id'];
-
-//echo $sql;
+$sql="UPDATE tbl_user_img_perfil SET img=? where user_id=?";
 
 $stmt = $PDO->prepare( $sql );
-$result = $stmt->execute();
+$result = $stmt->execute([$img_vazio, (int) ($_POST['id'] ?? 0)]);
 
 
 if($result==1){
