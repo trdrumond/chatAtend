@@ -18,7 +18,7 @@
     <script type="text/javascript" src="http://localhost/solvetask/js/jquery.js?v=1751883642"></script>
     <script type="text/javascript" src="http://localhost/solvetask/js/jquery.titlealert.js?v=1751883641"></script>
     <script type="text/javascript" src="http://localhost/solvetask/js/jquery.form.js?v=1751883641"></script>
-    <script src="js/action.js?v=1781696890"></script>
+    <script src="js/action.js?v=1786710337"></script>
     <script src="js/st-bko-distrib.js?v=1781613584"></script>
     <script src="js/minus.js?v=1781269348"></script>
 
@@ -29,7 +29,7 @@
 
     <script src="http://localhost/solvetask/js/sweetalert2/dist/sweetalert2.all.js?v=1751883672"></script>
 
-    <script src="js/st-tinymce-loader.js?v=1781696890"></script>
+    <script src="js/st-tinymce-loader.js?v=1783686017"></script>
 
-    <link href="css/style.css?v=1781696889" rel="stylesheet" type="text/css" />
+    <link href="css/style.css?v=1786708311" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="css/style-materialize.css?v=1781524474">
