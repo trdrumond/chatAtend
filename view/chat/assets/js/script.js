@@ -657,7 +657,161 @@ function setServerStatus(state) {
     if ($('#footer-status-label').length) {
         $('#footer-status-label').text(labels[state] || labels.neutro);
     }
+    if (typeof stChatSyncAllComposers === 'function') {
+        stChatSyncAllComposers();
+    }
 }
+
+function stChatWsIsOnline() {
+    return typeof conn !== 'undefined' && conn && conn.readyState === 1;
+}
+
+function stChatWarnOffline() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sem conexão',
+            text: 'Aguarde o indicador ficar verde para enviar mensagens.',
+            timer: 3500,
+            showConfirmButton: false
+        });
+        return;
+    }
+    alert('Sem conexão com o servidor. Aguarde o indicador ficar verde.');
+}
+
+function stChatListComposerChatIds() {
+    var ids = [];
+    $('[id^="form_"]').each(function () {
+        var chatId = String(this.id || '').replace(/^form_/, '');
+        if (chatId && ids.indexOf(chatId) === -1) {
+            ids.push(chatId);
+        }
+    });
+    return ids;
+}
+
+function stChatComposerEnded(chatId) {
+    var form = document.getElementById('form_' + chatId);
+    if (form && form.getAttribute('data-chat-ended') === '1') {
+        return true;
+    }
+    if (typeof stChatIsEnded === 'function' && stChatIsEnded(String(chatId), '')) {
+        return true;
+    }
+    return false;
+}
+
+function stChatMarkComposerEnded(chatId) {
+    var form = document.getElementById('form_' + chatId);
+    if (form) {
+        form.setAttribute('data-chat-ended', '1');
+    }
+}
+
+function stChatSetElementEnabled(id, enabled) {
+    var el = document.getElementById(id);
+    if (!el) {
+        return;
+    }
+    el.disabled = !enabled;
+    if (enabled) {
+        el.removeAttribute('aria-disabled');
+        el.classList.remove('st-chat-ws-disabled');
+    } else {
+        el.setAttribute('aria-disabled', 'true');
+        el.classList.add('st-chat-ws-disabled');
+    }
+}
+
+function stChatSetComposerEnabled(chatId, enabled) {
+    if (stChatComposerEnded(chatId)) {
+        return;
+    }
+
+    var controlIds = [
+        'msg_' + chatId,
+        'message_' + chatId,
+        'btn1_' + chatId,
+        'btn_file_' + chatId,
+        'btn_file_responsive_' + chatId,
+        'btn_atent_' + chatId,
+        'btn_atent_responsive_' + chatId,
+        'btn_fin_' + chatId,
+        'btn_fin_responsive_' + chatId,
+        'trasnferir_' + chatId,
+        'select_in_chat_' + chatId,
+        'file_' + chatId,
+        'save_file_' + chatId
+    ];
+
+    controlIds.forEach(function (id) {
+        stChatSetElementEnabled(id, enabled);
+    });
+
+    if (typeof tinymce !== 'undefined') {
+        var editor = tinymce.get('msg_' + chatId);
+        if (editor) {
+            try {
+                editor.mode.set(enabled ? 'design' : 'readonly');
+            } catch (e) {}
+        }
+    }
+
+    var $banner = $('#st-chat-ws-banner-' + chatId);
+    if (!enabled) {
+        if (!$banner.length && $('#div_message_' + chatId).length) {
+            $('#div_message_' + chatId).before(
+                '<div id="st-chat-ws-banner-' + chatId + '" class="st-chat-ws-banner">'
+                + '<i class="fas fa-exclamation-triangle"></i> Sem conexão com o servidor. Aguarde o indicador verde.'
+                + '</div>'
+            );
+        }
+    } else {
+        $banner.remove();
+    }
+
+    var $formChat = $('#form_' + chatId).closest('.form-chat');
+    if ($formChat.length) {
+        $formChat.toggleClass('st-chat-composer-offline', !enabled);
+    }
+}
+
+function stChatSyncAllComposers() {
+    var online = stChatWsIsOnline();
+    stChatListComposerChatIds().forEach(function (chatId) {
+        stChatSetComposerEnabled(chatId, online);
+    });
+}
+
+function stChatWsSend(payload) {
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        stChatSyncAllComposers();
+        return false;
+    }
+    try {
+        conn.send(payload);
+        return true;
+    } catch (e) {
+        stChatWarnOffline();
+        return false;
+    }
+}
+
+window.stChatSyncAllComposers = stChatSyncAllComposers;
+window.stChatDeferUntilOnline = function (fn, delayMs) {
+    if (typeof fn !== 'function') {
+        return;
+    }
+    if (stChatWsIsOnline()) {
+        fn();
+        return;
+    }
+    setTimeout(function () {
+        window.stChatDeferUntilOnline(fn, delayMs);
+    }, typeof delayMs === 'number' ? delayMs : 2000);
+};
 
 function stChatHideById(id) {
     var el = document.getElementById(id);
@@ -815,6 +969,7 @@ function connect(conn, status, host) {
     };
 }
 
+setServerStatus('neutro');
 connect(conn, 0, host);
 
 //console.log(conn.readyState);
@@ -824,6 +979,10 @@ connect(conn, 0, host);
 
 function chatMsg(chatId, destinatario, contrato, token) {
 
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        return;
+    }
 
     var form_txt = 'form_' + chatId;
     var message_txt = 'message_' + chatId;
@@ -855,6 +1014,11 @@ function chatMsg(chatId, destinatario, contrato, token) {
 
 function chatFim(chatId, destinatario, contrato, token, mensagem, indice) {
 
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        return;
+    }
+
     if (typeof stChatIsEnded === 'function' && stChatIsEnded(chatId, token) && window.stChatPosOpened && window.stChatPosOpened[String(chatId)]) {
         return;
     }
@@ -885,6 +1049,10 @@ function chatFim(chatId, destinatario, contrato, token, mensagem, indice) {
 
 function chatTransfer(chatId, destinatario, contrato, token, mensagem) {
 
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        return;
+    }
 
     var form_txt = 'form_' + chatId;
     var id_user_remetente_txt = 'id_user_remetente_' + chatId;
@@ -946,6 +1114,10 @@ function chatIn(chatId, destinatario, contrato, token, mensagem, indice) {
 
 function chatAtent(chatId, destinatario, contrato, token, mensagem) {
 
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        return;
+    }
 
     var form_txt = 'form_' + chatId;
     var id_user_remetente_txt = 'id_user_remetente_' + chatId;
@@ -971,6 +1143,10 @@ function chatAtent(chatId, destinatario, contrato, token, mensagem) {
 
 
 function sendMessage(chatId, inp_message, inp_name, userDestinatario, userRemetente, inp_img) {
+    if (!stChatWsIsOnline()) {
+        stChatWarnOffline();
+        return;
+    }
     var data = new Date();
     var dia = data.getDate();
     var mes = data.getMonth();
@@ -999,14 +1175,9 @@ function sendMessage(chatId, inp_message, inp_name, userDestinatario, userRemete
         };
 
         msg = JSON.stringify(msg);
-        //console.log(msg);
-        //conn.send(msg);
-        if (conn.send(msg)) {
-            //console.log('Mensagem enviada!');
+        if (!stChatWsSend(msg)) {
+            return;
         }
-
-        //console.log(msg);
-        //console.log("Teste 1");
 
         stChatShowMsg(chatId, 'me', msg, userDestinatario.value, userRemetente.value);
         inp_message.value = '';
@@ -1046,12 +1217,9 @@ function sendMessageSys(chatId, inp_message, userDestinatario, userRemetente, in
         };
 
         msg = JSON.stringify(msg);
-        //console.log(msg);
-        //conn.send(msg);
-        if (conn.send(msg)) {
-            //console.log('Mensagem enviada!');
+        if (!stChatWsSend(msg)) {
+            return;
         }
-        //console.log(msg);
         if (!stChatHasSysMsg(chatId, msgText)) {
             stChatShowSysMsg(chatId, 'sys', msg, userDestinatario.value, indice);
         }
@@ -1088,13 +1256,9 @@ function sendAtent(chatId, inp_message, userDestinatario, userRemetente) {
         };
 
         msg = JSON.stringify(msg);
-        //console.log(msg);
-        //conn.send(msg);
-        if (conn.send(msg)) {
-            //console.log('Mensagem enviada!');
+        if (!stChatWsSend(msg)) {
+            return;
         }
-        //console.log(msg);
-        //showMessagesSys('sys', msg, userDestinatario.value);
         stChatShowSysMsg(chatId, 'sys', msg, userDestinatario.value, stChatResolveIndiceForChat(chatId));
 
 
@@ -1135,7 +1299,8 @@ function sendMessageFim(chatId, inp_message, userDestinatario, userRemetente, in
     };
 
     msg = JSON.stringify(msg);
-    if (conn.send(msg)) {
+    if (!stChatWsSend(msg)) {
+        return;
     }
     if (typeof stChatMarkEnded === 'function') {
         stChatMarkEnded(String(chatId), tokenChat || '');
@@ -1171,12 +1336,9 @@ function sendMessageTransfer(chatId, inp_message, userDestinatario, userRemetent
         };
 
         msg = JSON.stringify(msg);
-        //console.log(msg);
-        //conn.send(msg);
-        if (conn.send(msg)) {
-            //console.log('Mensagem enviada!');
+        if (!stChatWsSend(msg)) {
+            return;
         }
-        //console.log(msg);
         stChatShowSysMsg(chatId, 'sys', msg, userDestinatario.value, indice);
 
 
@@ -1403,7 +1565,9 @@ function sendAtend() {
     window._stSendAtendLast = now;
     var msg = { "flagAtend": "true" };
     msg = JSON.stringify(msg);
-    conn.send(msg);
+    if (!stChatWsSend(msg)) {
+        return;
+    }
     if (typeof load === 'function') {
         stChatScheduleFilaPoll(500);
     }
@@ -1412,9 +1576,7 @@ function sendAtend() {
 function sendBko() {
     var msg = { "flagBko": "true" };
     msg = JSON.stringify(msg);
-    //console.log(msg);
-    conn.send(msg);
-    //setTimeout(function(){ load(); }, 500);
+    stChatWsSend(msg);
     if (typeof load === 'function') {
         stChatScheduleFilaPoll(120);
     }
@@ -1430,8 +1592,9 @@ function sendFile(chatId) {
         "chatId": chatId
     };
     msg = JSON.stringify(msg);
-    //console.log(msg);
-    conn.send(msg);
+    if (!stChatWsSend(msg)) {
+        return;
+    }
     if (typeof loadFileDiv === 'function') {
         loadFileDiv(chatId);
     }
@@ -1467,15 +1630,7 @@ function sendKey(chatId, inp_name, userDestinatario, userRemetente) {
         };
 
         msg = JSON.stringify(msg);
-
-        //console.log(msg);
-        //conn.send(msg);
-        if (conn.send(msg)) {
-            //console.log('Mensagem enviada!');
-        }
-        //console.log(msg);
-        //showDig('me', msg, userDestinatario.value);
-        //inp_message.value = '';
+        stChatWsSend(msg);
     }
 
 

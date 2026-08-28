@@ -543,7 +543,17 @@ function inChat() {
     }
     window.stChatJoinOnce[guardKey] = true;
     sessionStorage.setItem(joinStoreKey, '1');
-    chatIn(chatId, destinatario, <?=$infoUser['contrato_id']?>, '<?=$tokenChat?>', mensagem);
+    var runJoin = function () {
+        chatIn(chatId, destinatario, <?=$infoUser['contrato_id']?>, '<?=$tokenChat?>', mensagem);
+    };
+    if (typeof window.stChatDeferUntilOnline === 'function') {
+        window.stChatDeferUntilOnline(runJoin, 1500);
+    } else {
+        runJoin();
+    }
+    if (typeof window.stChatSyncAllComposers === 'function') {
+        window.stChatSyncAllComposers();
+    }
 }
 
 
@@ -792,6 +802,12 @@ function stChatHandleEnterSend_<?=$chatId?>(e) {
 }
 
 function sendChatMessage_<?=$chatId?>() {
+    if (typeof stChatWsIsOnline === 'function' && !stChatWsIsOnline()) {
+        if (typeof stChatWarnOffline === 'function') {
+            stChatWarnOffline();
+        }
+        return false;
+    }
     var destinatario = $('#id_user_destinatario_<?=$chatId?>').val();
     var composer = stChatReadComposer_<?=$chatId?>();
     var msg = composer.html;
@@ -1301,6 +1317,9 @@ function loadTextarea_<?=$chatId?>() {
                 stChatClearComposerFallback_<?=$chatId?>();
                 $('#div_message_<?=$chatId?>').addClass('st-chat-tinymce-active');
                 stChatGetMsgEl_<?=$chatId?>().addClass('st-chat-force-hidden');
+                if (typeof window.stChatSyncAllComposers === 'function') {
+                    window.stChatSyncAllComposers();
+                }
                 var container = editor.getContainer();
                 if (container) {
                     container.style.visibility = 'visible';
@@ -1673,6 +1692,12 @@ function loadFileDiv(chatId) {
                 });
 
                 $('#save_file_<?=$chatId?>').click(function() {
+                    if (typeof stChatWsIsOnline === 'function' && !stChatWsIsOnline()) {
+                        if (typeof stChatWarnOffline === 'function') {
+                            stChatWarnOffline();
+                        }
+                        return;
+                    }
                     var feed = '#status_file_<?=$chatId?>';
                     var file = $('#ipt_file_<?=$chatId?>').val();
                     var rem = $('#id_user_remetente_<?=$chatId?>').val();
