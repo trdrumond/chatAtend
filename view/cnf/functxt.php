@@ -25,8 +25,11 @@ function infoAtend($PDO, $id_chat){
         $msg['nome_envio'] = ($msg['rem_id']==0) ? "Sistema" : $msg['nome_envio'];
         $string .= "\n[".$msg['data_hora']."] ".$msg['nome_envio'].": ".$msg['msg'];
     }
-    //return $string;
-    return atendTxt($PDO, $info['id_chat'], utf8_decode($string));
+    // PHP 8.2+: utf8_decode() deprecated — equivalente ISO-8859-1 sem deprecation
+    $textoArquivo = function_exists('mb_convert_encoding')
+        ? mb_convert_encoding((string) $string, 'ISO-8859-1', 'UTF-8')
+        : (string) $string;
+    return atendTxt($PDO, $info['id_chat'], $textoArquivo);
 }
     //echo "<br>----------<br>";
 

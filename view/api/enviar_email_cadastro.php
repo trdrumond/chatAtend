@@ -4,6 +4,7 @@
 // $PDO (conexão já aberta pelo conn da API)
 
 include(dirname(__FILE__) . "/../staff/newpass_email_config_envio.php");
+require_once(dirname(__FILE__) . "/../staff/phpmailer/class.phpmailer.php");
 
 $tituloSistema = 'SolveTask';
 if (isset($PDO) && $PDO instanceof PDO) {
@@ -35,8 +36,6 @@ $conteudo = 'Olá <b>' . $nome . '</b>,<br><br>
     https://solvetask.logos-ma.com.br
     <br><br><br><br><br><br><center>********** Não responda este e-mail **********</center>';
 
-require_once(dirname(__FILE__) . "/../staff/phpmailer/class.phpmailer.php");
-
 $enviado = false;
 $erroEmail = null;
 
@@ -45,27 +44,15 @@ if ($dest === '' || !filter_var($dest, FILTER_VALIDATE_EMAIL)) {
     $erroEmail = 'E-mail de destino inválido.';
 } else {
     $mail = new PHPMailer();
-    $mail->IsSMTP();
-    $mail->CharSet = 'UTF-8';
-    $mail->SMTPAuth = true;
-    $mail->Host = $host;
-    $mail->Port = (int) $port;
-    if ($mail->Port === 587) {
-        $mail->SMTPSecure = 'tls';
-    } elseif ($mail->Port === 465) {
-        $mail->SMTPSecure = 'ssl';
-    }
+    solvetask_configure_mailer($mail);
     $mail->Timeout = 30;
-    $mail->Username = $caixaPostalServidorUser;
-    $mail->Password = $caixaPostalServidorSenha;
-    $mail->From = $caixaPostalServidorEmail;
-    $mail->FromName = $caixaPostalServidorNome;
-    $mail->IsHTML(true);
-    $mail->Subject = $assunto;
+    $mail->isHTML(true);
+    $mail->Subject = solvetask_encode_subject($assunto);
     $mail->Body = $conteudo;
-    $mail->AddAddress($dest);
+    $mail->AltBody = solvetask_html_to_text($conteudo);
+    $mail->addAddress($dest);
 
-    $okSend = $mail->Send();
+    $okSend = $mail->send();
     $enviado = ($okSend === true);
     if (!$enviado) {
         $erroEmail = trim((string) $mail->ErrorInfo);
@@ -74,6 +61,6 @@ if ($dest === '' || !filter_var($dest, FILTER_VALIDATE_EMAIL)) {
         }
     }
 
-    $mail->ClearAllRecipients();
-    $mail->ClearAttachments();
+    $mail->clearAllRecipients();
+    $mail->clearAttachments();
 }

@@ -29,23 +29,19 @@ $senha = generateHash($pass);
 include("../staff/newpass_email_config_cad.php");
 require_once("../staff/phpmailer/class.phpmailer.php");
 
-$mail = new PHPMailer();
+$assunto = isset($assunto) ? (string) $assunto : '';
+$conteudo = isset($conteudo) ? (string) $conteudo : '';
 
-$mail->IsSMTP();
-$mail->Port = $port;
-$mail->Host = $host;
-$mail->SMTPAuth = true;
-$mail->Username = $caixaPostalServidorUser;
-$mail->Password = $caixaPostalServidorSenha;
-$mail->From = $caixaPostalServidorEmail;
-$mail->FromName = $caixaPostalServidorNome;
-$mail->AddAddress($email);
-$mail->IsHTML(true);
-$mail->Subject  = utf8_decode($assunto);
-$mail->Body = utf8_decode($conteudo);
-$enviado = $mail->Send();
-$mail->ClearAllRecipients();
-$mail->ClearAttachments();
+$mail = new PHPMailer();
+solvetask_configure_mailer($mail);
+$mail->addAddress($email, $nome);
+$mail->isHTML(true);
+$mail->Subject = solvetask_encode_subject($assunto);
+$mail->Body = $conteudo;
+$mail->AltBody = solvetask_html_to_text($conteudo);
+$enviado = $mail->send();
+$mail->clearAllRecipients();
+$mail->clearAttachments();
 
 if ($enviado) {
     $sqlmAIL = "UPDATE tbl_user SET flag_mail=1, senha_usuario=? where id_user=?";
