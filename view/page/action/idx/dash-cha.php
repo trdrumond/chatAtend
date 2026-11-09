@@ -355,6 +355,26 @@ require_once __DIR__ . '/../cnf/_cnf_ui.php';
 
 
 
+                <?php } else { ?>
+
+                    <header class="st-dash-cha-side__head">
+
+                        <i class="fas fa-history" aria-hidden="true"></i>
+
+                        <span>Protocolos de hoje</span>
+
+                    </header>
+
+                    <div class="dash-fila-empty st-dash-cha-side-empty">
+
+                        <i class="fas fa-inbox" aria-hidden="true"></i>
+
+                        <div class="dash-fila-empty__title">Nenhum protocolo hoje</div>
+
+                        <div class="dash-fila-empty__sub">Seus atendimentos do dia aparecerão aqui.</div>
+
+                    </div>
+
                 <?php } ?>
 
             </div>

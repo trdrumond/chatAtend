@@ -1,6 +1,6 @@
 <?php
 return [
-    'host' => '10.33.29.106',
+    'host' => 'localhost',
     'port' => 3306,
     'usuario' => 'acesso.sistemas',
     'senha' => 'tDHMpeXVTzQAZsGD',

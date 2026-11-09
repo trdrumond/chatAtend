@@ -343,7 +343,7 @@ if($ver['user_id']!=''){
 
                 <div id="bloco-bko">
 
-                    <button onclick="addAba();" id="btn-add-tab" class="btn btn-outline-secondary" disabled>+</button>
+                    <button type="button" onclick="addAba();" id="btn-add-tab" class="btn btn-outline-secondary" title="Abrir novo atendimento" aria-label="Abrir novo atendimento" disabled>+</button>
 
                     <?php
 

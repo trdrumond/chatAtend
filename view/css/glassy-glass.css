@@ -1,0 +1,63 @@
+/* =========================================================
+   SolveTask Glassy — vidro (liquid glass) nos cards do conteúdo
+   Fundo translúcido + desfoque do fundo aurora + borda clara.
+   backdrop-filter vira bloco de contenção de position:fixed: cards que contêm
+   modais/offcanvas ficam fora (:has) para os modais continuarem cobrindo a tela.
+   Com transparência reduzida, --g-blur vale none (glassy-tokens.css).
+   ========================================================= */
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy {
+        --g-blur-card: blur(18px) saturate(170%);
+    }
+
+    body.st-glassy #action-page :is(
+        .card,
+        .st-form-card,
+        .cnf-usu-form-profile,
+        .cnf-table-wrap,
+        .cnf-usu-table-wrap,
+        .cnf-filter-bar,
+        .cnf-kpi,
+        .cnf-chart-card,
+        .cnf-table-card,
+        .cnf-log-panel,
+        .cnf-report-panel,
+        .cnf-live-fila-card,
+        .st-score-profile,
+        .st-score-kpi,
+        .st-score-panel,
+        .st-pos-closure-card,
+        .bloco_info,
+        .dash-fila-col,
+        .dash-ind-card,
+        #div_pend.st-dash-cha-side,
+        #bloco_central.st-dash-cha-bot
+    ):not(:has(.modal, [class*="gw-modal"], .offcanvas, .swal2-container)) {
+        -webkit-backdrop-filter: var(--g-blur-card);
+        backdrop-filter: var(--g-blur-card);
+        border-color: var(--a-line-2);
+    }
+
+    body.st-glassy-painel .bloco_info_painel {
+        -webkit-backdrop-filter: blur(18px) saturate(170%);
+        backdrop-filter: blur(18px) saturate(170%);
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.st-glassy {
+        --g-blur-card: blur(10px) saturate(160%);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    body.st-glassy {
+        --g-blur-card: none;
+    }
+
+    body.st-glassy-painel .bloco_info_painel {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

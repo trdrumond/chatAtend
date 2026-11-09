@@ -1,0 +1,89 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: MINHA CONTA (?sec=usu → action pass.php)
+   Carregado após glassy-idx.css. A página usa st_page_open / st-form-card / cnf-form
+   (glassy-cnf.css, global); aqui só as peças que no cnf existem apenas em modais.
+   ========================================================= */
+
+body.st-glassy.st-sec-usu #action-page .cnf-usu-form-profile {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    color: var(--a-text);
+}
+
+body.st-glassy.st-sec-usu #action-page .cnf-usu-form-profile-info .text-muted {
+    color: var(--a-text-2) !important;
+}
+
+/* Upload da foto (#img_load envolve a imagem/spinner trocados por pass.php). */
+body.st-glassy.st-sec-usu #action-page .st-upload-wrap {
+    border: 1px dashed var(--a-line-hover);
+    border-radius: var(--g-r-lg);
+    background: var(--a-row-stripe);
+}
+
+body.st-glassy.st-sec-usu #action-page .st-upload-wrap #img_load {
+    border-radius: 50%;
+    transition: box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy.st-sec-usu #action-page .st-upload-wrap #img_load:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 2px var(--c-primary), 0 0 18px rgba(214, 51, 108, .4);
+}
+
+body.st-glassy.st-sec-usu #action-page #feed_pass,
+body.st-glassy.st-sec-usu #action-page #feed_img {
+    color: var(--a-text) !important;
+}
+
+/* Layout: dados do usuário em 3 colunas; senha e foto lado a lado. */
+body.st-sec-usu #action-page .cnf-usu-form-section .st-form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+body.st-sec-usu #action-page .st-usu-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 16px;
+}
+
+body.st-sec-usu #action-page .st-usu-row > .st-form-card {
+    margin-bottom: 0;
+}
+
+body.st-sec-usu #action-page .st-usu-row .cnf-form-grid--narrow {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 1100px) {
+    body.st-sec-usu #action-page .cnf-usu-form-section .st-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    body.st-sec-usu #action-page .st-usu-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body.st-sec-usu #action-page .cnf-usu-form-section .st-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy.st-sec-usu #action-page .st-upload-wrap #img_load {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy.st-sec-usu #action-page :is(.cnf-usu-form-profile, .st-upload-wrap) {
+        border: 1px solid CanvasText;
+    }
+}

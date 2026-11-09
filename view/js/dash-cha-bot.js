@@ -11,7 +11,7 @@
     var state = {
         started: false,
         step: 'idle',
-        nomeRobo: 'Robô Logos',
+        nomeRobo: 'Logosnildson',
         nomeUsuario: '',
         filas: [],
         assuntos: [],
@@ -267,13 +267,13 @@
             if (!data || !data.ok) {
                 return;
             }
-            state.nomeRobo = data.nome_robo || 'Robô Logos';
+            state.nomeRobo = data.nome_robo || 'Logosnildson';
             state.nomeUsuario = data.nome_usuario || 'visitante';
             state.filas = data.filas || [];
             runConversation();
         }).fail(function () {
             state.nomeUsuario = 'visitante';
-            state.nomeRobo = 'Robô Logos';
+            state.nomeRobo = 'Logosnildson';
             state.filas = [];
             runConversation();
         });

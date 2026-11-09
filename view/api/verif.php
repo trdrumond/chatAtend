@@ -16,7 +16,10 @@ $stmt = $PDO->prepare($sql);
 $result = $stmt->execute([(int) $idu]);
 $info = $stmt->fetch( PDO::FETCH_ASSOC );
 
-if (is_array($info) && isset($info['dias_refresh'], $info['dias_config']) && (int)$info['dias_refresh'] > (int)$info['dias_config']) {
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$isPaginaSenha = ($_GET['sec'] ?? '') === 'usu';
+
+if (!$isAjaxRequest && !$isPaginaSenha && is_array($info) && isset($info['dias_refresh'], $info['dias_config']) && (int)$info['dias_refresh'] > (int)$info['dias_config']) {
     echo "<meta http-equiv=refresh content='0; URL=index.php?sec=usu&op=2';>";
 }
 

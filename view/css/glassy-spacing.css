@@ -1,0 +1,118 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: ESPAÇAMENTO INTERNO DOS CARDS
+   Carregado por último. Só padding/gap: não altera cores, display nem posição.
+   ========================================================= */
+
+body.st-glassy {
+    --a-pad-card: 22px 24px;
+    --a-pad-panel: 20px 22px;
+    --a-pad-tile: 16px 18px;
+}
+
+/* Cabeçalho de página, filtros e cards de formulário */
+body.st-glassy #action-page .cnf-header {
+    padding: 18px 24px;
+}
+
+body.st-glassy #action-page .cnf-filter-bar {
+    padding: 18px 22px;
+}
+
+body.st-glassy #action-page .st-form-card {
+    padding: var(--a-pad-card);
+}
+
+body.st-glassy #action-page .st-form-card-title {
+    margin-bottom: 14px;
+}
+
+body.st-glassy #action-page .cnf-usu-form-profile {
+    padding: 18px 20px;
+}
+
+/* Tabelas */
+body.st-glassy #action-page .cnf-table-wrap {
+    padding: 6px 10px 10px;
+}
+
+body.st-glassy #action-page .cnf-table > :not(caption) > * > * {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+/* Cards genéricos (Bootstrap) e cards do dashboard de configuração */
+body.st-glassy #action-page .card-body {
+    padding: var(--a-pad-panel);
+}
+
+body.st-glassy #action-page .card-header {
+    padding: 14px 22px;
+}
+
+body.st-glassy #action-page :is(.cnf-chart-card, .cnf-table-card, .st-score-panel, .st-pos-closure-card) {
+    padding: var(--a-pad-panel);
+}
+
+body.st-glassy #action-page :is(.cnf-kpi, .st-score-kpi) {
+    padding: var(--a-pad-tile);
+}
+
+/* Dashboard (fila) */
+body.st-glassy #action-page .dash-fila-col__body {
+    padding: 16px;
+}
+
+body.st-glassy #action-page .dash-user-tile {
+    padding: 14px 12px;
+}
+
+body.st-glassy #indice :is(.bloco_info, .bloco_info_painel) {
+    padding: 14px 18px;
+}
+
+/* Solicitante: robô e lateral */
+body.st-glassy #action-page .st-dash-cha-card__head {
+    padding: 16px 22px;
+}
+
+body.st-glassy #action-page .st-dash-cha-bot__chat {
+    padding: 18px 22px;
+}
+
+body.st-glassy #action-page .st-dash-cha-bot__input {
+    padding: 0 22px;
+}
+
+/* style.css zera o padding de #div_pend com !important. */
+body.st-glassy #action-page .st-dash-cha-workspace #div_pend.st-dash-cha-side {
+    padding: var(--a-pad-panel) !important;
+}
+
+/* Modais */
+body.st-glassy .modal-header {
+    padding: 16px 24px;
+}
+
+body.st-glassy .modal-body {
+    padding: 22px 24px;
+}
+
+body.st-glassy .modal-footer {
+    padding: 14px 24px;
+}
+
+@media (max-width: 768px) {
+    body.st-glassy {
+        --a-pad-card: 16px 16px;
+        --a-pad-panel: 14px 16px;
+        --a-pad-tile: 12px 14px;
+    }
+
+    body.st-glassy #action-page :is(.cnf-header, .cnf-filter-bar) {
+        padding: 14px 16px;
+    }
+
+    body.st-glassy .modal-body {
+        padding: 16px;
+    }
+}

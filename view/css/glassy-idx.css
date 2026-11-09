@@ -1,0 +1,374 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: TELAS DE ?sec=idx (regras específicas)
+   Carregado após glassy-chat.css. O grosso já vem das camadas globais
+   (glassy-components.css: paleta --c-* remapeada, Bootstrap, style=""; glassy-cnf.css:
+   st_page_open / st-form-card / cnf-table). Aqui ficam só as peças com cores literais
+   claras em style.css ou em <style> inline das actions/staff:
+     dash-scor + load_dados_score, gov-analytics, ia-insights, chat-fila (st-fila-sol),
+     dash-cha (bot), pós-atendimento (st-pos), dash-ava, dash-pause, dash-inicio,
+     load_info_user (detalhe no dashboard), load_monitoria, load_pend_info, rel-*.
+   Sem backdrop-filter (tudo dentro de #action-page, que contém modais).
+   ========================================================= */
+
+/* ---------- 1. Score (dash-scor.php + staff/load_dados_score.php) ---------- */
+body.st-glassy #action-page :is(.st-score-profile, .st-score-kpi, .st-score-panel) {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    box-shadow: var(--a-shadow-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-score-profile__avatar img {
+    border-color: var(--a-line-hover);
+    box-shadow: 0 4px 14px rgba(6, 5, 28, .35);
+}
+
+body.st-glassy #action-page :is(.st-score-profile__name, .st-score-kpi__value, .st-score-panel h5) {
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-score-profile__status {
+    background: var(--a-row-stripe);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-score-profile dt, .st-score-kpi--accent .st-score-kpi__label) {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page :is(.st-score-profile dd, .st-score-ref) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page :is(.st-score-kpi__label, .st-score-kpi__sub, .st-score-table th, .st-score-empty) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .st-score-kpi__delta--good { color: var(--a-ok-text); }
+body.st-glassy #action-page .st-score-kpi__delta--warn { color: var(--a-off-text); }
+body.st-glassy #action-page .st-score-kpi__delta--neutral { color: var(--a-text-2); }
+
+body.st-glassy #action-page .st-score-kpi--accent {
+    border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
+    background: var(--a-tile);
+}
+
+body.st-glassy #action-page .st-score-kpi--stars .st-score-kpi__value {
+    color: var(--a-warn-text);
+}
+
+body.st-glassy #action-page :is(.st-score-table th, .st-score-table td) {
+    border-bottom-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-score-table th {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .st-score-rank {
+    background: var(--a-tile-hi);
+    color: var(--a-text);
+}
+
+/* ---------- 2. Governança (gov-analytics) e IA (ia-insights) ---------- */
+body.st-glassy #action-page :is(.st-gov-kpi, .st-gov-panel, .st-ia-section, .st-ia-dia-card) {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    box-shadow: var(--a-shadow-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-gov-periodo {
+    background: var(--a-row-stripe);
+    border-color: var(--a-line);
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page :is(.st-gov-periodo i, .st-gov-panel__title i) {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page :is(.st-gov-kpi__value, .st-gov-panel__title, .st-ia-dia-card__body, .st-ia-dia-card__body strong) {
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-gov-loading, .st-gov-kpi__label, .st-gov-kpi__sub, .st-gov-empty, .st-ia-periodo-label, .st-ia-cache-tag) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page :is(.st-gov-table th, .st-gov-table td) {
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy #action-page .st-gov-table th {
+    background: var(--a-thead);
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .st-gov-table td {
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-gov-table tbody tr:hover {
+    background: var(--a-row-hover);
+}
+
+body.st-glassy #action-page .st-ia-dia-card__head {
+    background: var(--a-row-stripe);
+    border-bottom-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-ia-dia-card--periodo {
+    border-color: color-mix(in srgb, var(--st-online) 45%, transparent);
+}
+
+body.st-glassy #action-page .st-ia-banner {
+    --al: var(--st-online);
+    border: 1px solid color-mix(in srgb, var(--al) 40%, transparent);
+    border-left: 3px solid var(--al);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-ia-banner--warn { --al: var(--c-warning); }
+body.st-glassy #action-page .st-ia-banner--ok { --al: var(--c-success); }
+
+/* ---------- 3. Solicitante (chat-fila: st-fila-sol-*) ---------- */
+body.st-glassy #action-page :is(.st-fila-sol-meta__item, .st-fila-sol-queue-stat) {
+    background: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-fila-sol-position, .st-fila-sol-side__head) {
+    background: var(--a-row-stripe);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-fila-sol-steps__dot {
+    background: var(--a-solid);
+    border-color: var(--a-line-2);
+}
+
+body.st-glassy #action-page .st-fila-sol-position__ring {
+    background: var(--a-solid);
+    border-color: var(--a-line-2);
+    box-shadow: inset 0 0 0 6px color-mix(in srgb, var(--st-online) 18%, transparent), var(--a-shadow-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-fila-sol-tabs .nav-link {
+    border-color: transparent !important;
+    border-radius: var(--g-r-pill) !important;
+    background: transparent !important;
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy #action-page .st-fila-sol-tabs .nav-link:hover {
+    background: var(--a-tile) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy #action-page .st-fila-sol-tabs .nav-link.active {
+    background: var(--a-chip-active) !important;
+    border-color: transparent !important;
+    color: var(--a-text) !important;
+    box-shadow: var(--a-chip-active-shadow);
+}
+
+/* ---------- 4. Bot de abertura (dash-cha: st-dash-cha-*) ---------- */
+body.st-glassy #action-page .st-dash-cha-bot__chat {
+    background: transparent;
+}
+
+body.st-glassy #action-page .st-dash-cha-card__head {
+    background: var(--a-row-stripe);
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy #action-page .st-dash-cha-bot__msg--bot .st-dash-cha-bot__bubble {
+    background: var(--a-bubble);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-dash-cha-bot__opt {
+    background: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-dash-cha-bot__opt:hover {
+    background: var(--a-tile-hi);
+    border-color: var(--c-primary);
+}
+
+/* ---------- 5. Pós-atendimento (st-pos-*) ---------- */
+body.st-glassy #action-page :is(.st-pos-question, .st-pos-closure-card) {
+    background: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-pos-header, .st-pos-question__head) {
+    background: var(--a-row-stripe);
+    border-color: var(--a-line);
+}
+
+/* ---------- 6. Backoffice: abas de atendimentos (#bloco-bko) ---------- */
+body.st-glassy #action-page #bloco-bko .tab {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page #bloco-bko .tab.active-tab {
+    background: var(--a-chip-active);
+    color: var(--a-text);
+    box-shadow: var(--a-chip-active-shadow);
+}
+
+body.st-glassy #action-page .st-chat-open__spinner {
+    border-color: var(--a-line-2);
+    border-top-color: var(--c-primary);
+}
+
+/* ---------- 7. Avaliação (dash-ava), pausa (dash-pause), início (dash-inicio) ---------- */
+body.st-glassy #action-page #perfil_user {
+    border: 1px solid var(--a-line-2);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .label-perfil {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page #bloco_central {
+    border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
+}
+
+body.st-glassy #action-page #feedback {
+    color: var(--a-text-3);
+}
+
+body.st-glassy #action-page #tempo-pausa {
+    color: var(--a-off-text);
+}
+
+body.st-glassy #action-page #tempo-pausa-label {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .dash-inicio .card {
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy #action-page .dash-inicio .card:hover {
+    box-shadow: var(--a-shadow-tile-hover);
+}
+
+body.st-glassy #action-page .dash-inicio .card-title {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .dash-inicio .card-value {
+    color: var(--a-text);
+}
+
+/* ---------- 8. Detalhe do atendente no dashboard (staff/load_info_user.php) ---------- */
+body.st-glassy #action-page .info_dados {
+    background: var(--a-tile);
+    color: var(--a-text);
+    box-shadow: inset 0 0 0 1px var(--a-line);
+}
+
+body.st-glassy #action-page #btn_close_info {
+    background: var(--p-btn2-bg);
+    border: 1px solid var(--p-btn2-border);
+    color: var(--p-btn2-text);
+}
+
+body.st-glassy #action-page #btn_close_info:hover {
+    background: var(--p-btn2-hover);
+}
+
+/* ---------- 9. Monitoria e pendências (load_monitoria.php / load_pend_info.php) ---------- */
+body.st-glassy #action-page :is(.titulo_mon, .titulo_mon > .titulo, .titulo_mon > .close_mon, .div_question) {
+    background: transparent;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .titulo_mon {
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy #action-page .question {
+    border-radius: var(--g-r-sm);
+    background: var(--a-tile-hi);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .titulo_pend {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page .motivo_pend {
+    color: var(--a-text);
+}
+
+/* ---------- 10. Relatórios / histórico / indicadores ---------- */
+body.st-glassy #action-page .tr_sel {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page .dados {
+    border-color: var(--a-line-2);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .btn_atualizar {
+    border: 1px solid var(--p-btn2-border);
+    background: var(--p-btn2-bg);
+    color: var(--p-btn2-text);
+}
+
+/* ---------- 11. Forced colors ---------- */
+@media (forced-colors: active) {
+    body.st-glassy #action-page :is(.st-score-kpi, .st-score-panel, .st-gov-kpi, .st-gov-panel, .st-ia-section, .st-ia-banner, .st-fila-sol-meta__item, .st-pos-question, #perfil_user, .info_dados) {
+        border: 1px solid CanvasText;
+    }
+
+    body.st-glassy #action-page :is(#bloco-bko .tab.active-tab, .st-fila-sol-tabs .nav-link.active) {
+        forced-color-adjust: none;
+        background: Highlight !important;
+        color: HighlightText !important;
+    }
+}
+
+/* Solicitante: robô ocupa a coluna principal; lateral com estado vazio centralizado. */
+body.st-glassy #action-page .st-dash-cha-workspace #bloco_central.st-dash-cha-bot {
+    max-width: none;
+    max-height: none;
+    flex: 1 1 auto;
+}
+
+body.st-glassy #action-page .st-dash-cha-workspace #div_pend.st-dash-cha-side .st-dash-cha-side-empty {
+    flex: 1 1 auto;
+    justify-content: center;
+    text-align: center;
+}
+
+body.st-glassy #action-page .st-dash-cha-workspace #div_pend .st-dash-cha-side-empty > svg,
+body.st-glassy #action-page .st-dash-cha-workspace #div_pend .st-dash-cha-side-empty > i {
+    color: var(--c-primary);
+    background:
+        radial-gradient(120% 80% at 30% 0%, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0) 55%),
+        radial-gradient(80% 80% at 50% 100%, rgba(214, 51, 108, .3), rgba(214, 51, 108, 0) 70%),
+        var(--a-tile);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 0 0 1px rgba(255, 255, 255, .14), var(--a-shadow-orb), 0 0 30px rgba(214, 51, 108, .22);
+    filter: drop-shadow(0 0 6px rgba(214, 51, 108, .35));
+}

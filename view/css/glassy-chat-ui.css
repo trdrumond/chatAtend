@@ -1,0 +1,1112 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: LAYOUT DO CHAT (backoffice e solicitante)
+   Carregado após glassy-spacing.css e antes de glassy-glass.css.
+   Cobre .st-chat-workspace (staff/chat-bko.php, page/action/idx/chat-bko.php,
+   chat-ate.php + chat/chat_ind.php) e as abas de atendimentos do BKO (#bloco-bko).
+   Regras legadas com !important (style.css, chat/assets/css/style.css, <style> inline
+   de chat_ind.php) exigem !important em cor/tamanho de botões. Nunca forçar display
+   com !important em botões: o JS oculta botões via style.display = 'none'.
+   Cards sem box-shadow; os modais (#div_file_*, #div_transfer_*, #div_pos_*) são
+   irmãos dos cards, então o vidro (seção 9) não contém elementos fixed.
+   ========================================================= */
+
+body.st-glassy {
+    --st-chat-btn-h: 36px;
+    --st-chat-icon-btn: 40px;
+    --st-chat-me-bg: color-mix(in srgb, var(--c-primary) 13%, var(--a-bubble));
+    --st-chat-me-line: color-mix(in srgb, var(--c-primary) 30%, transparent);
+    --st-chat-danger-line: color-mix(in srgb, var(--c-coral) 55%, transparent);
+    --st-chat-danger-bg: color-mix(in srgb, var(--c-coral) 8%, transparent);
+}
+
+/* ---------- 1. Cards do workspace ---------- */
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header, .st-chat-header, .chat-div, .st-chat-side, .form-chat) {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    box-shadow: none;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-body {
+    gap: 12px;
+}
+
+/* Duas colunas. style.css usa flex: 1 1 auto !important na coluna principal: com base
+   auto ela ocupa a linha inteira e o painel lateral quebra para baixo (oculto pelo
+   overflow). O solicitante empilha até 1100px no legado. */
+@media (min-width: 993px) {
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body {
+        flex-wrap: nowrap;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body > :is(#div_ope, .st-chat-main) {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body > :is(#div_info, .st-chat-side) {
+        flex: 0 0 clamp(280px, 30%, 380px);
+        min-width: 0;
+    }
+}
+
+@media (min-width: 1101px) {
+    body.st-glassy #action-page .st-chat-workspace--sol .st-chat-bko-body {
+        flex-wrap: nowrap;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--sol .st-chat-bko-body > :is(#div_ope, .st-chat-main) {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--sol .st-chat-bko-body > :is(#div_info, .st-chat-side) {
+        flex: 0 0 clamp(280px, 30%, 380px);
+        min-width: 0;
+    }
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-main,
+body.st-glassy #action-page .st-chat-workspace #div_ope {
+    gap: 10px;
+}
+
+body.st-glassy #action-page #dashboard.st-chat-workspace,
+body.st-glassy #action-page #principal .st-chat-workspace--bko {
+    gap: 12px;
+}
+
+/* ---------- 2. Cabeçalho ---------- */
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header, .st-chat-header) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding: 14px 20px;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header__main, .st-chat-header__main) {
+    flex: 1 1 340px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-avatar, .st-chat-header__icon) {
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+    color: var(--a-pink-text);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    line-height: 1;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header__identity, .st-chat-header__info) {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header__title, .st-chat-header__title) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante__name,
+body.st-glassy #action-page .st-chat-workspace .st-chat-header__name {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--a-text);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-proto-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-stripe);
+    color: var(--a-text);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-proto-chip__label {
+    color: var(--a-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-proto-chip strong {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    cursor: text;
+    -webkit-user-select: all;
+    user-select: all;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 16px;
+    min-width: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante .info-pad,
+body.st-glassy #action-page .st-chat-workspace .st-chat-header__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--a-text-2);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-solicitante .info-pad, .st-chat-header__label) svg {
+    flex: 0 0 auto;
+    color: var(--a-text-3);
+    font-size: 11px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante a {
+    overflow: hidden;
+    color: var(--a-link);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante a:hover {
+    text-decoration: underline;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-header__aside {
+    flex: 0 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* Timers TE/TA */
+body.st-glassy #action-page .st-chat-workspace .st-chat-bko-timers {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-stripe);
+    color: var(--a-text);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-timer:empty {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-timer svg {
+    color: var(--a-text-3);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-timer--ta,
+body.st-glassy #action-page .st-chat-workspace .st-chat-timer--ta svg {
+    color: var(--a-pink-text);
+}
+
+/* ---------- 3. Ações do atendimento (slot do cabeçalho) ---------- */
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions:empty {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-btn__label {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions .st-chat-btn__label {
+    display: inline;
+    margin-left: 7px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions :is(.btn-chat, .btn-bko, .btn-finalizar) {
+    width: auto !important;
+    height: var(--st-chat-btn-h) !important;
+    min-height: var(--st-chat-btn-h) !important;
+    max-height: var(--st-chat-btn-h) !important;
+    margin: 0 !important;
+    padding: 0 14px !important;
+    border: 1px solid var(--a-line-hover) !important;
+    border-radius: var(--g-r-pill) !important;
+    background: transparent !important;
+    color: var(--a-text) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: normal;
+    line-height: 1 !important;
+    text-transform: none !important;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions :is(.btn-chat, .btn-bko, .btn-finalizar) svg {
+    font-size: 13px;
+    vertical-align: -.125em;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions .btn-atent-chat svg {
+    color: var(--a-warn-text);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions .btn-transfer-chat svg {
+    color: var(--a-link);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions :is(.btn-chat, .btn-bko):hover:not(:disabled) {
+    border-color: var(--a-line-hover) !important;
+    background: var(--a-row-hover) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions .btn-finalizar {
+    border-color: var(--st-chat-danger-line) !important;
+    background: var(--st-chat-danger-bg) !important;
+    color: var(--a-off-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-actions .btn-finalizar:hover:not(:disabled) {
+    border-color: var(--c-coral) !important;
+    background: var(--c-coral) !important;
+    color: #fff !important;
+}
+
+/* ---------- 4. Mensagens ---------- */
+body.st-glassy #action-page .st-chat-workspace .chat-content {
+    padding: 18px 20px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--a-scrollbar) transparent;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content > :is(.me, .other, .sys):empty {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) {
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    max-width: min(78%, 720px);
+    margin-top: 0;
+    margin-bottom: 14px;
+    border-radius: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .other {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .me {
+    flex-direction: row-reverse;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > img {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    margin: 18px 0 0;
+    padding: 0;
+    border: 1px solid var(--a-line-2);
+    border-radius: 50%;
+    background: var(--a-tile-hi);
+    object-fit: cover;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > .text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    max-width: 100%;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .me > .text {
+    align-items: flex-end;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > .text > h5 {
+    height: auto;
+    margin: 0 4px 4px;
+    padding: 0;
+    color: var(--a-text-2);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 1;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > .text > .paragrafo {
+    max-width: 100%;
+    margin: 0;
+    padding: 9px 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .other > .text > .paragrafo {
+    border: 1px solid var(--a-line-2);
+    border-radius: 16px 16px 16px 6px;
+    background: var(--a-bubble);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .me > .text > .paragrafo {
+    border: 1px solid var(--st-chat-me-line);
+    border-radius: 16px 16px 6px 16px;
+    background: var(--st-chat-me-bg);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > .text > .paragrafo img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--g-r-sm);
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > .text > .dataHora {
+    margin: 4px 4px 0;
+    padding: 0;
+    color: var(--a-text-3);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    opacity: 1;
+}
+
+/* Mensagens de sistema: pílula central compacta (texto + hora) */
+body.st-glassy #action-page .st-chat-workspace .chat-content .sys {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    margin: 6px auto 10px !important;
+    border-radius: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .sys > img {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .sys > .text {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px 8px;
+    width: auto;
+    max-width: min(88%, 560px);
+    margin: 0 auto !important;
+    padding: 4px 12px;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-stripe);
+    text-align: center;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .sys > .text > .paragrafo {
+    float: none;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--a-text-2);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+body.st-glassy #action-page .st-chat-workspace .chat-content .sys > .text > .dataHora {
+    width: auto;
+    margin: 0;
+    color: var(--a-text-3);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    opacity: 1;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-motivo {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-radius: var(--g-r-md);
+    font-size: 13px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .dig {
+    padding: 0 20px 8px;
+    font-size: 11px;
+}
+
+/* ---------- 5. Compositor ---------- */
+body.st-glassy #action-page .st-chat-workspace .form-chat {
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px 12px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .input-container {
+    gap: 8px;
+}
+
+/* style-materialize.css força largura/altura/borda/fundo com !important em .input-container > select. */
+body.st-glassy #action-page .st-chat-workspace select[id^="select_in_chat_"] {
+    -webkit-appearance: none;
+    appearance: none;
+    align-self: flex-start;
+    width: min(100%, 340px) !important;
+    height: 32px !important;
+    min-height: 32px;
+    margin: 0;
+    padding: 0 32px 0 14px !important;
+    border: 1px solid var(--a-line-2) !important;
+    border-radius: var(--g-r-pill) !important;
+    background: var(--p-field) var(--a-select-arrow) no-repeat right 12px center / 12px 12px !important;
+    color: var(--a-text);
+    font-size: 12.5px !important;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+body.st-glassy #action-page .st-chat-workspace select[id^="select_in_chat_"]:focus-visible {
+    outline: none;
+    border-color: var(--c-primary) !important;
+    box-shadow: 0 0 0 3px var(--a-field-ring) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox.tox-tinymce {
+    border-radius: var(--g-r-md) !important;
+    box-shadow: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox.tox-tinymce:focus-within {
+    box-shadow: 0 0 0 3px var(--a-field-ring);
+}
+
+/* O Chrome descarta parte do skin.min.css do TinyMCE 5.10 (as regras da área de
+   edição somem e o iframe fica com os 300px padrão). Repõe só o essencial. */
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox.tox-tinymce {
+    flex-direction: column;
+    background: #fff;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox :is(.tox-editor-container, .tox-sidebar-wrap, .tox-edit-area) {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox .tox-editor-container {
+    flex-direction: column;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox .tox-edit-area {
+    position: relative;
+    overflow: hidden;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .tox .tox-edit-area__iframe {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+}
+
+body.st-glassy #action-page .st-chat-workspace .msg_textarea :is(.st-chat-composer-visual, textarea:not(.st-chat-force-hidden)) {
+    border-radius: var(--g-r-md) !important;
+    border-color: var(--a-line-2) !important;
+    background: var(--p-field);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-chat-workspace #btn-bko {
+    align-self: flex-end;
+    gap: 8px;
+}
+
+body.st-glassy #action-page .st-chat-workspace #btn-bko :is(.text-msg-area, #btns-bko-1) {
+    gap: 8px;
+}
+
+body.st-glassy #action-page .st-chat-workspace #btn-bko #btns-bko-1 {
+    order: 1;
+}
+
+body.st-glassy #action-page .st-chat-workspace #btn-bko .text-msg-area {
+    order: 2;
+}
+
+body.st-glassy #action-page .st-chat-workspace #btns-bko-1:empty {
+    display: none;
+}
+
+/* Ações no cabeçalho: os duplicados responsivos (#btn-bko-980) ficam sobrando. */
+body.st-glassy #action-page .st-chat-workspace--actions-top #btn-bko-980 {
+    display: none !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace--actions-top #btn-bko #btns-bko-1 {
+    display: flex;
+}
+
+/* Botões de ícone do compositor (mesmo tamanho; enviar = primário) */
+body.st-glassy #action-page .st-chat-workspace .form-chat :is(.btn-chat, .btn-bko, .btn-finalizar) {
+    width: var(--st-chat-icon-btn) !important;
+    height: var(--st-chat-icon-btn) !important;
+    min-height: var(--st-chat-icon-btn) !important;
+    max-height: var(--st-chat-icon-btn) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--a-line-2) !important;
+    border-radius: var(--g-r-md) !important;
+    background: var(--a-row-stripe) !important;
+    color: var(--a-text-2) !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    text-align: center;
+    text-transform: none !important;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat :is(.btn-chat, .btn-bko, .btn-finalizar) svg {
+    font-size: 15px;
+    vertical-align: middle;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat :is(.btn-chat, .btn-bko):hover:not(:disabled) {
+    border-color: var(--a-line-hover) !important;
+    background: var(--a-row-hover) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-atent-chat {
+    color: var(--a-warn-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-finalizar {
+    border-color: var(--st-chat-danger-line) !important;
+    background: var(--st-chat-danger-bg) !important;
+    color: var(--a-off-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-finalizar:hover:not(:disabled) {
+    border-color: var(--c-coral) !important;
+    background: var(--c-coral) !important;
+    color: #fff !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-send-chat {
+    border-color: var(--c-primary) !important;
+    background: var(--c-primary) !important;
+    color: #fff !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-send-chat:hover:not(:disabled) {
+    border-color: var(--c-primary-dark, #b02a5b) !important;
+    background: var(--c-primary-dark, #b02a5b) !important;
+    color: #fff !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .form-chat .btn-send-chat svg.fa-2x {
+    font-size: 15px;
+}
+
+/* Foco e desabilitado (compositor + cabeçalho) */
+body.st-glassy #action-page .st-chat-workspace :is(.form-chat, .st-chat-actions) :is(.btn-chat, .btn-bko, .btn-finalizar):focus-visible {
+    outline: none;
+    box-shadow: var(--a-focus-shell) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace :is(.form-chat, .st-chat-actions) :is(.btn-chat, .btn-bko, .btn-finalizar):is(:disabled, .st-chat-ws-disabled, [aria-disabled="true"]) {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* ---------- 6. Painel lateral (procedimento / FAQ / arquivos / fila) ---------- */
+body.st-glassy #action-page .st-chat-workspace .st-chat-side {
+    padding: 0;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin: 14px 14px 0;
+    padding: 4px;
+    border: 1px solid var(--a-line) !important;
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-stripe);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs .nav-item {
+    flex: 1 1 auto;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 7px 12px;
+    border: 0 !important;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs .nav-link svg {
+    font-size: 12px;
+    opacity: .8;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs .nav-link.active svg {
+    color: var(--a-pink-text);
+    opacity: 1;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-tabs .nav-link:focus-visible {
+    outline: none;
+    box-shadow: var(--a-focus-shell) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-side__content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--a-scrollbar) transparent;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-side .tab-pane {
+    padding: 18px 20px 20px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    color: var(--a-text);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__title svg {
+    color: var(--a-pink-text);
+    font-size: 13px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__meta {
+    gap: 8px;
+    margin: 0 0 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--a-line);
+    color: var(--a-text-2);
+    font-size: 12px;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__meta .badge {
+    padding: 4px 10px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-stripe) !important;
+    color: var(--a-text-2) !important;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__meta .badge.bg-danger {
+    border-color: color-mix(in srgb, var(--c-coral) 40%, transparent);
+    background: color-mix(in srgb, var(--c-coral) 12%, transparent) !important;
+    color: var(--a-off-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-pane__body {
+    color: var(--a-text);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Estado vazio (procedimento sem conteúdo; aviso padrão do depósito de arquivos) */
+body.st-glassy #action-page .st-chat-workspace .st-chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 36px 16px;
+    color: var(--a-text-2);
+    text-align: center;
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-empty svg {
+    box-sizing: content-box;
+    width: 22px;
+    height: 22px;
+    padding: 15px;
+    border: 1px solid var(--a-line-2);
+    border-radius: 50%;
+    background: var(--a-row-stripe);
+    color: var(--a-text-3);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-empty p {
+    max-width: 240px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+body.st-glassy #action-page .st-chat-workspace [id^="files_deposit"] > br:has(~ center) {
+    display: none;
+}
+
+body.st-glassy #action-page .st-chat-workspace [id^="files_deposit"] > center {
+    padding: 28px 12px;
+}
+
+body.st-glassy #action-page .st-chat-workspace [id^="files_deposit"] > center h6 {
+    margin: 0;
+    color: var(--a-text-2);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Solicitante: cartão do atendente no topo do painel */
+body.st-glassy #action-page .st-chat-workspace .st-chat-agent {
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: transparent;
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy #action-page .st-chat-workspace .st-chat-agent__avatar {
+    border: 1px solid var(--a-line-2);
+}
+
+/* ---------- 7. Abas de atendimentos do BKO (dash-ate: #bloco-bko) ---------- */
+body.st-glassy #action-page #content-bko {
+    flex-direction: column;
+    gap: 12px;
+}
+
+body.st-glassy #action-page #bloco-bko {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    width: 100% !important;
+    max-width: none;
+    padding: 2px 2px 4px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+body.st-glassy #action-page #bloco-bko .tab {
+    flex: 0 0 auto;
+    display: inline-block;
+    width: auto;
+    max-width: 240px;
+    height: 38px;
+    min-height: 38px;
+    max-height: none;
+    padding: 0 16px 0 12px;
+    overflow: hidden;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: none;
+    color: var(--a-text-2);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 36px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+}
+
+body.st-glassy #action-page #bloco-bko .tab::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--a-text-3);
+    vertical-align: 1px;
+}
+
+body.st-glassy #action-page #bloco-bko .tab:hover {
+    border-color: var(--a-line-hover);
+    background: var(--a-tile-hi);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page #bloco-bko .tab.active-tab {
+    border-width: 1px;
+    border-color: color-mix(in srgb, var(--c-primary) 45%, transparent);
+    background: var(--a-chip-active);
+    box-shadow: var(--a-chip-active-shadow);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page #bloco-bko .tab.active-tab::before {
+    background: var(--c-primary);
+}
+
+body.st-glassy #action-page #bloco-bko .tab.blink_me::before {
+    background: var(--c-coral);
+}
+
+body.st-glassy #action-page #bloco-bko #btn-add-tab {
+    order: 99;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    border: 1px dashed var(--a-line-hover);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--a-text-2);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+body.st-glassy #action-page #bloco-bko #btn-add-tab:hover:not(:disabled) {
+    border-style: solid;
+    border-color: var(--c-primary);
+    background: var(--a-row-hover);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page #bloco-bko #btn-add-tab:disabled {
+    opacity: .4;
+}
+
+body.st-glassy #action-page :is(#bloco-bko .tab, #bloco-bko #btn-add-tab):focus-visible {
+    outline: none;
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy #action-page #principal {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ---------- 8. Responsivo ---------- */
+@media (max-width: 992px) {
+    /* BKO: nesta largura a página rola; o chat ganha altura própria para manter o
+       compositor visível e rolar só as mensagens. O solicitante já empilha no legado. */
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        min-height: 0 !important;
+        overflow: visible;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body > :is(#div_ope, .st-chat-main) {
+        flex: 0 0 auto !important;
+        width: 100%;
+        height: min(640px, 74vh) !important;
+        min-width: 0;
+        min-height: 360px !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace--bko .st-chat-bko-body > :is(#div_info, .st-chat-side) {
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: 0;
+        max-height: 42vh !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .st-chat-bko-header__aside {
+        flex: 1 1 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    body.st-glassy {
+        --st-chat-icon-btn: 36px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header, .st-chat-header) {
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace :is(.st-chat-avatar, .st-chat-header__icon) {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .st-chat-bko-solicitante__name,
+    body.st-glassy #action-page .st-chat-workspace .st-chat-header__name {
+        font-size: 15px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .st-chat-actions .st-chat-btn__label {
+        display: none;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .st-chat-actions :is(.btn-chat, .btn-bko, .btn-finalizar) {
+        width: var(--st-chat-btn-h) !important;
+        padding: 0 !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .chat-content {
+        padding: 12px 12px 6px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) {
+        max-width: 90%;
+        gap: 8px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .chat-content :is(.other, .me) > img {
+        flex-basis: 28px;
+        width: 28px;
+        height: 28px;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace .form-chat {
+        gap: 8px;
+        padding: 8px;
+        border-radius: var(--g-r-md);
+    }
+
+    body.st-glassy #action-page .st-chat-workspace select[id^="select_in_chat_"] {
+        width: 100% !important;
+    }
+
+    body.st-glassy #action-page .st-chat-workspace #btn-bko,
+    body.st-glassy #action-page .st-chat-workspace #btn-bko :is(.text-msg-area, #btns-bko-1) {
+        gap: 6px;
+    }
+
+    body.st-glassy #action-page #bloco-bko .tab {
+        max-width: 180px;
+        height: 34px;
+        min-height: 34px;
+        line-height: 32px;
+        font-size: 12px;
+    }
+
+    body.st-glassy #action-page #bloco-bko #btn-add-tab {
+        flex-basis: 34px;
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+    }
+}
+
+/* ---------- 9. Vidro nos cards do chat ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy #action-page .st-chat-workspace :is(.st-chat-bko-header, .st-chat-header, .chat-div, .st-chat-side, .form-chat):not(:has(.modal, [class*="gw-modal"], .offcanvas, .swal2-container)) {
+        -webkit-backdrop-filter: var(--g-blur-card);
+        backdrop-filter: var(--g-blur-card);
+    }
+}
+
+/* ---------- 10. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy #action-page .st-chat-workspace :is(.st-chat-actions, .form-chat) :is(.btn-chat, .btn-bko, .btn-finalizar) {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy #action-page .st-chat-workspace :is(.st-chat-proto-chip, .st-chat-timer, .chat-content .sys > .text),
+    body.st-glassy #action-page #bloco-bko .tab {
+        border: 1px solid CanvasText;
+    }
+
+    body.st-glassy #action-page #bloco-bko .tab.active-tab {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+}

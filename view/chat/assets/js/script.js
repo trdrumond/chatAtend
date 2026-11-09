@@ -1836,10 +1836,8 @@ if (typeof conn !== "undefined") {
                 if (sysJoin && sysFromSelf) {
                     stChatScheduleFilaPoll(500);
                 } else if (data.userDestinatario == userRem) {
-                    if (!stChatHasSysMsg(data.chatId, data.msg)) {
-                        var indiceTab = stChatResolveIndiceForChat(data.chatId);
-                        stChatShowSysMsg(data.chatId, 'sys', e.data, data.userRemetente, indiceTab);
-                    }
+                    var indiceTab = stChatResolveIndiceForChat(data.chatId);
+                    stChatShowSysMsg(data.chatId, 'sys', e.data, data.userRemetente, indiceTab);
                     stChatScheduleFilaPoll(500);
                 } else {
                     var indiceAdmin = stChatResolveIndiceForChat(data.chatId);
@@ -2527,36 +2525,32 @@ function showMessagesSys(chatId, how, data, destinatario, indice) {
         data = JSON.parse(data);
         //console.log(data);
 
-        if (stChatHasSysMsg(chatId, data.msg)) {
-            return;
+        // Textos de sistema se repetem entre atendimentos: duplicata só evita renderizar, não pode bloquear fim/transferência.
+        var sysDup = stChatHasSysMsg(chatId, data.msg);
+
+        if (!sysDup) {
+            var div = document.createElement('div');
+            div.setAttribute('class', how);
+
+            var div_txt = document.createElement('div');
+            div_txt.setAttribute('class', 'text');
+
+            var p = document.createElement('div');
+            p.setAttribute('class', 'paragrafo');
+            p.textContent = data.msg;
+
+            var p_dataHora = document.createElement('div');
+            p_dataHora.setAttribute('class', 'dataHora');
+            p_dataHora.textContent = data.dataHora;
+
+            div_txt.appendChild(p);
+            div_txt.appendChild(p_dataHora);
+
+            div.appendChild(div_txt);
+
+            area_content.appendChild(div);
+            $(div_area).animate({ scrollTop: 100000 }, 'slow');
         }
-
-        var div = document.createElement('div');
-        div.setAttribute('class', how);
-
-
-        var div_txt = document.createElement('div');
-        div_txt.setAttribute('class', 'text');
-
-        //var h5 = document.createElement('h5');
-        //h5.textContent = data.name;
-
-        var p = document.createElement('div');
-        p.setAttribute('class', 'paragrafo');
-        p.textContent = data.msg;
-
-        var p_dataHora = document.createElement('div');
-        p_dataHora.setAttribute('class', 'dataHora');
-        p_dataHora.textContent = data.dataHora;
-
-        //div_txt.appendChild(h5);
-        div_txt.appendChild(p);
-        div_txt.appendChild(p_dataHora);
-
-        div.appendChild(div_txt);
-
-        area_content.appendChild(div);
-        $(div_area).animate({ scrollTop: 100000 }, 'slow');
 
         if (typeof stChatTypingHide === 'function') {
             stChatTypingHide(chatId);
@@ -2589,6 +2583,10 @@ function showMessagesSys(chatId, how, data, destinatario, indice) {
             }
         }
 
+        if (sysDup) {
+            return;
+        }
+
         if (data.flagSys == 'Atent') {
             play_atent(data.msg);
         }
@@ -2618,38 +2616,33 @@ function showMessagesSysAdmin(chatId, how, data, indice) {
 
         data = JSON.parse(data);
 
-        if ($(div_area).find('.sys .paragrafo').filter(function () {
+        var sysDup = $(div_area).find('.sys .paragrafo').filter(function () {
             return $(this).text() === data.msg;
-        }).length) {
-            return;
+        }).length > 0;
+
+        if (!sysDup) {
+            var div = document.createElement('div');
+            div.setAttribute('class', how);
+
+            var div_txt = document.createElement('div');
+            div_txt.setAttribute('class', 'text');
+
+            var p = document.createElement('div');
+            p.setAttribute('class', 'paragrafo');
+            p.textContent = data.msg;
+
+            var p_dataHora = document.createElement('div');
+            p_dataHora.setAttribute('class', 'dataHora');
+            p_dataHora.textContent = data.dataHora;
+
+            div_txt.appendChild(p);
+            div_txt.appendChild(p_dataHora);
+
+            div.appendChild(div_txt);
+
+            area_content.appendChild(div);
+            $(div_area).animate({ scrollTop: 100000 }, 'slow');
         }
-
-        var div = document.createElement('div');
-        div.setAttribute('class', how);
-
-
-        var div_txt = document.createElement('div');
-        div_txt.setAttribute('class', 'text');
-
-        //var h5 = document.createElement('h5');
-        //h5.textContent = data.name;
-
-        var p = document.createElement('div');
-        p.setAttribute('class', 'paragrafo');
-        p.textContent = data.msg;
-
-        var p_dataHora = document.createElement('div');
-        p_dataHora.setAttribute('class', 'dataHora');
-        p_dataHora.textContent = data.dataHora;
-
-        //div_txt.appendChild(h5);
-        div_txt.appendChild(p);
-        div_txt.appendChild(p_dataHora);
-
-        div.appendChild(div_txt);
-
-        area_content.appendChild(div);
-        $(div_area).animate({ scrollTop: 100000 }, 'slow');
         if (typeof stChatTypingHide === 'function') {
             stChatTypingHide(chatId);
         }
@@ -2672,6 +2665,10 @@ function showMessagesSysAdmin(chatId, how, data, indice) {
                 setTimeout(function () { loadPos(indiceTab, chatId); }, 500);
             }
 
+        }
+
+        if (sysDup) {
+            return;
         }
 
         if (data.msg && (data.msg.indexOf('entrou no chat') !== -1 || data.msg.indexOf('voltou para o chat') !== -1)) {

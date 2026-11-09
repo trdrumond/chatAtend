@@ -129,15 +129,20 @@ if ($_POST) {
             margin-bottom: 70px;
         }
     </style>
+<?php include __DIR__ . '/view/content/access/head.php'; ?>
 </head>
 
-<body>
-    <div class="login-container">
+<body class="st-glassy-login">
+<?php include __DIR__ . '/view/content/access/theme-toggle.php'; ?>
+    <main class="login-container">
 
         <form method="post" action="">
             <div class="input-container left logo">
-                <img src="imagem/logo.png" class="imglogin" alt="Logo">
+                <img src="imagem/logo.png" class="imglogin" alt="Solvetask">
             </div>
+            <h1 class="st-access-title">Acesse sua conta</h1>
+            <p class="st-access-sub">Plataforma de atendimento corporativo</p>
+            <?php echo $mensagem; ?>
             <div class="input-container">
                 <input type="text" id="login" name="login" class="input" required>
                 <label for="login" class="label">Nome de usuário / Matrícula Logos</label>
@@ -155,9 +160,8 @@ if ($_POST) {
                     Entrar
                 </button>
             </div>
-            <?php echo $mensagem; ?>
         </form>
-    </div>
+    </main>
 
     <script>
 

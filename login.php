@@ -155,17 +155,20 @@ if ($dados != '') {
             color: #64748b;
         }
     </style>
+<?php include __DIR__ . '/view/content/access/head.php'; ?>
     <meta http-equiv="refresh" content="1;url=<?php echo htmlspecialchars($redirectUrl, ENT_QUOTES, 'UTF-8'); ?>">
 </head>
 
-<body>
-    <div class="loading-screen">
-        <img src="imagem/logo.png" alt="Solvetask" class="loading-logo">
-        <div class="progress-track">
+<body class="st-glassy-login">
+    <main class="loading-screen">
+        <div class="st-access-logo">
+            <img src="imagem/logo.png" alt="Solvetask" class="loading-logo">
+        </div>
+        <div class="progress-track" aria-hidden="true">
             <div class="progress-fill"></div>
         </div>
-        <p class="loading-text" id="loading-text">Reunindo informações do perfil</p>
-    </div>
+        <p class="loading-text" id="loading-text" role="status" aria-live="polite">Reunindo informações do perfil</p>
+    </main>
     <script>
         (function() {
             var redirectUrl = <?php echo json_encode($redirectUrl); ?>;

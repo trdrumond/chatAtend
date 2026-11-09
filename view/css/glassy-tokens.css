@@ -1,0 +1,483 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: TOKENS E FUNDO COMPARTILHADOS
+   Usado pelo shell (view/index.php, <body class="st-glassy">) e pelas telas de acesso
+   (index.php, login.php, newpass.php, out.php — <body class="st-glassy-login">) e pelo
+   painel/monitor (painel/index.php — <body class="st-glassy-painel">).
+   Carregar ANTES de glassy-theme.css / glassy-login.css / glassy-painel.css.
+   Tema em <html data-st-theme="dark|light"> (padrão dark), chave localStorage
+   "st-glassy-theme", aplicado por script inline no <head> antes da primeira pintura.
+   ========================================================= */
+
+/* Paleta --c-*: no shell vem do :root de style.css; as telas de acesso não carregam
+   style.css, então repetem aqui exatamente os mesmos valores. */
+body.st-glassy-login {
+    --c-navy: #28285E;
+    --c-navy-deep: #1a1840;
+    --c-bg: #eef5fb;
+    --c-surface: #ffffff;
+    --c-border: #c8d9ea;
+    --c-primary: #D6336C;
+    --c-primary-dark: #BE2C5A;
+    --c-coral: #FA5252;
+    --c-accent-sky: #C1E7F5;
+    --c-accent-sky-light: #e8f6fc;
+    --c-gradient-brand: linear-gradient(135deg, #D6336C 0%, #FA5252 55%, #f783ac 100%);
+    --c-success: #2FAB4E;
+    --c-warning: #e67700;
+    --c-danger: #FA5252;
+    --c-text: #28285E;
+    --c-muted: #5c5a8a;
+    --c-white: #ffffff;
+    --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------- 1. Tokens ---------- */
+/* Paradas do fundo registradas para a troca de tema poder interpolar o gradiente. */
+@property --a-bg-1 { syntax: "<color>"; inherits: true; initial-value: #1a1840; }
+@property --a-bg-2 { syntax: "<color>"; inherits: true; initial-value: #28285E; }
+@property --a-bg-3 { syntax: "<color>"; inherits: true; initial-value: #2a1f52; }
+
+/* 1a. Geometria, blur e movimento (iguais nos dois temas) + comuns */
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    --g-blur: blur(32px) saturate(180%);
+    --g-blur-strong: blur(40px) saturate(180%);
+    --g-blur-scrim: blur(10px) saturate(140%);
+    --g-blur-overlay: blur(36px) saturate(180%);
+    --g-r-sm: 10px;
+    --g-r-md: 14px;
+    --g-r-lg: 22px;
+    --g-r-xl: 28px;
+    --g-r-pill: 999px;
+    --g-ease: cubic-bezier(.2, .8, .2, 1);
+    --g-dur: 220ms;
+
+    /* Cores de status (mesmas de style.css) */
+    --st-online: #31CAF0;
+    --st-indisp: #0C7C98;
+    --st-atendimento: #FF8F59;
+    --st-pos: #888800;
+    --st-pausa: #8C0000;
+    --st-logout: #555555;
+    --st-offline: #CCCCCC;
+
+    /* Comuns: painéis de conteúdo claros, botões, foco claro */
+    --a-panel: rgba(255, 255, 255, .86);
+    --a-overlay: rgba(255, 255, 255, .90);
+    --a-control: rgba(255, 255, 255, .60);
+    --a-panel-thead: rgba(255, 255, 255, .80);
+    --a-input: rgba(255, 255, 255, .72);
+    --a-spec-light: radial-gradient(130% 70% at 15% -10%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 55%);
+    --a-sheen: linear-gradient(180deg, rgba(255, 255, 255, .24) 0%, rgba(255, 255, 255, 0) 55%);
+    --a-shadow-soft: 0 1px 2px rgba(40, 40, 94, .06), 0 4px 14px rgba(40, 40, 94, .08);
+    --a-glow-primary: 0 8px 22px rgba(214, 51, 108, .45);
+    --a-focus: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-primary);
+}
+
+/* 1b. Tema ESCURO (padrão) */
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    /* Fundo + auroras */
+    --a-bg-1: var(--c-navy-deep);
+    --a-bg-2: var(--c-navy);
+    --a-bg-3: #2a1f52;
+    --a-aurora-1: rgba(214, 51, 108, .55);
+    --a-aurora-2: rgba(49, 202, 240, .38);
+    --a-aurora-3: rgba(250, 82, 82, .34);
+    --a-aurora-4: rgba(193, 231, 245, .22);
+    --a-aurora-5: rgba(40, 40, 94, 0);
+    --a-grain: .035;
+
+    /* Texto */
+    --a-text: #ffffff;
+    --a-text-2: rgba(255, 255, 255, .72);
+    --a-text-3: rgba(255, 255, 255, .55);
+    --a-accent-text: var(--c-accent-sky);
+    --a-link: var(--c-accent-sky);
+
+    /* Vidro do shell */
+    --a-glass: rgba(26, 24, 64, .42);
+    --a-glass-strong: rgba(26, 24, 64, .72);
+    --a-tile: rgba(255, 255, 255, .06);
+    --a-tile-hi: rgba(255, 255, 255, .12);
+    --a-thead: rgba(35, 34, 80, .94);
+    --a-line: rgba(255, 255, 255, .08);
+    --a-line-2: rgba(255, 255, 255, .14);
+    --a-line-hover: rgba(255, 255, 255, .24);
+    --a-row-stripe: rgba(255, 255, 255, .04);
+    --a-row-hover: rgba(255, 255, 255, .08);
+    --a-well-inset: inset 0 1px 2px rgba(0, 0, 0, .25);
+    --a-scrollbar: rgba(255, 255, 255, .2);
+    --a-scrim: rgba(10, 9, 32, .55);
+
+    /* Rim (borda iluminada, mais clara no topo-esquerda) + reflexo especular */
+    --a-rim: linear-gradient(145deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, .18) 22%, rgba(255, 255, 255, .04) 50%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .10) 100%);
+    --a-rim-strong: linear-gradient(145deg, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .32) 24%, rgba(255, 255, 255, .08) 52%, rgba(255, 255, 255, .02) 74%, rgba(255, 255, 255, .18) 100%);
+    --a-spec: radial-gradient(130% 70% at 15% -10%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%), linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0) 40%);
+
+    /* Sombras */
+    --a-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 18px 50px rgba(6, 5, 28, .45), 0 2px 8px rgba(6, 5, 28, .25);
+    --a-shadow-lift: inset 0 1px 0 rgba(255, 255, 255, .26), 0 26px 60px rgba(6, 5, 28, .55), 0 4px 12px rgba(6, 5, 28, .3);
+    --a-shadow-overlay: 0 6px 16px rgba(6, 5, 28, .25), 0 30px 80px rgba(6, 5, 28, .45);
+    --a-shadow-track: inset 0 1px 0 rgba(255, 255, 255, .08), 0 10px 30px rgba(6, 5, 28, .35);
+    --a-shadow-tile: inset 0 1px 0 rgba(255, 255, 255, .08);
+    --a-shadow-tile-hover: inset 0 1px 0 rgba(255, 255, 255, .18), 0 12px 28px rgba(6, 5, 28, .4);
+    --a-shadow-orb: 0 14px 34px rgba(6, 5, 28, .45);
+
+    /* Peças específicas */
+    --a-ring-bg: var(--c-navy-deep);
+    --a-avatar-bg: var(--c-navy-deep);
+    --a-avatar-ring: rgba(255, 255, 255, .3);
+    --a-logo-filter: brightness(0) invert(1);
+    --a-bubble: #2c2a66;
+    --a-seg-thumb: linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, .12));
+    --a-seg-thumb-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 0 0 1px rgba(255, 255, 255, .18), 0 4px 14px rgba(6, 5, 28, .35), 0 0 18px rgba(214, 51, 108, .28);
+    --a-chip-active: linear-gradient(180deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, .1));
+    --a-chip-active-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 0 0 1px rgba(255, 255, 255, .16);
+    --a-dock-active: linear-gradient(180deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .06)), radial-gradient(120% 100% at 50% 120%, rgba(214, 51, 108, .6), rgba(214, 51, 108, 0) 70%), var(--a-tile);
+    --a-dock-active-text: var(--a-text);
+    --a-dock-active-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 0 0 1px rgba(255, 255, 255, .16), 0 0 0 1px rgba(214, 51, 108, .4), var(--a-glow-primary);
+    --a-dock-active-icon: drop-shadow(0 0 6px rgba(214, 51, 108, .9));
+    --a-focus-shell: 0 0 0 2px var(--c-navy-deep), 0 0 0 4px var(--c-accent-sky);
+    --a-field-ring: rgba(193, 231, 245, .35);
+
+    /* Camadas sobrepostas (modais, SweetAlert, dropdowns) */
+    --a-scheme: dark;
+    --a-solid: #232250;
+    --a-sheet: rgba(26, 24, 64, .82);
+    --a-popover: rgba(26, 24, 64, .96);
+    --a-select-arrow: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23C1E7F5' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    --a-icon-close: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-width='2' d='M4 4l8 8M12 4l-8 8'/%3e%3c/svg%3e");
+    --a-gif-filter: invert(1) hue-rotate(180deg);
+    --a-gif-blend: screen;
+    --a-icon-filter: invert(1);
+    --a-ok-text: #5BE584;
+    --a-off-text: #FF8A8A;
+    --a-warn-text: #FFC266;
+    --a-pink-text: #F783AC;
+}
+
+/* 1c. Tema CLARO ("Aurora Glass Light") */
+html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    --a-bg-1: var(--c-bg);
+    --a-bg-2: #f6f9fd;
+    --a-bg-3: var(--c-bg);
+    --a-aurora-1: rgba(214, 51, 108, .34);
+    --a-aurora-2: rgba(49, 202, 240, .38);
+    --a-aurora-3: rgba(250, 82, 82, .26);
+    --a-aurora-4: rgba(193, 231, 245, .95);
+    --a-aurora-5: rgba(40, 40, 94, .10);
+    --a-grain: .03;
+
+    --a-text: var(--c-navy);
+    --a-text-2: var(--c-muted);
+    --a-text-3: rgba(40, 40, 94, .62);
+    --a-accent-text: var(--c-primary-dark);
+    --a-link: var(--c-primary-dark);
+
+    --a-glass: rgba(255, 255, 255, .50);
+    --a-glass-strong: rgba(255, 255, 255, .62);
+    --a-tile: rgba(255, 255, 255, .55);
+    --a-tile-hi: rgba(255, 255, 255, .82);
+    --a-thead: rgba(244, 248, 252, .96);
+    --a-line: rgba(40, 40, 94, .08);
+    --a-line-2: rgba(40, 40, 94, .12);
+    --a-line-hover: rgba(40, 40, 94, .18);
+    --a-row-stripe: rgba(40, 40, 94, .03);
+    --a-row-hover: rgba(40, 40, 94, .06);
+    --a-well-inset: inset 0 1px 2px rgba(40, 40, 94, .14);
+    --a-scrollbar: rgba(40, 40, 94, .2);
+    --a-scrim: rgba(26, 24, 64, .35);
+
+    --a-rim: linear-gradient(160deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .55) 26%, rgba(255, 255, 255, .18) 52%, rgba(40, 40, 94, .06) 76%, rgba(40, 40, 94, .10) 100%);
+    --a-rim-strong: linear-gradient(160deg, #ffffff 0%, rgba(255, 255, 255, .7) 28%, rgba(255, 255, 255, .25) 54%, rgba(40, 40, 94, .10) 78%, rgba(40, 40, 94, .16) 100%);
+    --a-spec: radial-gradient(130% 70% at 15% -10%, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0) 55%), linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 40%);
+
+    --a-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 18px 46px rgba(40, 40, 94, .14), 0 2px 8px rgba(40, 40, 94, .08);
+    --a-shadow-lift: inset 0 1px 0 #ffffff, 0 24px 56px rgba(40, 40, 94, .18), 0 4px 12px rgba(40, 40, 94, .10);
+    --a-shadow-overlay: 0 6px 16px rgba(40, 40, 94, .10), 0 30px 80px rgba(40, 40, 94, .18);
+    --a-shadow-track: inset 0 1px 0 rgba(255, 255, 255, .8), 0 10px 26px rgba(40, 40, 94, .12);
+    --a-shadow-tile: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 8px rgba(40, 40, 94, .06);
+    --a-shadow-tile-hover: inset 0 1px 0 #ffffff, 0 12px 28px rgba(40, 40, 94, .16);
+    --a-shadow-orb: 0 14px 34px rgba(40, 40, 94, .16);
+
+    --a-ring-bg: #ffffff;
+    --a-avatar-bg: #ffffff;
+    --a-avatar-ring: rgba(40, 40, 94, .2);
+    --a-logo-filter: none;
+    --a-bubble: #ffffff;
+    --a-seg-thumb: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, .88));
+    --a-seg-thumb-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(40, 40, 94, .08), 0 4px 14px rgba(40, 40, 94, .14), 0 0 18px rgba(214, 51, 108, .16);
+    --a-chip-active: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, .88));
+    --a-chip-active-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(40, 40, 94, .08), 0 2px 8px rgba(40, 40, 94, .10);
+    --a-dock-active: var(--a-sheen), var(--c-primary);
+    --a-dock-active-text: var(--c-white);
+    --a-dock-active-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 0 0 1px rgba(214, 51, 108, .35), var(--a-glow-primary);
+    --a-dock-active-icon: none;
+    --a-focus-shell: var(--a-focus);
+    --a-field-ring: rgba(214, 51, 108, .2);
+
+    --a-scheme: light;
+    --a-solid: #ffffff;
+    --a-sheet: rgba(255, 255, 255, .80);
+    --a-popover: rgba(255, 255, 255, .97);
+    --a-select-arrow: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2328285E' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    --a-icon-close: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2328285E' stroke-linecap='round' stroke-width='2' d='M4 4l8 8M12 4l-8 8'/%3e%3c/svg%3e");
+    --a-gif-filter: none;
+    --a-gif-blend: multiply;
+    --a-icon-filter: none;
+    --a-ok-text: #15803d;
+    --a-off-text: #b91c1c;
+    --a-warn-text: #b45309;
+    --a-pink-text: #BE2C5A;
+}
+
+/* Superfícies sólidas (sem backdrop-filter): mesmo layout. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #232250;
+        --a-glass-strong: #232250;
+        --a-tile: #2c2a66;
+        --a-tile-hi: #2c2a66;
+        --a-thead: #232250;
+        --a-panel: #ffffff;
+        --a-overlay: #ffffff;
+        --a-control: #ffffff;
+        --a-panel-thead: var(--c-accent-sky-light);
+        --a-input: #ffffff;
+        --a-scrim: rgba(10, 9, 32, .72);
+        --a-sheet: #232250;
+        --a-popover: #232250;
+    }
+
+    html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #ffffff;
+        --a-glass-strong: #ffffff;
+        --a-tile: #f4f8fc;
+        --a-tile-hi: #eaf1f8;
+        --a-thead: #f4f8fc;
+        --a-line: rgba(40, 40, 94, .10);
+        --a-line-2: rgba(40, 40, 94, .14);
+        --a-scrim: rgba(26, 24, 64, .5);
+        --a-sheet: #ffffff;
+        --a-popover: #ffffff;
+    }
+}
+
+@media (max-width: 767.98px) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --g-blur: blur(14px) saturate(170%);
+        --g-blur-strong: blur(16px) saturate(170%);
+        --g-blur-overlay: blur(16px) saturate(170%);
+    }
+}
+
+/* ---------- 2. Fundo: gradiente + auroras + grão ---------- */
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    background: var(--a-bg-1) linear-gradient(160deg, var(--a-bg-1) 0%, var(--a-bg-2) 52%, var(--a-bg-3) 100%) fixed;
+}
+
+/* Cards sem reflexo em degradê e sem sombra (modais/dropdowns mantêm --a-shadow-overlay). */
+html :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    --a-spec: none !important;
+    --a-shadow: none !important;
+    --a-shadow-lift: none !important;
+    --a-shadow-soft: none !important;
+    --a-shadow-track: none !important;
+    --a-shadow-tile: none !important;
+    --a-shadow-tile-hover: none !important;
+    --shadow: none !important;
+    --a-rim: linear-gradient(var(--a-line-2), var(--a-line-2)) !important;
+}
+
+/* Auroras: uma única camada fixa animada só por transform (compositor). steps() limita a
+   ~6 atualizações/s: o movimento é imperceptivelmente mais lento, mas o vidro (backdrop-filter)
+   deixa de ser recalculado a cada frame. */
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::before {
+    content: "";
+    position: fixed;
+    inset: -15%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(32% 38% at 18% 22%, var(--a-aurora-1), transparent 70%),
+        radial-gradient(30% 34% at 82% 16%, var(--a-aurora-2), transparent 70%),
+        radial-gradient(34% 40% at 74% 84%, var(--a-aurora-3), transparent 70%),
+        radial-gradient(30% 36% at 26% 88%, var(--a-aurora-4), transparent 70%),
+        radial-gradient(40% 30% at 55% 50%, var(--a-aurora-5), transparent 72%);
+    animation: st-aurora-drift 48s steps(144, jump-none) infinite alternate;
+    will-change: transform;
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--a-grain);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+}
+
+@keyframes st-aurora-drift {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    50% { transform: translate3d(3%, -2%, 0) rotate(8deg) scale(1.08); }
+    100% { transform: translate3d(-3%, 2%, 0) rotate(-6deg) scale(1.02); }
+}
+
+/* Troca de tema: transição curta de cores (classe aplicada por glassy-theme-core.js; nunca com reduced-motion). */
+html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+    transition: --a-bg-1 .45s var(--g-ease), --a-bg-2 .45s var(--g-ease), --a-bg-3 .45s var(--g-ease), background-color .45s var(--g-ease), color .45s var(--g-ease) !important;
+}
+
+html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *,
+html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *::before,
+html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *::after {
+    transition: background-color .45s var(--g-ease), color .45s var(--g-ease), border-color .45s var(--g-ease), box-shadow .45s var(--g-ease), fill .45s var(--g-ease) !important;
+}
+
+/* ---------- Botão de tema (#st-theme-toggle) ---------- */
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-sheen), var(--a-tile);
+    color: var(--a-text);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+    cursor: pointer;
+    transition: background-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle:hover {
+    background: var(--a-sheen), var(--a-tile-hi);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 16px rgba(214, 51, 108, .28);
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle:active {
+    transform: scale(.94);
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon {
+    display: inline-flex;
+    line-height: 1;
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon i,
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon svg {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon--sun {
+    color: var(--st-atendimento);
+}
+
+:is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon--moon,
+html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon--sun {
+    display: none;
+}
+
+html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle__icon--moon {
+    display: inline-flex;
+    color: var(--c-navy);
+}
+
+/* ---------- Preferências do usuário (tokens, fundo e botão de tema) ---------- */
+/* Transparência reduzida: mesmo layout, só superfícies sólidas (navy no escuro, branco no claro) e sem blur. */
+@media (prefers-reduced-transparency: reduce) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #232250;
+        --a-glass-strong: #232250;
+        --a-tile: #2c2a66;
+        --a-tile-hi: #2c2a66;
+        --a-thead: #232250;
+        --a-panel: #ffffff;
+        --a-overlay: #ffffff;
+        --a-control: #ffffff;
+        --a-panel-thead: var(--c-accent-sky-light);
+        --a-input: #ffffff;
+        --a-scrim: rgba(10, 9, 32, .72);
+        --g-blur: none;
+        --g-blur-strong: none;
+        --g-blur-scrim: none;
+        --g-blur-overlay: none;
+        --a-sheet: #232250;
+        --a-popover: #232250;
+    }
+
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::before {
+        animation: none;
+    }
+
+    /* Claro sólido: branco / #f4f8fc com rim e sombra navy suaves (mesmo layout). */
+    html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #ffffff;
+        --a-glass-strong: #ffffff;
+        --a-tile: #f4f8fc;
+        --a-tile-hi: #eaf1f8;
+        --a-thead: #f4f8fc;
+        --a-line: rgba(40, 40, 94, .10);
+        --a-line-2: rgba(40, 40, 94, .14);
+        --a-scrim: rgba(26, 24, 64, .5);
+        --a-spec: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 40%);
+        --a-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(40, 40, 94, .06), 0 14px 36px rgba(40, 40, 94, .12), 0 2px 6px rgba(40, 40, 94, .08);
+        --a-sheet: #ffffff;
+        --a-popover: #ffffff;
+    }
+}
+
+@media (prefers-contrast: more) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #232250;
+        --a-glass-strong: #232250;
+        --a-text-2: rgba(255, 255, 255, .88);
+        --a-line: rgba(255, 255, 255, .22);
+        --a-line-2: rgba(255, 255, 255, .32);
+        --a-panel: #ffffff;
+        --a-overlay: #ffffff;
+    }
+
+    html[data-st-theme="light"] :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) {
+        --a-glass: #ffffff;
+        --a-glass-strong: #ffffff;
+        --a-text-2: #3f3d6e;
+        --a-line: rgba(40, 40, 94, .22);
+        --a-line-2: rgba(40, 40, 94, .32);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::before {
+        animation: none;
+    }
+
+    html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel),
+    html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *,
+    html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *::before,
+    html.st-theme-anim :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) *::after,
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle {
+        transition: none !important;
+    }
+
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle:active {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::before,
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel)::after {
+        display: none;
+    }
+
+    :is(body.st-glassy, body.st-glassy-login, body.st-glassy-painel) .st-theme-toggle {
+        border: 1px solid CanvasText !important;
+    }
+}

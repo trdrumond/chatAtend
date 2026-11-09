@@ -6,6 +6,13 @@ require_once __DIR__ . '/cnf/cache_layout.php';
 
 $solvetaskFsRoot = dirname(__DIR__, 2);
 $solvetaskRoot = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '')))), '/');
+// Em homologação/produção os assets compartilhados (js/, css/) ficam na raiz do site, não em /solvetask/.
+$stDocRoot = rtrim(str_replace('\\', '/', (string) ($_SERVER['DOCUMENT_ROOT'] ?? '')), '/');
+if (!is_file($solvetaskFsRoot . '/js/jquery.js') && $stDocRoot !== '' && is_file($stDocRoot . '/js/jquery.js')) {
+    $solvetaskFsRoot = $stDocRoot;
+    $solvetaskRoot = '';
+}
+$bootstrapDir = is_file($solvetaskFsRoot . '/css/bootstrap-5/js/bootstrap.min.js') ? 'bootstrap-5' : 'bootstrap-5.0.2';
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     ? 'https'
     : ($_SERVER['REQUEST_SCHEME'] ?? 'http');
@@ -34,7 +41,7 @@ $viewJsPath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/
 $stLoadTinyMce = ((int) ($infoUser['env_img'] ?? 0) === 1)
     || in_array($_GET['sec'] ?? '', ['idx', 'cnf'], true);
 
-$vBootstrapCss = $assetVer($solvetaskFsRoot . '/css/bootstrap-5/css/bootstrap.min.css');
+$vBootstrapCss = $assetVer($solvetaskFsRoot . '/css/' . $bootstrapDir . '/css/bootstrap.min.css');
 $vFontAwesome = $assetVer($solvetaskFsRoot . '/js/fontawesome/js/all.js');
 $vJquery = $assetVer($solvetaskFsRoot . '/js/jquery.js');
 $vJqueryTitlealert = $assetVer($solvetaskFsRoot . '/js/jquery.titlealert.js');
@@ -42,11 +49,27 @@ $vJqueryForm = $assetVer($solvetaskFsRoot . '/js/jquery.form.js');
 $vActionJs = $assetVer(__DIR__ . '/js/action.js');
 $vStBkoDistrib = $assetVer(__DIR__ . '/js/st-bko-distrib.js');
 $vMinusJs = $assetVer(__DIR__ . '/js/minus.js');
-$vPopper = $assetVer($solvetaskFsRoot . '/css/bootstrap-5/js/popper.min.js');
-$vBootstrapJs = $assetVer($solvetaskFsRoot . '/css/bootstrap-5/js/bootstrap.min.js');
+$vPopper = $assetVer($solvetaskFsRoot . '/css/' . $bootstrapDir . '/js/popper.min.js');
+$vBootstrapJs = $assetVer($solvetaskFsRoot . '/css/' . $bootstrapDir . '/js/bootstrap.min.js');
 $vSweetalert = $assetVer($solvetaskFsRoot . '/js/sweetalert2/dist/sweetalert2.all.js');
 $vStyleCss = $assetVer(__DIR__ . '/css/style.css');
 $vStyleMaterialize = $assetVer(__DIR__ . '/css/style-materialize.css');
+$vGlassyTokens = $assetVer(__DIR__ . '/css/glassy-tokens.css');
+$vGlassyCss = $assetVer(__DIR__ . '/css/glassy-theme.css');
+$vGlassyModals = $assetVer(__DIR__ . '/css/glassy-modals.css');
+$vGlassyCnf = $assetVer(__DIR__ . '/css/glassy-cnf.css');
+$vGlassyComponents = $assetVer(__DIR__ . '/css/glassy-components.css');
+$vGlassyChat = $assetVer(__DIR__ . '/css/glassy-chat.css');
+$vGlassyIdx = $assetVer(__DIR__ . '/css/glassy-idx.css');
+$vGlassyUsu = $assetVer(__DIR__ . '/css/glassy-usu.css');
+$vGlassySpacing = $assetVer(__DIR__ . '/css/glassy-spacing.css');
+$vGlassyChatUi = $assetVer(__DIR__ . '/css/glassy-chat-ui.css');
+$vGlassyPos = $assetVer(__DIR__ . '/css/glassy-pos.css');
+$vGlassyGlass = $assetVer(__DIR__ . '/css/glassy-glass.css');
+$vGlassyCharts = $assetVer(__DIR__ . '/js/glassy-charts.js');
+$stSecClass = preg_replace('/[^a-z]/', '', strtolower((string) ($_GET['sec'] ?? '')));
+$vGlassyJs = $assetVer(__DIR__ . '/js/glassy-theme.js');
+$vGlassyThemeCore = $assetVer(__DIR__ . '/js/glassy-theme-core.js');
 $vStChatOpen = $assetVer(__DIR__ . '/js/st-chat-open.js');
 $vChatScript = $assetVer(__DIR__ . '/chat/assets/js/script.js');
 $vChatNotify = $assetVer(__DIR__ . '/chat/assets/js/notify.js');
@@ -73,8 +96,9 @@ if (!isset($_GET['sec'])) {
     exit;
 }
 
-$headCache = getCachedLayout('layout_head_v3_' . md5($patch), function () use (
+$headCache = getCachedLayout('layout_head_v4_' . md5($patch . '|' . $bootstrapDir), function () use (
     $patch,
+    $bootstrapDir,
     $vBootstrapCss,
     $vFontAwesome,
     $vJquery,
@@ -104,7 +128,7 @@ $headCache = getCachedLayout('layout_head_v3_' . md5($patch), function () use (
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link href="<?= $patch ?>/css/bootstrap-5/css/bootstrap.min.css?v=<?= $vBootstrapCss ?>" rel="stylesheet">
+    <link href="<?= $patch ?>/css/<?= $bootstrapDir ?>/css/bootstrap.min.css?v=<?= $vBootstrapCss ?>" rel="stylesheet">
 
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
@@ -116,8 +140,8 @@ $headCache = getCachedLayout('layout_head_v3_' . md5($patch), function () use (
     <script src="js/st-bko-distrib.js?v=<?= $vStBkoDistrib ?>"></script>
     <script src="js/minus.js?v=<?= $vMinusJs ?>"></script>
 
-    <script src="<?= $patch ?>/css/bootstrap-5/js/popper.min.js?v=<?= $vPopper ?>"></script>
-    <script src="<?= $patch ?>/css/bootstrap-5/js/bootstrap.min.js?v=<?= $vBootstrapJs ?>"></script>
+    <script src="<?= $patch ?>/css/<?= $bootstrapDir ?>/js/popper.min.js?v=<?= $vPopper ?>"></script>
+    <script src="<?= $patch ?>/css/<?= $bootstrapDir ?>/js/bootstrap.min.js?v=<?= $vBootstrapJs ?>"></script>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
@@ -133,6 +157,19 @@ $headCache = getCachedLayout('layout_head_v3_' . md5($patch), function () use (
 
 echo $headCache;
 ?>
+    <script>(function (d) { var t = 'light'; try { var s = window.localStorage.getItem('st-glassy-theme'); if (s === 'light' || s === 'dark') { t = s; } } catch (e) {} d.documentElement.setAttribute('data-st-theme', t); })(document);</script>
+    <link href="css/glassy-tokens.css?v=<?= $vGlassyTokens ?>" rel="stylesheet">
+    <link href="css/glassy-theme.css?v=<?= $vGlassyCss ?>" rel="stylesheet">
+    <link href="css/glassy-modals.css?v=<?= $vGlassyModals ?>" rel="stylesheet">
+    <link href="css/glassy-cnf.css?v=<?= $vGlassyCnf ?>" rel="stylesheet">
+    <link href="css/glassy-components.css?v=<?= $vGlassyComponents ?>" rel="stylesheet">
+    <link href="css/glassy-chat.css?v=<?= $vGlassyChat ?>" rel="stylesheet">
+    <link href="css/glassy-idx.css?v=<?= $vGlassyIdx ?>" rel="stylesheet">
+    <link href="css/glassy-usu.css?v=<?= $vGlassyUsu ?>" rel="stylesheet">
+    <link href="css/glassy-spacing.css?v=<?= $vGlassySpacing ?>" rel="stylesheet">
+    <link href="css/glassy-chat-ui.css?v=<?= $vGlassyChatUi ?>" rel="stylesheet">
+    <link href="css/glassy-pos.css?v=<?= $vGlassyPos ?>" rel="stylesheet">
+    <link href="css/glassy-glass.css?v=<?= $vGlassyGlass ?>" rel="stylesheet">
 
     <script>window.ST_CSRF = <?= json_encode($stCsrf ?? '', JSON_UNESCAPED_SLASHES) ?>;</script>
     <script>
@@ -156,12 +193,25 @@ echo $headCache;
         <script src="<?= $patch ?>/js/charts/charts.js"></script>
         <script src="<?= $patch ?>/js/charts/animated.js"></script>
         <script src="<?= $patch ?>/js/charts/material.js"></script>
+        <script src="js/glassy-charts.js?v=<?= $vGlassyCharts ?>"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <?php } ?>
 
 </head>
 
-<body>
+<body class="st-glassy<?= $stSecClass !== '' ? ' st-sec-' . $stSecClass : '' ?>">
+    <svg class="st-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <filter id="st-glass-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="11" result="noise" />
+            <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+            <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="st-glass-refract-soft" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="11" result="noise" />
+            <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+            <feDisplacementMap in="SourceGraphic" in2="soft" scale="20" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
     <div id="app-topbar">
         <div class="app-brand">
             <div class="app-brand-text">
@@ -170,7 +220,13 @@ echo $headCache;
                 <span class="app-brand-subtitle">Atendimento inteligente</span>
             </div>
         </div>
-        <div id="suspended"><?php include __DIR__ . '/content/suspended.php'; ?></div>
+        <div id="suspended">
+            <button type="button" id="st-theme-toggle" class="st-theme-toggle" aria-label="Tema claro" aria-pressed="false" title="Tema claro">
+                <span class="st-theme-toggle__icon st-theme-toggle__icon--sun" aria-hidden="true"><i class="fas fa-sun"></i></span>
+                <span class="st-theme-toggle__icon st-theme-toggle__icon--moon" aria-hidden="true"><i class="fas fa-moon"></i></span>
+            </button>
+            <?php include __DIR__ . '/content/suspended.php'; ?>
+        </div>
     </div>
 
     <div id="header">
@@ -277,6 +333,8 @@ echo $headCache;
         <div id="feed_verifica_atendente"></div>
     <?php } ?>
 
+    <script src="js/glassy-theme-core.js?v=<?= $vGlassyThemeCore ?>" defer></script>
+    <script src="js/glassy-theme.js?v=<?= $vGlassyJs ?>" defer></script>
 </body>
 
 </html>

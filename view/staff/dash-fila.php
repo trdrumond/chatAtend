@@ -34,14 +34,14 @@ function dashFilaRenderPaneColumns(int $contrato, int $fila): void
 ?>
     <div class="dash-fila-col dash-fila-col--team">
         <header class="dash-fila-col__head">
-            <i class="fas fa-users" aria-hidden="true"></i>
+            <span class="st-orb" aria-hidden="true"><i class="fas fa-users"></i></span>
             <span>Equipe</span>
         </header>
         <div id="div_user_<?= $key ?>" class="user_dash_0 dash-fila-col__body"><?= $loadTeam ?></div>
     </div>
     <div class="dash-fila-col dash-fila-col--queue">
         <header class="dash-fila-col__head">
-            <i class="fas fa-list-ol" aria-hidden="true"></i>
+            <span class="st-orb" aria-hidden="true"><i class="fas fa-list-ol"></i></span>
             <span>Fila de atendimento</span>
         </header>
         <div id="div_fila_<?= $key ?>" class="dash_fila dash-fila-col__body"><?= $loadQueue ?></div>
@@ -49,7 +49,7 @@ function dashFilaRenderPaneColumns(int $contrato, int $fila): void
     </div>
     <div class="dash-fila-col dash-fila-col--chart">
         <header class="dash-fila-col__head">
-            <i class="fas fa-chart-area" aria-hidden="true"></i>
+            <span class="st-orb" aria-hidden="true"><i class="fas fa-chart-area"></i></span>
             <span>Indicadores</span>
         </header>
         <div class="charts dash-fila-col__body">
@@ -316,17 +316,6 @@ if ($infoUser['nivel_id'] >= 1) {
 
 
 ?>
-<div id="legend" class="dash-oper-legend" style="width: 100% !important">
-    <div class="legend-dash leg-online">Livre</div>
-    <div class="legend-dash leg-indisp">Indisp.</div>
-    <div class="legend-dash leg-atendimento">Em Atendimento</div>
-    <div class="legend-dash leg-pos">Pós</div>
-    <div class="legend-dash leg-pausa">Em Pausa</div>
-    <div class="legend-dash leg-logout">Logout</div>
-    <div class="legend-dash leg-offline">Offline</div>
-</div>
-<p class="dash-fila-live-ts"><i class="fas fa-circle"></i> Atualizado: <span id="dashFilaLiveTs">—</span></p>
-
 <div id="dashboard" class="dash-fila-workspace">
 
 
@@ -340,7 +329,8 @@ if ($infoUser['nivel_id'] >= 1) {
     $dadosContratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     //depurador($dadosContratos);
     ?>
-    <ul class="nav nav-pills mb-3" id="myTab" role="tablist">
+    <div class="st-dash-toolbar">
+    <ul class="nav nav-pills mb-3" id="myTab" role="tablist" aria-label="Filas">
         <?php
 
         //if($infoUser['nivel_id']==0){
@@ -378,6 +368,19 @@ if ($infoUser['nivel_id'] >= 1) {
         }
         ?>
     </ul>
+        <div class="st-dash-toolbar__status">
+            <div id="legend" class="dash-oper-legend" role="list" aria-label="Legenda de status da equipe">
+                <div class="legend-dash leg-online" role="listitem">Livre</div>
+                <div class="legend-dash leg-indisp" role="listitem">Indisp.</div>
+                <div class="legend-dash leg-atendimento" role="listitem">Em Atendimento</div>
+                <div class="legend-dash leg-pos" role="listitem">Pós</div>
+                <div class="legend-dash leg-pausa" role="listitem">Em Pausa</div>
+                <div class="legend-dash leg-logout" role="listitem">Logout</div>
+                <div class="legend-dash leg-offline" role="listitem">Offline</div>
+            </div>
+            <p class="dash-fila-live-ts"><span class="st-live-dot" aria-hidden="true"></span> Atualizado: <span id="dashFilaLiveTs">—</span></p>
+        </div>
+    </div>
 
     <div class="tab-content" id="myTabContent">
 

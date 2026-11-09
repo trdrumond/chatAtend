@@ -72,7 +72,7 @@ if (!$hasProc && !$hasFaq && !$hasFile) {
 <ul class="nav nav-tabs st-chat-tabs" id="tabChat" role="tablist">
     <?php if ($hasProc) { ?>
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="proc-tab" data-bs-toggle="tab" data-bs-target="#proc" type="button" role="tab" aria-controls="proc" aria-selected="true"><i class="fas fa-bars"></i> Procedimento</button>
+        <button class="nav-link active" id="proc-tab" data-bs-toggle="tab" data-bs-target="#proc" type="button" role="tab" aria-controls="proc" aria-selected="true"><i class="fas fa-book-open" aria-hidden="true"></i> Procedimento</button>
     </li>
     <?php } ?>
     <?php if ($hasFaq) { ?>

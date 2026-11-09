@@ -274,6 +274,8 @@ st_page_header_close();
 
 
 
+<div class="st-usu-row">
+
 <div class="<?= $cardSenhaClass ?>">
 
     <h6 class="st-form-card-title">Alteração de senha</h6>
@@ -351,6 +353,8 @@ st_page_header_close();
         <div id="feed_img" class="cnf-feed"></div>
 
     </div>
+
+</div>
 
 </div>
 

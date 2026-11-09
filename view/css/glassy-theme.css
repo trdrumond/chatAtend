@@ -1,0 +1,2107 @@
+/* =========================================================
+   SOLVETASK 2.0 — TEMA "AURORA GLASS" (liquid glass, CSS puro)
+   Visual inspirado em Glassy UI (https://glassyui.com, MIT)
+
+   Escopo: piloto_2.0_glassy/view (ativado por <body class="st-glassy">).
+   Dois temas, mesmo layout, alternados por <html data-st-theme="dark|light">
+   (padrão dark; script inline no <head> de view/index.php + glassy-theme.js):
+   - dark  (padrão): shell e dashboard em vidro escuro sobre navy + auroras.
+   - light: shell e dashboard em vidro branco sobre fundo claro + auroras.
+   Painéis de conteúdo (relatórios, DataTables, formulários, modais) são vidro
+   claro fosco nos dois temas.
+   Todas as cores vêm de tokens semânticos --a-* (glassy-tokens.css, carregado antes); as regras de
+   componente não conhecem o tema. --g-* = geometria, blur e movimento.
+   Transparência reduzida / sem backdrop-filter: mesmo layout, superfícies sólidas.
+   Cores: paleta --c-* de style.css + cores de status já usadas pelo sistema
+   (#31CAF0, #0C7C98, #FF8F59, #888800, #8C0000, #555, #ccc, #00FF7F, #B22222).
+   O CSS do DataTables entra no fim do <body>: todo seletor começa com
+   "body.st-glassy". !important só onde style.css/Bootstrap já usam !important.
+   ========================================================= */
+
+/* ---------- 1. Tokens ---------- */
+/* Tokens de tema (--a-*, --g-*, status) e fundo aurora: glassy-tokens.css (compartilhado). */
+/* 1a. Layout do shell e tokens de conteúdo --p-* */
+body.st-glassy {
+    --st-edge: 14px;
+    --dock-w: 88px;
+    --top-h: 48px;
+    --foot-h: 34px;
+    --sidebar-w: calc(var(--st-edge) + var(--dock-w));
+    --shell-topbar-h: calc(var(--st-edge) + var(--top-h));
+    --shell-footer-h: calc(var(--foot-h) + var(--st-edge));
+    --shell-viewport-h: calc(100vh - var(--shell-topbar-h) - var(--shell-footer-h));
+    --action-workspace-min-h: calc(100vh - var(--shell-topbar-h) - var(--shell-footer-h) - var(--shell-page-pad) - var(--action-indice-est));
+    --action-panel-min-h: calc(var(--action-workspace-min-h) - 56px);
+
+    /* Conteúdo (--p-*): padrão = painel claro fosco; escopos Aurora (seção 11) redefinem. */
+    --p-text: var(--c-navy);
+    --p-text-2: var(--c-muted);
+    --p-line: rgba(40, 40, 94, .1);
+    --p-field: var(--a-input);
+    --p-field-focus: var(--c-surface);
+    --p-field-border: var(--c-border);
+    --p-placeholder: var(--c-muted);
+    --p-select-arrow: var(--a-select-arrow);
+    --p-disabled: #f1f5f9;
+    --p-disabled-border: #e2e8f0;
+    --p-disabled-text: #94a3b8;
+    --p-option-bg: var(--c-surface);
+    --p-thead: var(--a-panel-thead);
+    --p-thead-text: var(--c-muted);
+    --p-row: #ffffff;
+    --p-row-odd: color-mix(in srgb, var(--c-accent-sky) 18%, var(--c-surface));
+    --p-row-hover: color-mix(in srgb, var(--c-accent-sky) 42%, var(--c-surface));
+    --p-row-selected: color-mix(in srgb, var(--c-primary) 10%, var(--c-surface));
+    --p-btn2-bg: var(--a-control);
+    --p-btn2-border: var(--c-border);
+    --p-btn2-text: var(--c-navy);
+    --p-btn2-hover: rgba(255, 255, 255, .9);
+    --p-btn2-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), var(--a-shadow-soft);
+    --p-pop: var(--a-overlay);
+    --p-focus: var(--a-focus);
+    --p-scheme: light;
+    --p-switch-track: #cbd5e1;
+}
+
+/* ---------- 2. Base do shell (fundo, auroras e botão de tema: glassy-tokens.css) ---------- */
+body.st-glassy .st-glass-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+body.st-glassy #page {
+    background: transparent !important;
+}
+
+body.st-glassy #page > #content {
+    gap: 16px;
+}
+
+/* ---------- 3. Vidro do shell: receita comum + rim ---------- */
+body.st-glassy #perfil,
+body.st-glassy #app-topbar,
+body.st-glassy #app-footer,
+body.st-glassy .bloco_info,
+body.st-glassy #indice-idx-fila,
+body.st-glassy .dash-fila-col {
+    background: var(--a-spec), var(--a-glass);
+    box-shadow: var(--a-shadow);
+    color: var(--a-text);
+}
+
+body.st-glassy .bloco_info,
+body.st-glassy #indice-idx-fila,
+body.st-glassy .dash-fila-col {
+    position: relative;
+}
+
+body.st-glassy #perfil::before,
+body.st-glassy #app-topbar::before,
+body.st-glassy #app-footer::before,
+body.st-glassy .bloco_info::before,
+body.st-glassy #indice-idx-fila::before,
+body.st-glassy .dash-fila-col::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--a-rim);
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    transition: opacity var(--g-dur) var(--g-ease);
+}
+
+/* ---------- 4. Topbar → pílula flutuante ---------- */
+body.st-glassy #app-topbar {
+    top: var(--st-edge);
+    left: calc(var(--sidebar-w) + 16px);
+    right: var(--st-edge);
+    height: var(--top-h);
+    padding: 0 8px 0 20px;
+    border: 0;
+    border-image: none;
+    border-radius: var(--g-r-pill);
+}
+
+body.st-glassy .app-brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: var(--a-text);
+}
+
+body.st-glassy .app-brand-dot {
+    width: 7px;
+    height: 7px;
+    box-shadow: 0 0 10px rgba(214, 51, 108, .9);
+}
+
+body.st-glassy .app-brand-subtitle {
+    font-size: 12px;
+    color: var(--a-text-2);
+    opacity: 1;
+}
+
+body.st-glassy #suspended {
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy .mosaic-menu-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    color: var(--a-text);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+body.st-glassy .mosaic-menu-btn:hover {
+    background: var(--a-tile-hi);
+}
+
+body.st-glassy .mosaic-menu-btn i,
+body.st-glassy .mosaic-menu-btn .svg-inline--fa {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- 5. Sidebar → DOCK flutuante ---------- */
+body.st-glassy #perfil {
+    top: var(--st-edge);
+    left: var(--st-edge);
+    bottom: var(--st-edge);
+    width: var(--dock-w) !important;
+    min-width: var(--dock-w) !important;
+    background: var(--a-spec), var(--a-glass) !important;
+    border: 0;
+    border-radius: var(--g-r-xl) !important;
+    color: var(--a-text) !important;
+    overflow: hidden;
+}
+
+body.st-glassy #perfil::after {
+    display: none;
+}
+
+body.st-glassy #img-perfil {
+    flex: 0 0 auto;
+    margin: 0 10px;
+    padding: 16px 0 12px;
+    border-bottom: 1px solid var(--a-line);
+    gap: 2px;
+}
+
+/* Anel de status ao redor do avatar (cor do servidor: classes trocadas por chat/assets/js/script.js). */
+body.st-glassy #img-perfil {
+    --st-ring: var(--c-gradient-brand);
+    --st-ring-glow: rgba(214, 51, 108, .55);
+}
+
+body.st-glassy #img-perfil:has(#sinal_server.status_online) {
+    --st-ring: linear-gradient(#00FF7F, #00FF7F);
+    --st-ring-glow: rgba(0, 255, 127, .55);
+}
+
+body.st-glassy #img-perfil:has(#sinal_server.status_offline) {
+    --st-ring: linear-gradient(#B22222, #B22222);
+    --st-ring-glow: rgba(178, 34, 34, .6);
+}
+
+body.st-glassy #img-perfil:has(#sinal_server.status_neutro) {
+    --st-ring: linear-gradient(#94a3b8, #94a3b8);
+    --st-ring-glow: rgba(148, 163, 184, .45);
+}
+
+body.st-glassy #img-perfil img {
+    width: 46px !important;
+    height: 46px !important;
+    margin: 0 auto 6px !important;
+    border: 2px solid transparent;
+    background: linear-gradient(var(--a-avatar-bg), var(--a-avatar-bg)) padding-box, var(--st-ring) border-box;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .06), 0 0 18px -2px var(--st-ring-glow);
+}
+
+body.st-glassy .perfil-nome,
+body.st-glassy .perfil-nivel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    text-align: center;
+}
+
+body.st-glassy .perfil-nome__linha,
+body.st-glassy .perfil-nivel__texto {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.st-glassy .perfil-nome {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--a-text);
+}
+
+body.st-glassy .perfil-nivel {
+    gap: 2px;
+    margin-top: 4px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: var(--a-text-2);
+}
+
+body.st-glassy .perfil-nivel__icone {
+    font-size: 14px;
+    line-height: 1;
+}
+
+body.st-glassy #img-perfil .bloco_status_server {
+    display: none;
+}
+
+body.st-glassy #dadosLogados,
+body.st-glassy .perfil-star {
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--a-accent-text);
+}
+
+body.st-glassy #menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 10px 8px !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--a-scrollbar) transparent;
+}
+
+body.st-glassy .span-menu {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    min-height: 58px;
+    margin: 2px 0 !important;
+    padding: 9px 4px !important;
+    border-radius: 18px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    overflow-wrap: anywhere;
+    color: var(--a-text-2);
+    transition: background-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy .span-menu i,
+body.st-glassy .span-menu > svg {
+    width: 22px;
+    font-size: 18px;
+    opacity: 1;
+}
+
+body.st-glassy .span-menu:hover {
+    background: var(--a-tile) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy .span-menu:active {
+    transform: scale(.98);
+}
+
+/* Item ativo: cápsula de vidro com brilho rosa + indicador. */
+body.st-glassy .span-menu.active {
+    background: var(--a-dock-active) !important;
+    color: var(--a-dock-active-text) !important;
+    box-shadow: var(--a-dock-active-shadow);
+}
+
+body.st-glassy .span-menu.active > svg,
+body.st-glassy .span-menu.active i {
+    filter: var(--a-dock-active-icon);
+}
+
+body.st-glassy .span-menu.active::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    width: 4px;
+    height: 22px;
+    transform: translateY(-50%);
+    border-radius: var(--g-r-pill);
+    background: var(--c-gradient-brand);
+    box-shadow: 0 0 10px var(--c-primary);
+}
+
+body.st-glassy .menu-section {
+    padding: 12px 2px 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-align: center;
+    color: var(--a-text-2);
+}
+
+/* Contadores: pílula rosa no canto do item; zero/vazio some. */
+body.st-glassy #perfil #dadosPendMen:not(:empty),
+body.st-glassy #perfil #countCom:not(:empty) {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    margin: 0;
+}
+
+body.st-glassy #perfil #dadosPendMen:not(:empty),
+body.st-glassy #perfil #countCom .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 5px;
+    border-radius: var(--g-r-pill);
+    background: var(--c-primary) !important;
+    color: var(--c-white) !important;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--a-ring-bg), 0 0 10px rgba(214, 51, 108, .7);
+}
+
+body.st-glassy #perfil .st-glassy-count-empty {
+    display: none !important;
+}
+
+/* ---------- 6. Rodapé → pílula de status ---------- */
+body.st-glassy #app-footer {
+    left: calc(var(--sidebar-w) + 16px);
+    right: auto;
+    bottom: 10px;
+    height: var(--foot-h);
+    gap: 14px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--g-r-pill);
+    font-size: 11px;
+    color: var(--a-text-2);
+}
+
+body.st-glassy #footer-status-label {
+    color: var(--a-text);
+}
+
+body.st-glassy #sinal_server_footer {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .12), 0 0 8px currentColor;
+}
+
+body.st-glassy #app-footer > span:last-child > span {
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy #app-footer img {
+    height: 16px;
+    filter: var(--a-logo-filter);
+    opacity: .8;
+}
+
+/* ---------- 7. Faixa de KPIs (#indice) ---------- */
+body.st-glassy #indice {
+    gap: 12px;
+    margin: 0 0 16px 0 !important;
+}
+
+/* Título da página / saudação (action.js reescreve com <h3>). */
+body.st-glassy #indice-idx-men {
+    flex: 1 1 100%;
+    max-width: none;
+    min-height: 0 !important;
+}
+
+body.st-glassy #indice-idx-men .alert-msg,
+body.st-glassy #indice-idx-men h3 {
+    min-height: 0;
+    padding: 0 4px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--a-text);
+}
+
+body.st-glassy #indice-idx-men h3 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+body.st-glassy #indice-idx-men h3 i,
+body.st-glassy #indice-idx-men h3 svg {
+    font-size: 15px;
+    color: var(--c-primary);
+    filter: drop-shadow(0 0 6px rgba(214, 51, 108, .8));
+}
+
+body.st-glassy #indice-idx-men .alert-msg {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--a-text-2);
+}
+
+body.st-glassy #indice-idx-fila {
+    border: 0;
+    border-radius: var(--g-r-lg);
+}
+
+body.st-glassy #indice-idx-fila .fila_in { color: #2FAB4E; }
+body.st-glassy #indice-idx-fila .fila_out { color: var(--c-coral); }
+
+body.st-glassy #indice-idx {
+    flex: 1 1 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 0 !important;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.st-glassy .bloco_info {
+    --kpi: var(--c-accent-sky);
+    flex: none;
+    max-width: none;
+    min-width: 0;
+    min-height: 98px;
+    padding: 14px 16px;
+    align-items: flex-start;
+    justify-content: space-between;
+    text-align: left;
+    border: 0;
+    border-radius: var(--g-r-lg);
+    background: var(--a-glass);
+    transition: transform var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy .bloco_info::after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kpi);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .06), 0 0 12px var(--kpi);
+}
+
+body.st-glassy .bloco_info:has(.info1) { --kpi: var(--st-online); }
+body.st-glassy .bloco_info:has(.info2) { --kpi: var(--c-primary); }
+body.st-glassy .bloco_info:has(.info3) { --kpi: var(--st-atendimento); }
+body.st-glassy .bloco_info:has(.info4) { --kpi: var(--c-success); }
+body.st-glassy .bloco_info:has(.info5) { --kpi: var(--c-accent-sky); }
+body.st-glassy .bloco_info:has(.info6) { --kpi: var(--c-warning); }
+body.st-glassy .bloco_info:has(.info7) { --kpi: var(--c-coral); }
+
+body.st-glassy .bloco_info.pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--a-shadow-lift);
+}
+
+body.st-glassy .bloco_info.pointer:hover::before {
+    background: var(--a-rim-strong);
+}
+
+body.st-glassy .bloco_info.pointer:active {
+    transform: scale(.98);
+}
+
+body.st-glassy .bloco_info .til {
+    width: calc(100% - 18px);
+    margin: 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-align: left;
+    color: var(--a-text-2);
+}
+
+body.st-glassy .bloco_info .inf {
+    justify-content: flex-start;
+    min-height: 0;
+    margin-top: 10px;
+    background: none;
+    color: var(--a-text);
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tempos (hh:mm:ss) não cabem a 36px no tile. */
+body.st-glassy .bloco_info .info5,
+body.st-glassy .bloco_info .info6 {
+    font-size: 26px;
+}
+
+/* ---------- 8. Área de conteúdo: totalmente transparente (os cards internos dão o vidro) ----------
+   Sem backdrop-filter aqui: #action-page pode conter .gw-modal-* / .modal fixos. */
+body.st-glassy[class] #action-page {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0;
+    box-shadow: none !important;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page hr {
+    border-top: 1px solid var(--a-line);
+    opacity: 1;
+}
+
+body.st-glassy #action-page .card {
+    background-color: var(--a-tile);
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    box-shadow: var(--a-shadow-tile);
+    color: var(--a-text);
+}
+
+/* ---------- 9. DASHBOARD (dash-fila): vidro do shell ---------- */
+body.st-glassy #action-page:has(#content-idx) {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0 !important;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page:has(#content-idx) #load_conn {
+    color: var(--a-text-2);
+    font-weight: 600;
+    letter-spacing: .08em;
+}
+
+body.st-glassy #action-page #dashboard.dash-fila-workspace {
+    gap: 0;
+}
+
+/* Barra: abas (segmented control) + legenda + "ao vivo" */
+body.st-glassy .st-dash-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 16px;
+}
+
+body.st-glassy .dash-fila-workspace #myTab {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    gap: 2px;
+    padding: 4px;
+    margin: 0 !important;
+    background: var(--a-glass-strong);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    box-shadow: var(--a-shadow-track);
+    scrollbar-width: none;
+}
+
+body.st-glassy .dash-fila-workspace #myTab .nav-link {
+    padding: 7px 16px;
+    border: 0;
+    border-radius: var(--g-r-pill) !important;
+    background: transparent;
+    color: var(--a-text-2) !important;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: background-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy .dash-fila-workspace #myTab .nav-link:hover {
+    background: var(--a-tile);
+    color: var(--a-text) !important;
+}
+
+body.st-glassy .dash-fila-workspace #myTab .nav-link:active {
+    transform: scale(.98);
+}
+
+body.st-glassy .dash-fila-workspace #myTab .nav-link.active {
+    background: var(--a-seg-thumb) !important;
+    color: var(--a-text) !important;
+    box-shadow: var(--a-seg-thumb-shadow);
+}
+
+body.st-glassy .st-dash-toolbar__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 10px;
+    margin-left: auto;
+}
+
+body.st-glassy #action-page #legend.dash-oper-legend {
+    flex: 0 1 auto;
+    width: auto !important;
+    min-height: 0;
+    margin: 0 !important;
+    padding: 0;
+    gap: 6px;
+    justify-content: flex-end;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+body.st-glassy #action-page #legend .legend-dash {
+    --st: var(--a-text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    padding: 4px 11px 4px 9px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-glass-strong);
+    color: var(--a-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy #action-page #legend .legend-dash::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--st);
+    box-shadow: 0 0 8px var(--st);
+}
+
+body.st-glassy #action-page #legend .leg-online { --st: var(--st-online); }
+body.st-glassy #action-page #legend .leg-indisp { --st: var(--st-indisp); }
+body.st-glassy #action-page #legend .leg-atendimento { --st: var(--st-atendimento); }
+body.st-glassy #action-page #legend .leg-pos { --st: var(--st-pos); }
+body.st-glassy #action-page #legend .leg-pausa { --st: var(--st-pausa); }
+body.st-glassy #action-page #legend .leg-logout { --st: var(--st-logout); }
+body.st-glassy #action-page #legend .leg-offline { --st: var(--st-offline); }
+
+body.st-glassy .dash-fila-live-ts {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 4px 12px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-glass-strong);
+    color: var(--a-text-2);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy #dashFilaLiveTs {
+    color: var(--a-text);
+}
+
+body.st-glassy .st-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-success);
+    box-shadow: 0 0 0 0 rgba(47, 171, 78, .6);
+    animation: st-live-pulse 2.4s var(--g-ease) infinite;
+}
+
+@keyframes st-live-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(47, 171, 78, .6); }
+    70% { box-shadow: 0 0 0 8px rgba(47, 171, 78, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(47, 171, 78, 0); }
+}
+
+/* Colunas */
+body.st-glassy #action-page #dashboard.dash-fila-workspace #myTabContent > .tab-pane.active.show {
+    gap: 16px;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--team {
+    flex: 1 1 40%;
+    min-width: 240px;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--queue {
+    flex: 1 1 34%;
+    min-width: 220px;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--chart {
+    flex: 0 0 300px;
+    min-width: 260px;
+    max-width: 320px;
+}
+
+body.st-glassy .dash-fila-col {
+    border: 0;
+    border-radius: var(--g-r-lg);
+}
+
+body.st-glassy .dash-fila-col__head {
+    gap: 10px;
+    padding: 14px 16px 12px;
+    background: none;
+    border-bottom: 1px solid var(--a-line);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    color: var(--a-text);
+}
+
+body.st-glassy .st-orb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--a-sheen), var(--c-gradient-brand);
+    color: var(--c-white);
+    font-size: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 16px rgba(214, 51, 108, .45);
+}
+
+body.st-glassy .st-orb svg,
+body.st-glassy .st-orb i {
+    color: var(--c-white);
+    width: 12px;
+}
+
+body.st-glassy .dash-fila-col__body {
+    padding: 12px;
+}
+
+body.st-glassy .dash-fila-loading {
+    color: var(--a-text-2);
+}
+
+body.st-glassy .cnf-live-empty {
+    color: var(--a-text-2);
+    text-align: center;
+    margin: 24px 0;
+}
+
+/* Equipe: tiles sem blur (podem ser muitos), anel na cor do status */
+body.st-glassy #action-page .dash-fila-workspace .dash-fila-col--team .dash-users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+body.st-glassy #action-page .dash-user-tile.div_user {
+    flex: none !important;
+    width: auto !important;
+    padding: 14px 8px 12px;
+    border: 1px solid var(--a-line);
+    border-radius: 18px;
+    background: var(--a-tile);
+    box-shadow: var(--a-shadow-tile);
+    transition: transform var(--g-dur) var(--g-ease), background-color var(--g-dur) var(--g-ease), border-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy #action-page .dash-user-tile.div_user:hover {
+    transform: translateY(-2px);
+    background: var(--a-tile-hi);
+    border-color: var(--a-line-hover);
+    box-shadow: var(--a-shadow-tile-hover);
+}
+
+body.st-glassy #action-page .dash-user-tile.div_user:active {
+    transform: scale(.98);
+}
+
+body.st-glassy .dash-user-tile__avatar-wrap {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 8px;
+}
+
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar {
+    --st: var(--a-avatar-ring);
+    width: 54px !important;
+    height: 54px !important;
+    padding: 3px;
+    border: 2px solid var(--st);
+    background: var(--a-avatar-bg);
+    box-shadow: 0 0 16px -2px var(--st);
+}
+
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.online { --st: var(--st-online); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.indisp { --st: var(--st-indisp); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.atendimento { --st: var(--st-atendimento); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.pos { --st: var(--st-pos); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.pausa { --st: var(--st-pausa); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.logout { --st: var(--st-logout); }
+body.st-glassy .dash-fila-workspace .dash-user-tile__avatar.offline { --st: var(--st-offline); }
+
+body.st-glassy .dash-user-tile__name {
+    max-width: 100%;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--a-text);
+}
+
+body.st-glassy .dash-user-tile__time {
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--a-text-2);
+}
+
+body.st-glassy .dash-user-tile__star {
+    margin-top: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--a-text);
+}
+
+body.st-glassy .dash-user-tile__star svg,
+body.st-glassy .dash-user-tile__star .fa-star {
+    color: #D2D200;
+    filter: drop-shadow(0 0 4px rgba(210, 210, 0, .6));
+}
+
+body.st-glassy .dash-user-tile__badge,
+body.st-glassy .dash-user-tile .badge-count {
+    top: 8px;
+    right: 8px;
+    background: var(--st-atendimento);
+    color: var(--c-navy-deep);
+    box-shadow: 0 0 10px rgba(255, 143, 89, .6);
+}
+
+/* Fila de atendimento */
+body.st-glassy .dash-fila-panel__meta {
+    color: var(--a-text-2);
+}
+
+body.st-glassy .dash-fila-empty {
+    gap: 8px;
+    padding: 32px 16px;
+    color: var(--a-text-2);
+}
+
+body.st-glassy .dash-fila-empty > svg,
+body.st-glassy .dash-fila-empty > i {
+    box-sizing: content-box;
+    width: 38px;
+    height: 38px;
+    padding: 25px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    color: var(--c-success);
+    background:
+        radial-gradient(120% 80% at 30% 0%, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0) 55%),
+        radial-gradient(80% 80% at 50% 100%, rgba(47, 171, 78, .35), rgba(47, 171, 78, 0) 70%),
+        var(--a-tile);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 0 0 1px rgba(255, 255, 255, .14), var(--a-shadow-orb), 0 0 30px rgba(47, 171, 78, .25);
+    filter: drop-shadow(0 0 6px rgba(47, 171, 78, .45));
+}
+
+body.st-glassy .dash-fila-empty__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--a-text);
+}
+
+body.st-glassy .dash-fila-empty__sub {
+    color: var(--a-text-2);
+}
+
+body.st-glassy .dash-fila-table-wrap {
+    background: transparent;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+}
+
+body.st-glassy .dash-fila-table-wrap .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--a-text);
+    --bs-table-accent-bg: transparent;
+    --bs-table-striped-bg: var(--a-row-stripe);
+    --bs-table-striped-color: var(--a-text);
+    --bs-table-hover-bg: var(--a-row-hover);
+    --bs-table-hover-color: var(--a-text);
+    color: var(--a-text);
+}
+
+body.st-glassy .dash-fila-table-wrap .table thead th {
+    background: var(--a-thead);
+    color: var(--a-text-2);
+    border-bottom: 1px solid var(--a-line-2);
+}
+
+body.st-glassy .dash-fila-table-wrap .table tbody td {
+    color: var(--a-text);
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy .dash-fila-table-wrap .table tbody tr:hover {
+    background: var(--a-row-hover) !important;
+}
+
+body.st-glassy .dash-fila-table__protocol {
+    color: var(--a-text);
+}
+
+/* Detalhe do atendente (load_info_user.php): tile do tema (peças internas em glassy-idx.css). */
+body.st-glassy #action-page .dash-fila-workspace .dash-fila-col--queue > .chat_info {
+    margin: 8px;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy .dash-fila-workspace .chat_info .dash-fila-loading {
+    color: var(--a-text-2);
+}
+
+/* Indicadores: mini-tiles com acento de cor */
+body.st-glassy #action-page .dash-fila-col--chart .dash-fila-col__body.charts {
+    padding: 12px;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-panel {
+    gap: 14px;
+    overflow: visible;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-section__title {
+    margin: 0 0 8px;
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-section__title svg,
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-section__title i {
+    font-size: 10px;
+    color: var(--c-primary);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-grid {
+    gap: 8px;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card {
+    --acc: var(--c-accent-sky);
+    position: relative;
+    gap: 4px;
+    min-height: 60px;
+    padding: 10px 12px;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card::before {
+    content: "";
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--acc);
+    box-shadow: 0 0 8px var(--acc);
+}
+
+body.st-glassy .dash-ind-card--bko { --acc: var(--st-online); }
+body.st-glassy .dash-ind-card--fila { --acc: var(--c-primary); }
+body.st-glassy .dash-ind-card--atend { --acc: var(--st-atendimento); }
+body.st-glassy .dash-ind-card--acesso { --acc: var(--c-accent-sky); }
+body.st-glassy .dash-ind-card--pend-fila { --acc: var(--c-coral); }
+body.st-glassy .dash-ind-card--ok { --acc: var(--c-success); }
+body.st-glassy .dash-ind-card--pend { --acc: var(--c-coral); }
+body.st-glassy .dash-ind-card--tma { --acc: var(--c-accent-sky); }
+body.st-glassy .dash-ind-card--tme { --acc: var(--c-primary); }
+body.st-glassy .dash-ind-card--espera-min { --acc: var(--c-success); }
+body.st-glassy .dash-ind-card--espera-max { --acc: var(--c-warning); }
+body.st-glassy .dash-ind-card--atend-rap { --acc: var(--st-online); }
+body.st-glassy .dash-ind-card--atend-max { --acc: var(--st-atendimento); }
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card__label {
+    display: block;
+    min-height: 0;
+    padding-right: 12px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card__value {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card--alert {
+    border-color: rgba(250, 82, 82, .55);
+    box-shadow: none;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-card--alert .dash-ind-card__value {
+    color: var(--c-coral);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team {
+    gap: 8px;
+    overflow: visible;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__head {
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__total {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--a-text);
+}
+
+/* Barra segmentada arredondada com glow */
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__bar {
+    gap: 3px;
+    height: 14px;
+    padding: 2px;
+    overflow: visible;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: var(--a-well-inset);
+}
+
+body.st-glassy .dash-ind-team__seg {
+    --st: var(--a-text-2);
+    min-width: 6px;
+    border-radius: var(--g-r-pill);
+    background: var(--st);
+    box-shadow: 0 0 10px -1px var(--st);
+}
+
+body.st-glassy .dash-ind-team__seg--atendimento,
+body.st-glassy .dash-ind-team__chip--atendimento { --st: var(--st-atendimento); }
+body.st-glassy .dash-ind-team__seg--online,
+body.st-glassy .dash-ind-team__chip--online { --st: var(--st-online); }
+body.st-glassy .dash-ind-team__seg--indisp,
+body.st-glassy .dash-ind-team__chip--indisp { --st: var(--st-indisp); }
+body.st-glassy .dash-ind-team__seg--pos,
+body.st-glassy .dash-ind-team__chip--pos { --st: var(--st-pos); }
+body.st-glassy .dash-ind-team__seg--pausa,
+body.st-glassy .dash-ind-team__chip--pausa { --st: var(--st-pausa); }
+body.st-glassy .dash-ind-team__seg--logout,
+body.st-glassy .dash-ind-team__chip--logout { --st: var(--st-logout); }
+body.st-glassy .dash-ind-team__seg--offline,
+body.st-glassy .dash-ind-team__chip--offline { --st: var(--st-offline); }
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__legend {
+    max-height: none;
+    gap: 6px 10px;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__chip {
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--a-text-2);
+}
+
+body.st-glassy .dash-ind-team__chip strong {
+    color: var(--a-text);
+    font-weight: 700;
+}
+
+body.st-glassy #action-page .dash-fila-col--chart .dash-ind-team__dot {
+    width: 8px;
+    height: 8px;
+    background: var(--st);
+    box-shadow: 0 0 6px var(--st);
+}
+
+body.st-glassy .dash-ind-team__empty {
+    color: var(--a-text-2);
+    font-size: 11px;
+}
+
+/* ---------- 10. Chat lateral (#chat): vidro fumê sem blur (pode conter conteúdo fixo) ---------- */
+body.st-glassy #page > #content > #chat.content-3-chat {
+    background: var(--a-spec), var(--a-glass-strong);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    box-shadow: var(--a-shadow);
+    color: var(--a-text);
+}
+
+body.st-glassy #chat #tabChat {
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy #chat #tabChat .nav-link {
+    border: 0;
+    border-radius: var(--g-r-pill);
+    background: transparent;
+    color: var(--a-text-2);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+body.st-glassy #chat #tabChat .nav-link:hover {
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #chat #tabChat .nav-link.active {
+    background: var(--a-chip-active);
+    color: var(--a-text);
+    box-shadow: var(--a-chip-active-shadow);
+}
+
+body.st-glassy #chat .chat-div,
+body.st-glassy #chat .chat-content {
+    background: transparent;
+}
+
+body.st-glassy #chat .other > .text > .paragrafo {
+    background: var(--a-bubble);
+    border: 1px solid var(--a-line-2);
+    border-radius: 16px 16px 16px 4px;
+    color: var(--a-text);
+}
+
+body.st-glassy #chat .me > .text > .paragrafo {
+    background: var(--a-sheen), var(--c-primary-dark);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 16px 16px 4px 16px;
+    color: var(--c-white);
+}
+
+body.st-glassy #chat .text > .paragrafo a {
+    color: var(--a-link);
+}
+
+body.st-glassy #chat .other > .text > h5,
+body.st-glassy #chat .me > .text > h5,
+body.st-glassy #chat .other > .text > .dataHora,
+body.st-glassy #chat .me > .text > .dataHora {
+    color: var(--a-text-2);
+    opacity: 1;
+}
+
+body.st-glassy #chat .btn-chat {
+    background: var(--a-sheen), var(--c-primary);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: var(--g-r-sm);
+    color: var(--c-white);
+}
+
+body.st-glassy #chat .btn-chat:hover {
+    background: var(--a-sheen), var(--c-primary-dark);
+    box-shadow: var(--a-glow-primary);
+}
+
+/* ---------- 11. Escopos de conteúdo Aurora ----------
+   Conteúdo legado (formulários, tabelas, botões secundários) usa tokens --p-*.
+   Padrão (body): painel claro fosco — só sobra para conteúdo fora dos escopos abaixo.
+   Escopos Aurora: --p-* passam a seguir o tema do shell (vidro escuro no dark, claro no light).
+   #action-page e #chat são escopo em todas as seções ([class] mantém a especificidade da
+   antiga classe de seção). Camadas novas: incluir na lista ou usar .st-aurora-scope. */
+body.st-glassy .modal-content,
+body.st-glassy .gw-modal,
+body.st-glassy .gw-modal-small,
+body.st-glassy .gw-modal-large,
+body.st-glassy .gw-modal-egg,
+body.st-glassy .swal2-popup,
+body.st-glassy .dropdown-menu,
+body.st-glassy .popover,
+body.st-glassy .dt-datetime,
+body.st-glassy .offcanvas,
+body.st-glassy .st-aurora-scope,
+body.st-glassy[class] :is(#action-page, #chat) {
+    --p-text: var(--a-text);
+    --p-text-2: var(--a-text-2);
+    --p-line: var(--a-line);
+    --p-field: var(--a-tile);
+    --p-field-focus: var(--a-tile-hi);
+    --p-field-border: var(--a-line-2);
+    --p-placeholder: var(--a-text-2);
+    --p-select-arrow: var(--a-select-arrow);
+    --p-disabled: var(--a-row-stripe);
+    --p-disabled-border: var(--a-line);
+    --p-disabled-text: var(--a-text-3);
+    --p-option-bg: var(--a-solid);
+    --p-thead: var(--a-thead);
+    --p-thead-text: var(--a-text-2);
+    --p-row: transparent;
+    --p-row-odd: var(--a-row-stripe);
+    --p-row-hover: var(--a-row-hover);
+    --p-row-selected: rgba(214, 51, 108, .16);
+    --p-btn2-bg: var(--a-tile);
+    --p-btn2-border: var(--a-line-2);
+    --p-btn2-text: var(--a-text);
+    --p-btn2-hover: var(--a-tile-hi);
+    --p-btn2-shadow: var(--a-shadow-tile);
+    --p-pop: var(--a-popover);
+    --p-focus: var(--a-focus-shell);
+    --p-scheme: var(--a-scheme);
+    --p-switch-track: var(--a-line-hover);
+
+    /* Campos de style-materialize.css (.input-container / .st-field) */
+    --f-bg: var(--a-tile);
+    --f-bg-focus: var(--a-tile-hi);
+    --f-text: var(--a-text);
+    --f-border: var(--a-line-2);
+    --f-label: var(--a-text-2);
+    --f-muted: var(--a-text-2);
+    --f-ring: var(--a-field-ring);
+    --f-error-bg: rgba(250, 82, 82, .14);
+    --f-ok-bg: rgba(47, 171, 78, .14);
+
+    color-scheme: var(--p-scheme);
+    color: var(--p-text);
+}
+
+/* Botões dentro dos escopos Aurora: pílulas. */
+body.st-glassy .modal-content .btn:not(.btn-close),
+body.st-glassy .gw-modal-small .btn,
+body.st-glassy .gw-modal-large .btn,
+body.st-glassy .gw-modal-egg .btn,
+body.st-glassy .gw-modal .btn,
+body.st-glassy .st-aurora-scope .btn,
+body.st-glassy[class] :is(#action-page, #chat) .btn {
+    border-radius: var(--g-r-pill) !important;
+    font-weight: 600;
+}
+
+body.st-glassy .modal-content .btn-solvetask,
+body.st-glassy .st-aurora-scope .btn-solvetask,
+body.st-glassy[class] :is(#action-page, #chat) .btn-solvetask {
+    background: var(--a-sheen), var(--c-primary) !important;
+    border: 1px solid rgba(255, 255, 255, .25) !important;
+    color: var(--c-white) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 14px rgba(214, 51, 108, .3);
+}
+
+body.st-glassy .modal-content .btn-solvetask:hover,
+body.st-glassy .st-aurora-scope .btn-solvetask:hover,
+body.st-glassy[class] :is(#action-page, #chat) .btn-solvetask:hover {
+    background: var(--a-sheen), var(--c-primary-dark) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), var(--a-glow-primary);
+}
+
+/* Textos legados genéricos dentro dos escopos */
+body.st-glassy .modal-content :is(h1, h2, h3, h4, h5, h6, label, strong, b, center, p, td, th, li, dt, dd),
+body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) :is(h1, h2, h3, h4, h5, h6, label, strong, b, center, p, td, th, li),
+body.st-glassy[class] :is(#action-page, #chat) :is(h1, h2, h3, h4, h5, h6, label, center) {
+    color: inherit;
+}
+
+body.st-glassy .modal-content .text-muted,
+body.st-glassy .modal-content .form-text,
+body.st-glassy :is(.gw-modal-small, .gw-modal-large, .gw-modal-egg) .text-muted,
+body.st-glassy[class] :is(#action-page, #chat) .text-muted,
+body.st-glassy[class] :is(#action-page, #chat) .form-text,
+body.st-glassy[class] :is(#action-page, #chat) .text-secondary {
+    color: var(--p-text-2) !important;
+}
+
+/* Cores fixas "red" em feeds de validação (JS legado). */
+body.st-glassy .modal-content [style*="color: red"],
+body.st-glassy .modal-content [style*="color:red"],
+body.st-glassy[class] :is(#action-page, #chat) [style*="color: red"] {
+    color: var(--c-coral) !important;
+}
+
+/* Alertas Bootstrap: vidro tingido + barra semântica (texto sempre no tom do tema → AA). */
+body.st-glassy .modal-content .alert,
+body.st-glassy .swal2-popup .alert,
+body.st-glassy .st-aurora-scope .alert,
+body.st-glassy[class] :is(#action-page, #chat) .alert {
+    --al: var(--c-accent-sky);
+    border: 1px solid var(--p-line);
+    border-left: 3px solid var(--al);
+    border-radius: var(--g-r-md);
+    background: var(--p-field);
+    color: var(--p-text);
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy :is(.modal-content, .swal2-popup, .st-aurora-scope) .alert-danger,
+body.st-glassy[class] :is(#action-page, #chat) .alert-danger { --al: var(--c-coral); }
+body.st-glassy :is(.modal-content, .swal2-popup, .st-aurora-scope) .alert-warning,
+body.st-glassy[class] :is(#action-page, #chat) .alert-warning { --al: var(--c-warning); }
+body.st-glassy :is(.modal-content, .swal2-popup, .st-aurora-scope) .alert-success,
+body.st-glassy[class] :is(#action-page, #chat) .alert-success { --al: var(--c-success); }
+
+body.st-glassy :is(.modal-content, .st-aurora-scope) .alert code,
+body.st-glassy[class] :is(#action-page, #chat) .alert code,
+body.st-glassy[class] :is(#action-page, #chat) code {
+    color: var(--a-accent-text);
+    background: var(--a-tile);
+    padding: 1px 6px;
+    border-radius: 6px;
+}
+
+/* Loader legado (img/loading.gif tem fundo branco): some no fundo em ambos os temas. */
+body.st-glassy img[src*="loading.gif"] {
+    filter: var(--a-gif-filter);
+    mix-blend-mode: var(--a-gif-blend);
+}
+
+body.st-glassy #load_gif {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+}
+
+/* ---------- 12. Botões ---------- */
+body.st-glassy .btn {
+    transition: background-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease) !important;
+}
+
+body.st-glassy .btn:active {
+    transform: scale(.98);
+}
+
+body.st-glassy .btn-primary {
+    background: var(--a-sheen), var(--c-primary) !important;
+    border: 1px solid rgba(255, 255, 255, .25) !important;
+    color: var(--c-white) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 14px rgba(214, 51, 108, .3);
+}
+
+body.st-glassy .btn-primary:hover {
+    background: var(--a-sheen), var(--c-primary-dark) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), var(--a-glow-primary);
+    opacity: 1;
+}
+
+body.st-glassy .btn-secondary,
+body.st-glassy .btn-light,
+body.st-glassy .btn-outline-secondary {
+    background: var(--p-btn2-bg) !important;
+    border: 1px solid var(--p-btn2-border) !important;
+    color: var(--p-btn2-text) !important;
+    box-shadow: var(--p-btn2-shadow);
+}
+
+body.st-glassy .btn-secondary:hover,
+body.st-glassy .btn-light:hover,
+body.st-glassy .btn-outline-secondary:hover {
+    background: var(--p-btn2-hover) !important;
+    opacity: 1;
+}
+
+/* Semânticos: contornados (branco sobre #FA5252/#2FAB4E/#e67700 não passa AA). */
+body.st-glassy .btn-danger,
+body.st-glassy .btn-success,
+body.st-glassy .btn-warning,
+body.st-glassy .btn-info,
+body.st-glassy .btn-outline-danger,
+body.st-glassy .btn-outline-success,
+body.st-glassy .btn-outline-warning,
+body.st-glassy .btn-outline-info {
+    background: var(--p-btn2-bg) !important;
+    color: var(--p-btn2-text) !important;
+    box-shadow: var(--p-btn2-shadow);
+}
+
+body.st-glassy .btn-danger, body.st-glassy .btn-outline-danger { border: 1px solid var(--c-danger) !important; }
+body.st-glassy .btn-success, body.st-glassy .btn-outline-success { border: 1px solid var(--c-success) !important; }
+body.st-glassy .btn-warning, body.st-glassy .btn-outline-warning { border: 1px solid var(--c-warning) !important; }
+body.st-glassy .btn-info, body.st-glassy .btn-outline-info { border: 1px solid var(--st-online) !important; }
+body.st-glassy :is(.btn-danger, .btn-outline-danger) > :is(svg, i) { color: var(--c-danger); }
+body.st-glassy :is(.btn-success, .btn-outline-success) > :is(svg, i) { color: var(--c-success); }
+body.st-glassy :is(.btn-warning, .btn-outline-warning) > :is(svg, i) { color: var(--c-warning); }
+body.st-glassy :is(.btn-info, .btn-outline-info) > :is(svg, i) { color: var(--st-online); }
+body.st-glassy :is(.btn-danger, .btn-outline-danger):hover { background: rgba(250, 82, 82, .12) !important; opacity: 1; }
+body.st-glassy :is(.btn-success, .btn-outline-success):hover { background: rgba(47, 171, 78, .12) !important; opacity: 1; }
+body.st-glassy :is(.btn-warning, .btn-outline-warning):hover { background: rgba(230, 119, 0, .12) !important; opacity: 1; }
+body.st-glassy :is(.btn-info, .btn-outline-info):hover { background: rgba(49, 202, 240, .12) !important; opacity: 1; }
+
+body.st-glassy .btn:disabled,
+body.st-glassy .btn.disabled {
+    opacity: .5;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* ---------- 13. Foco visível ---------- */
+body.st-glassy .btn:focus-visible,
+body.st-glassy a:focus-visible,
+body.st-glassy button:focus-visible,
+body.st-glassy [tabindex]:focus-visible,
+body.st-glassy .nav-link:focus-visible,
+body.st-glassy .btn-close:focus-visible,
+body.st-glassy .close:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: var(--p-focus) !important;
+}
+
+body.st-glassy #app-topbar :focus-visible,
+body.st-glassy #perfil :focus-visible,
+body.st-glassy #chat :focus-visible,
+body.st-glassy .dash-fila-workspace #myTab :focus-visible,
+body.st-glassy #indice :focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell) !important;
+}
+
+/* ---------- 14. Formulários (tokens --p-*; escuros no shell) ---------- */
+body.st-glassy .form-control:not(:disabled):not([readonly]),
+body.st-glassy .form-select:not(:disabled),
+body.st-glassy input[type="text"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="number"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="email"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="password"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="search"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="date"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="time"]:not(:disabled):not([readonly]),
+body.st-glassy input[type="tel"]:not(:disabled):not([readonly]),
+body.st-glassy select:not(:disabled),
+body.st-glassy textarea:not(:disabled):not([readonly]) {
+    background-color: var(--p-field);
+    border-color: var(--p-field-border);
+    border-radius: var(--g-r-sm);
+    color: var(--p-text);
+}
+
+body.st-glassy .form-select {
+    background-image: var(--p-select-arrow);
+}
+
+body.st-glassy :is(.st-field, .input-container) > select:not([multiple]),
+body.st-glassy select.form-control:not([multiple]) {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: var(--p-select-arrow) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px 12px !important;
+    padding-right: 32px !important;
+}
+
+body.st-glassy select option {
+    background-color: var(--p-option-bg);
+    color: var(--p-text);
+}
+
+/* Fora dos escopos Aurora o --p-* padrão é claro; no tema escuro a lista nativa precisa acompanhar o campo. */
+html[data-st-theme="dark"] body.st-glassy #indice select {
+    color-scheme: dark;
+}
+
+body.st-glassy input::placeholder,
+body.st-glassy textarea::placeholder {
+    color: var(--p-placeholder);
+    opacity: 1;
+}
+
+body.st-glassy .form-control:focus,
+body.st-glassy .form-select:focus,
+body.st-glassy input:not([type="checkbox"]):not([type="radio"]):focus,
+body.st-glassy select:focus,
+body.st-glassy textarea:focus {
+    background-color: var(--p-field-focus);
+    border-color: var(--c-primary);
+    box-shadow: var(--p-focus);
+    outline: 2px solid transparent;
+}
+
+body.st-glassy .form-control:disabled,
+body.st-glassy .form-control[readonly],
+body.st-glassy :is(.st-field, .input-container) > :is(input, select, textarea):disabled {
+    background: var(--p-disabled) !important;
+    border-color: var(--p-disabled-border) !important;
+    color: var(--p-disabled-text) !important;
+}
+
+body.st-glassy .form-control.is-invalid,
+body.st-glassy .form-select.is-invalid { border-color: var(--c-danger); }
+body.st-glassy .form-control.is-valid,
+body.st-glassy .form-select.is-valid { border-color: var(--c-success); }
+
+body.st-glassy input[type="checkbox"],
+body.st-glassy input[type="radio"],
+body.st-glassy input[type="range"],
+body.st-glassy progress {
+    accent-color: var(--c-primary);
+}
+
+body.st-glassy .form-check-input {
+    background-color: var(--p-field);
+    border-color: var(--p-field-border);
+}
+
+body.st-glassy .form-check-input:checked {
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+}
+
+body.st-glassy input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 4px 12px;
+    border: 1px solid var(--p-btn2-border);
+    border-radius: var(--g-r-pill);
+    background: var(--p-btn2-bg);
+    color: var(--p-btn2-text);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Toggle (.switch de style-materialize.css) */
+body.st-glassy .switch > label {
+    background: var(--p-switch-track);
+    box-shadow: inset 0 1px 2px rgba(6, 5, 28, .25), inset 0 0 0 1px var(--p-line);
+    transition: background-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy .switch > input:checked ~ label {
+    background: var(--a-sheen), var(--c-primary);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), 0 0 12px rgba(214, 51, 108, .45);
+}
+
+body.st-glassy .switch > input:disabled ~ label {
+    background: var(--p-disabled);
+    box-shadow: inset 0 0 0 1px var(--p-line);
+}
+
+body.st-glassy .switch > label::after {
+    box-shadow: 0 1px 4px rgba(6, 5, 28, .3), inset 0 -1px 0 rgba(40, 40, 94, .08);
+}
+
+body.st-glassy #chat,
+body.st-glassy #indice {
+    --f-bg: var(--a-tile);
+    --f-bg-focus: var(--a-tile-hi);
+    --f-text: var(--a-text);
+    --f-border: var(--a-line-2);
+    --f-label: var(--a-text-2);
+    --f-muted: var(--a-text-2);
+    --f-ring: var(--a-field-ring);
+}
+
+body.st-glassy #chat input[type="text"]:not(:disabled):not([readonly]),
+body.st-glassy #chat textarea:not(:disabled):not([readonly]),
+body.st-glassy #indice select:not(:disabled) {
+    background-color: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #chat input[type="text"]:focus,
+body.st-glassy #chat textarea:focus,
+body.st-glassy #indice select:focus {
+    background-color: var(--a-tile-hi);
+    border-color: var(--c-primary);
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy #chat input::placeholder {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #indice select option {
+    background: var(--a-solid);
+    color: var(--a-text);
+}
+
+/* ---------- 15. Tabelas (Bootstrap + DataTables; tokens --p-*) ---------- */
+body.st-glassy table.dataTable thead th,
+body.st-glassy table.dataTable thead td,
+body.st-glassy #action-page:not(:has(#content-idx)) .table thead th {
+    background: var(--p-thead);
+    color: var(--p-thead-text);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid var(--p-line);
+}
+
+body.st-glassy .dataTables_wrapper table.dataTable > thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+body.st-glassy table.dataTable.no-footer,
+body.st-glassy .dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border-bottom: 1px solid var(--p-line);
+}
+
+body.st-glassy table.dataTable tbody tr {
+    background-color: var(--p-row);
+}
+
+body.st-glassy table.dataTable tbody td {
+    color: var(--p-text);
+}
+
+body.st-glassy table.dataTable.stripe tbody tr.odd,
+body.st-glassy table.dataTable.display tbody tr.odd {
+    background-color: var(--p-row-odd);
+}
+
+body.st-glassy table.dataTable.hover tbody tr:hover,
+body.st-glassy table.dataTable.display tbody tr:hover,
+body.st-glassy .dataTables_wrapper .table tbody tr:hover {
+    background-color: var(--p-row-hover) !important;
+}
+
+body.st-glassy table.dataTable.display tbody tr > .sorting_1,
+body.st-glassy table.dataTable.display tbody tr > .sorting_2,
+body.st-glassy table.dataTable.display tbody tr > .sorting_3,
+body.st-glassy table.dataTable.order-column tbody tr > .sorting_1,
+body.st-glassy table.dataTable.order-column tbody tr > .sorting_2,
+body.st-glassy table.dataTable.order-column tbody tr > .sorting_3 {
+    background-color: transparent;
+}
+
+body.st-glassy .dataTables_wrapper table.dataTable tbody tr.selected.selected,
+body.st-glassy .dataTables_wrapper table.dataTable tbody tr.selected.selected > * {
+    background-color: var(--p-row-selected);
+}
+
+body.st-glassy .dataTables_wrapper table.dataTable tbody tr.selected.selected > :first-child {
+    box-shadow: inset 3px 0 0 var(--c-primary);
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    line-height: 26px;
+    margin: 0 2px;
+    border: 1px solid var(--p-field-border);
+    border-radius: var(--g-r-sm);
+    background: var(--p-btn2-bg);
+    color: var(--p-btn2-text) !important;
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--p-btn2-hover);
+    border-color: var(--p-field-border);
+    color: var(--p-btn2-text) !important;
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--a-sheen), var(--c-primary);
+    border-color: rgba(255, 255, 255, .25);
+    color: var(--c-white) !important;
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+body.st-glassy .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--p-text-2) !important;
+    opacity: .6;
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_info,
+body.st-glassy .dataTables_wrapper .dataTables_length,
+body.st-glassy .dataTables_wrapper .dataTables_filter {
+    color: var(--p-text-2);
+}
+
+/* Botões do DataTables Buttons (gradiente cinza legado) → pílulas */
+body.st-glassy .dt-buttons .dt-button,
+body.st-glassy .dt-buttons .dt-button:hover:not(.disabled),
+body.st-glassy .dt-buttons .dt-button:focus:not(.disabled) {
+    margin: 0 4px 4px 0;
+    padding: 5px 14px;
+    border: 1px solid var(--p-btn2-border);
+    border-radius: var(--g-r-pill);
+    background: var(--p-btn2-bg);
+    background-image: none;
+    color: var(--p-btn2-text);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--p-btn2-shadow);
+    text-shadow: none;
+}
+
+body.st-glassy .dt-buttons .dt-button:hover:not(.disabled) {
+    background: var(--p-btn2-hover);
+    border-color: var(--c-primary);
+}
+
+body.st-glassy .dataTables_wrapper .dataTables_processing {
+    border: 1px solid var(--p-line);
+    border-radius: var(--g-r-pill);
+    background: var(--p-pop);
+    color: var(--p-text);
+    box-shadow: var(--a-shadow-overlay);
+    font-weight: 600;
+}
+
+/* Tabelas Bootstrap (.table) dentro dos escopos Aurora */
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .swal2-popup, .st-aurora-scope) .table,
+body.st-glassy[class] :is(#action-page, #chat) .table {
+    --bs-table-bg: transparent;
+    --bs-table-accent-bg: transparent;
+    --bs-table-striped-bg: var(--p-row-odd);
+    --bs-table-striped-color: var(--p-text);
+    --bs-table-hover-bg: var(--p-row-hover);
+    --bs-table-hover-color: var(--p-text);
+    color: var(--p-text);
+    border-color: var(--p-line);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .swal2-popup, .st-aurora-scope) .table > :not(caption) > * > *,
+body.st-glassy[class] :is(#action-page, #chat) .table > :not(caption) > * > * {
+    color: var(--p-text);
+    border-bottom-color: var(--p-line);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .swal2-popup, .st-aurora-scope) .table thead th,
+body.st-glassy[class] :is(#action-page, #chat) .table thead th {
+    background: var(--p-thead);
+    color: var(--p-thead-text);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+/* ---------- 16. Vidro (backdrop-filter): só molduras e tiles de KPI ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy #perfil,
+    body.st-glassy #app-topbar,
+    body.st-glassy .dash-fila-col {
+        -webkit-backdrop-filter: var(--g-blur-strong);
+        backdrop-filter: var(--g-blur-strong);
+    }
+
+    body.st-glassy #app-footer,
+    body.st-glassy .bloco_info,
+    body.st-glassy #indice-idx-fila {
+        -webkit-backdrop-filter: var(--g-blur);
+        backdrop-filter: var(--g-blur);
+    }
+
+    /* Scrims e caixas de modal: view/css/glassy-modals.css */
+    body.st-glassy .toastify {
+        -webkit-backdrop-filter: var(--g-blur-overlay);
+        backdrop-filter: var(--g-blur-overlay);
+    }
+
+    /* Refração na borda (Chromium; classe aplicada por glassy-theme.js). */
+    body.st-glassy.st-glassy-refract #app-topbar {
+        backdrop-filter: url(#st-glass-refract) blur(28px) saturate(180%);
+    }
+
+    /* Fundo claro tem menos contraste: deslocamento menor evita "ondas" visíveis. */
+    html[data-st-theme="light"] body.st-glassy.st-glassy-refract #app-topbar {
+        backdrop-filter: url(#st-glass-refract-soft) blur(28px) saturate(180%);
+    }
+}
+
+/* ---------- 17. Responsivo ---------- */
+/* ≤ 1100px: style.css empilha as colunas do dashboard; mantém isso. */
+@media (max-width: 1100px) {
+    body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--team,
+    body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--queue,
+    body.st-glassy #action-page .dash-fila-workspace .tab-pane > .dash-fila-col--chart {
+        flex: 1 1 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    body.st-glassy #page {
+        margin-left: var(--sidebar-w) !important;
+        width: calc(100% - var(--sidebar-w)) !important;
+    }
+
+    body.st-glassy #perfil {
+        position: fixed;
+        top: var(--st-edge);
+        bottom: var(--st-edge);
+        width: var(--dock-w) !important;
+        min-width: var(--dock-w) !important;
+        height: auto !important;
+    }
+}
+
+/* < 992px: dock vira tab bar inferior flutuante (só ícones). */
+@media (max-width: 991.98px) {
+    body.st-glassy {
+        --st-edge: 12px;
+        --top-h: 46px;
+        --sidebar-w: 0px;
+        --shell-footer-h: 88px;
+    }
+
+    body.st-glassy #page {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 12px !important;
+    }
+
+    body.st-glassy #app-topbar {
+        left: var(--st-edge);
+    }
+
+    body.st-glassy #app-footer {
+        display: none !important;
+    }
+
+    body.st-glassy #perfil {
+        top: auto;
+        left: var(--st-edge);
+        right: var(--st-edge);
+        bottom: var(--st-edge);
+        width: auto !important;
+        min-width: 0 !important;
+        height: 64px !important;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 8px !important;
+    }
+
+    body.st-glassy #img-perfil {
+        margin: 0 4px 0 0;
+        padding: 0 8px 0 0;
+        border-bottom: 0;
+        border-right: 1px solid var(--a-line);
+    }
+
+    body.st-glassy #img-perfil img {
+        width: 38px !important;
+        height: 38px !important;
+        margin: 0 !important;
+    }
+
+    body.st-glassy .perfil-nome,
+    body.st-glassy .perfil-nivel,
+    body.st-glassy #dadosLogados,
+    body.st-glassy .perfil-star,
+    body.st-glassy .menu-section {
+        display: none;
+    }
+
+    body.st-glassy #menu {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 100%;
+        padding: 0 4px !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+    }
+
+    body.st-glassy #menu_bko,
+    body.st-glassy #menu_ate {
+        display: contents;
+    }
+
+    body.st-glassy .span-menu {
+        flex: 0 0 52px;
+        width: 52px !important;
+        height: 52px;
+        min-height: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 16px;
+        font-size: 0;
+        gap: 0;
+    }
+
+    body.st-glassy .span-menu i,
+    body.st-glassy .span-menu > svg {
+        font-size: 20px;
+    }
+
+    body.st-glassy .span-menu.active::before {
+        left: 50%;
+        top: auto;
+        bottom: 3px;
+        width: 16px;
+        height: 3px;
+        transform: translateX(-50%);
+    }
+
+    body.st-glassy #perfil #dadosPendMen:not(:empty),
+    body.st-glassy #perfil #countCom:not(:empty) {
+        top: 4px;
+        right: 4px;
+    }
+
+    body.st-glassy #indice-idx {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body.st-glassy #page > #content > #chat.content-3-chat {
+        min-height: 60vh !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.st-glassy #indice-idx-men h3 {
+        font-size: 18px;
+    }
+
+    body.st-glassy .st-dash-toolbar__status {
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+
+    body.st-glassy #action-page #legend.dash-oper-legend {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body.st-glassy #indice-idx {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    body.st-glassy .bloco_info .inf {
+        font-size: 30px;
+    }
+
+    body.st-glassy .bloco_info .info5,
+    body.st-glassy .bloco_info .info6 {
+        font-size: 21px;
+    }
+
+    body.st-glassy .app-brand-subtitle {
+        display: none;
+    }
+}
+
+/* ---------- 18. Preferências do usuário ---------- */
+/* Transparência reduzida: TODO o layout novo, só com superfícies sólidas navy e sem blur. */
+@media (prefers-reduced-transparency: reduce) {
+    body.st-glassy.st-glassy-refract #app-topbar {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    body.st-glassy #action-page #legend .legend-dash,
+    body.st-glassy .dash-fila-live-ts,
+    body.st-glassy .dash-fila-workspace #myTab {
+        border-color: rgba(255, 255, 255, .18);
+    }
+
+    html[data-st-theme="light"] body.st-glassy #action-page #legend .legend-dash,
+    html[data-st-theme="light"] body.st-glassy .dash-fila-live-ts,
+    html[data-st-theme="light"] body.st-glassy .dash-fila-workspace #myTab {
+        border-color: rgba(40, 40, 94, .16);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy .st-live-dot {
+        animation: none;
+    }
+
+    body.st-glassy .span-menu,
+    body.st-glassy .bloco_info,
+    body.st-glassy .btn,
+    body.st-glassy .dash-user-tile,
+    body.st-glassy .dash-fila-workspace #myTab .nav-link,
+    body.st-glassy .toastify {
+        transition: none !important;
+    }
+
+    body.st-glassy .bloco_info.pointer:hover,
+    body.st-glassy .bloco_info.pointer:active,
+    body.st-glassy #action-page .dash-user-tile.div_user:hover,
+    body.st-glassy #action-page .dash-user-tile.div_user:active,
+    body.st-glassy .span-menu:active,
+    body.st-glassy .btn:active,
+    body.st-glassy .dash-fila-workspace #myTab .nav-link:active {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy #perfil::before,
+    body.st-glassy #app-topbar::before,
+    body.st-glassy #app-footer::before,
+    body.st-glassy .bloco_info::before,
+    body.st-glassy #indice-idx-fila::before,
+    body.st-glassy .dash-fila-col::before {
+        display: none;
+    }
+
+    body.st-glassy #app-topbar,
+    body.st-glassy #perfil,
+    body.st-glassy #app-footer,
+    body.st-glassy #action-page,
+    body.st-glassy #chat,
+    body.st-glassy #indice-idx-fila,
+    body.st-glassy .bloco_info,
+    body.st-glassy .dash-fila-col,
+    body.st-glassy .dash-user-tile,
+    body.st-glassy .dash-ind-card,
+    body.st-glassy .legend-dash,
+    body.st-glassy .modal-content,
+    body.st-glassy .gw-modal-small,
+    body.st-glassy .gw-modal-large,
+    body.st-glassy .swal2-popup,
+    body.st-glassy .btn {
+        border: 1px solid CanvasText !important;
+    }
+
+    body.st-glassy .span-menu.active,
+    body.st-glassy .dash-fila-workspace #myTab .nav-link.active {
+        outline: 2px solid Highlight;
+    }
+
+    body.st-glassy .legend-dash::before,
+    body.st-glassy .dash-ind-team__seg,
+    body.st-glassy .dash-ind-team__dot,
+    body.st-glassy .dash-user-tile__avatar,
+    body.st-glassy .bloco_info::after {
+        forced-color-adjust: none;
+    }
+}

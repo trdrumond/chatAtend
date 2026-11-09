@@ -38,6 +38,9 @@
 
     var bkoChatOpen = {};
     var bkoPauseReq = {};
+    var posCheckInFlight = {};
+
+    window.stBkoPosPendentes = window.stBkoPosPendentes || [];
 
     function tabKey(indice) {
         return String(parseInt(indice, 10) || 1);
@@ -96,6 +99,7 @@
         f.bko = false;
         f.bkoForce = false;
         f.chat = false;
+        f.pos = false;
         f.openingProtocolo = '';
         f.filaPanel = false;
         clearBkoOpenWait(indice);
@@ -636,6 +640,7 @@
         });
 
         tabFlight = {};
+        posCheckInFlight = {};
 
     }
 
@@ -1217,6 +1222,10 @@
 
         }
 
+        if (getFlight(indice).pos || divHasPosForm(indice)) {
+            return;
+        }
+
         if (stBkoWaitShellReady(indice)) {
 
             bootWait(indice, false);
@@ -1343,6 +1352,8 @@
 
         f.chat = false;
 
+        f.pos = false;
+
         f.openingProtocolo = '';
 
         f.filaPanel = false;
@@ -1365,10 +1376,111 @@
 
         }
 
-        $('#div-' + indice).empty();
+        $('#div-' + indice).html(bkoLoaderHtml('Verificando pós-atendimentos pendentes...'));
 
-        loadFilaBko(indice);
+        stBkoCheckPosPendentes(indice, function () {
+            $('#div-' + indice).empty();
+            loadFilaBko(indice);
+        });
 
+    }
+
+    function stBkoTabIndices() {
+        var list = [];
+        $('#principal').children('[id^="div-"]').each(function () {
+            var i = parseInt(String(this.id).replace('div-', ''), 10);
+            if (i > 0) {
+                list.push(i);
+            }
+        });
+        return list;
+    }
+
+    function stBkoAnyChatActive() {
+        return stBkoTabIndices().some(function (i) {
+            return divHasChat(i) || getFlight(i).chat || getBkoOpen(i).inFlight;
+        });
+    }
+
+    function stBkoAnyPosBusy() {
+        if (Object.keys(posCheckInFlight).some(function (k) { return posCheckInFlight[k]; })) {
+            return true;
+        }
+        return stBkoTabIndices().some(function (i) {
+            return divHasPosForm(i) || getFlight(i).pos;
+        });
+    }
+
+    function stBkoSetPosPendentes(list) {
+        window.stBkoPosPendentes = list;
+        $(document).trigger('stBkoPosPendentes', [list.slice()]);
+    }
+
+    function stBkoResumeWait(indice) {
+        indice = parseInt(indice, 10) || 1;
+        if ($('#load-' + indice).length) {
+            bootWait(indice, true);
+        } else {
+            loadFilaBko(indice);
+        }
+    }
+
+    /**
+     * Consulta pós-atendimentos pendentes do BKO e abre o mais antigo na aba `indice`.
+     * Enquanto a consulta roda, getFlight(indice).pos bloqueia polling/distribuição da aba.
+     * Sem pendente (ou com chat ativo em alguma aba), libera a aba e chama onNone().
+     */
+    function stBkoCheckPosPendentes(indice, onNone) {
+        indice = parseInt(indice, 10) || 1;
+        onNone = typeof onNone === 'function' ? onNone : function () {};
+        var k = tabKey(indice);
+        if (posCheckInFlight[k]) {
+            return;
+        }
+        if (!$('#content-bko').length) {
+            onNone();
+            return;
+        }
+        posCheckInFlight[k] = true;
+        stopPoll(indice);
+        getFlight(indice).pos = true;
+
+        var release = function () {
+            posCheckInFlight[k] = false;
+            if (!divHasPosForm(indice)) {
+                getFlight(indice).pos = false;
+            }
+        };
+
+        $.ajax({
+            url: 'staff/load_pos_pendente.php',
+            type: 'GET',
+            dataType: 'json',
+            cache: false,
+            timeout: 10000
+        }).done(function (resp) {
+            if (!$('#content-bko').length || !$('#div-' + indice).length) {
+                posCheckInFlight[k] = false;
+                return;
+            }
+            var list = (resp && resp.ok && $.isArray(resp.pendentes)) ? resp.pendentes : [];
+            list = list.filter(function (p) {
+                var id = parseInt(p && p.chatId, 10);
+                return id > 0 && !$('#body-pos_' + id).length;
+            });
+            if (!list.length || stBkoAnyChatActive()) {
+                stBkoSetPosPendentes(list);
+                release();
+                onNone();
+                return;
+            }
+            posCheckInFlight[k] = false;
+            stBkoSetPosPendentes(list.slice(1));
+            window.actionPagePos(indice, String(list[0].chatId));
+        }).fail(function () {
+            release();
+            onNone();
+        });
     }
 
 
@@ -1575,17 +1687,31 @@
 
 
 
-        if ($('#load-' + indice).length) {
-
-            bootWait(indice);
-
-        } else {
-
-            loadFilaBko(indice);
-
-        }
+        stBkoCheckPosPendentes(indice, function () {
+            stBkoResumeWait(indice);
+        });
 
     }
+
+    $(document).off('stPosSaved.stBko').on('stPosSaved.stBko', function () {
+        setTimeout(function () {
+            if (!$('#content-bko').length || stBkoAnyPosBusy() || stBkoAnyChatActive()) {
+                return;
+            }
+            var target = 0;
+            stBkoTabIndices().forEach(function (i) {
+                if (!target && !divBlocksPoll(i)) {
+                    target = i;
+                }
+            });
+            if (!target) {
+                return;
+            }
+            stBkoCheckPosPendentes(target, function () {
+                stBkoResumeWait(target);
+            });
+        }, 0);
+    });
 
 
 
@@ -1620,6 +1746,7 @@
     window.loadAtendAndamento = loadAtendAndamento;
 
     window.loadChatIn = loadChatIn;
+    window.stBkoCheckPosPendentes = stBkoCheckPosPendentes;
 
 
 
@@ -1696,9 +1823,10 @@
 
         var $div = $('#div-' + indice);
 
-        if (window.stChatOpen) {
+        // stChatOpen.show() substitui todo o #action-page (destruiria #content-bko e o próprio #div-N).
+        if (window.stChatOpen && typeof window.stChatOpen.loaderHtml === 'function') {
 
-            stChatOpen.show($div, 'Pós-atendimento', 'Carregando formulário...');
+            $div.html(stChatOpen.loaderHtml('Pós-atendimento', 'Carregando formulário...'));
 
         } else {
 

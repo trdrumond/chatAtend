@@ -1,0 +1,856 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: MODAIS E CAMADAS SOBREPOSTAS
+   Carregado após glassy-theme.css (tokens --a-* / --p-* / --g-* vêm de lá).
+   Cobre: Bootstrap .modal, .gw-modal* (+ .gw-modal-fundo), SweetAlert2, Toastify,
+   .dropdown-menu (inclui painel de módulos #menu-mosaic), tooltip, popover,
+   offcanvas, DataTables DateTime (.dt-datetime), TinyMCE (moldura), loaders.
+   As caixas seguem o tema (vidro escuro no dark, vidro claro no light); o conteúdo
+   usa os tokens --p-* do escopo Aurora definido na seção 11 de glassy-theme.css.
+   Blur só nos scrims e em .modal-content: .gw-modal* e .swal2-popup ficam dentro de
+   um scrim com backdrop-filter (o blur interno não teria efeito) e usam folha mais densa.
+   ========================================================= */
+
+/* ---------- 1. Scrims ---------- */
+body.st-glassy .modal-backdrop {
+    background-color: var(--a-scrim);
+}
+
+body.st-glassy .modal-backdrop.show {
+    opacity: 1;
+}
+
+body.st-glassy .gw-modal-fundo,
+body.st-glassy .swal2-container.swal2-backdrop-show:not(:has(> .swal2-toast)) {
+    background: var(--a-scrim);
+}
+
+/* ---------- 2. Folha de vidro ---------- */
+body.st-glassy .modal-content,
+body.st-glassy .gw-modal,
+body.st-glassy .gw-modal-small,
+body.st-glassy .gw-modal-large,
+body.st-glassy .gw-modal-egg,
+body.st-glassy .swal2-popup,
+body.st-glassy .offcanvas {
+    background: var(--a-spec), var(--a-sheet);
+    border: 0;
+    box-shadow: var(--a-shadow-lift);
+    color: var(--p-text);
+    scrollbar-width: thin;
+    scrollbar-color: var(--a-scrollbar) transparent;
+}
+
+body.st-glassy .modal-content,
+body.st-glassy .gw-modal,
+body.st-glassy .gw-modal-small,
+body.st-glassy .gw-modal-large,
+body.st-glassy .gw-modal-egg,
+body.st-glassy .swal2-popup {
+    border-radius: var(--g-r-xl);
+}
+
+/* Rim em pseudo-elemento só onde a caixa não rola (o pseudo rolaria junto). */
+body.st-glassy .modal-content,
+body.st-glassy .swal2-popup {
+    position: relative;
+}
+
+body.st-glassy .modal-content::before,
+body.st-glassy .swal2-popup::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--a-rim-strong);
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* .gw-modal* rolam (overflow:auto): rim como borda + brilho superior. */
+body.st-glassy .gw-modal,
+body.st-glassy .gw-modal-small,
+body.st-glassy .gw-modal-large,
+body.st-glassy .gw-modal-egg {
+    border: 1px solid var(--a-line-2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), var(--a-shadow-lift);
+    padding: 22px 24px;
+}
+
+body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) > h5:first-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 40px 4px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--a-line);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) > h5:first-child + br {
+    display: none;
+}
+
+/* ---------- 3. Cabeçalho / corpo / rodapé ---------- */
+body.st-glassy .modal-header,
+body.st-glassy .cnf-usu-modal .modal-header {
+    padding: 16px 20px;
+    background: transparent;
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy .modal-title,
+body.st-glassy .cnf-usu-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--p-text);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* Ícone do título vira orbe da marca */
+body.st-glassy .modal-title > svg.svg-inline--fa,
+body.st-glassy .modal-title > i {
+    box-sizing: content-box;
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    padding: 7px;
+    border-radius: 50%;
+    background: var(--a-sheen), var(--c-gradient-brand);
+    color: var(--c-white) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 16px rgba(214, 51, 108, .4);
+}
+
+body.st-glassy .modal-body {
+    padding: 18px 20px;
+    color: var(--p-text);
+}
+
+body.st-glassy .modal-footer,
+body.st-glassy .cnf-modal-footer,
+body.st-glassy .cnf-usu-modal-footer {
+    gap: 8px;
+    padding: 12px 20px;
+    background: transparent;
+    border-top: 1px solid var(--a-line);
+}
+
+body.st-glassy .modal-footer > * {
+    margin: 0;
+}
+
+body.st-glassy .cnf-feed,
+body.st-glassy .cnf-usu-feed {
+    color: var(--p-text-2);
+}
+
+/* ---------- 4. Botões de fechar: redondos de vidro ---------- */
+body.st-glassy :is(.modal-content, .offcanvas, .st-aurora-scope) .btn-close,
+body.st-glassy.st-sec-cnf #action-page .btn-close {
+    box-sizing: content-box;
+    width: 14px;
+    height: 14px;
+    padding: 8px;
+    margin: 0 0 0 auto;
+    border: 1px solid var(--a-line-2);
+    border-radius: 50%;
+    background: var(--a-icon-close) center / 14px 14px no-repeat, var(--a-tile);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+    opacity: 1;
+    filter: none;
+    transition: background-color var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy :is(.modal-content, .offcanvas, .st-aurora-scope) .btn-close:hover,
+body.st-glassy.st-sec-cnf #action-page .btn-close:hover {
+    background-color: var(--a-tile-hi);
+    transform: rotate(90deg);
+}
+
+body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) .close {
+    top: 16px !important;
+    right: 16px !important;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--a-line-2);
+    border-radius: 50%;
+    background: var(--a-tile);
+    color: var(--p-text);
+    font-size: 20px;
+    line-height: 1;
+    opacity: 1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+    transition: background-color var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) .close:hover {
+    background: var(--a-tile-hi);
+    transform: rotate(90deg);
+}
+
+/* ---------- 5. Entrada: scale .96 → 1 + fade ---------- */
+body.st-glassy .modal.fade .modal-dialog {
+    transform: scale(.96);
+    transition: transform .28s var(--g-ease);
+}
+
+body.st-glassy .modal.show .modal-dialog {
+    transform: none;
+}
+
+body.st-glassy .modal.modal-static .modal-dialog {
+    transform: scale(1.02);
+}
+
+body.st-glassy .gw-modal,
+body.st-glassy .gw-modal-small,
+body.st-glassy .gw-modal-large,
+body.st-glassy .gw-modal-egg {
+    animation: st-gw-in .28s var(--g-ease) both;
+}
+
+body.st-glassy .swal2-popup.swal2-show {
+    animation: st-sheet-in .28s var(--g-ease) both;
+}
+
+@keyframes st-gw-in {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes st-sheet-in {
+    from { opacity: 0; transform: scale(.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- 6. Abas dentro de camadas: segmented control ---------- */
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .st-aurora-scope) :is(.nav-tabs, .nav-pills),
+body.st-glassy.st-sec-cnf #action-page :is(.nav-tabs, .nav-pills) {
+    gap: 2px;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 14px;
+    padding: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: var(--a-shadow-tile);
+    scrollbar-width: none;
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .st-aurora-scope) :is(.nav-tabs, .nav-pills) .nav-link,
+body.st-glassy.st-sec-cnf #action-page :is(.nav-tabs, .nav-pills) .nav-link {
+    margin: 0;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: var(--g-r-pill);
+    background: transparent;
+    color: var(--p-text-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .st-aurora-scope) :is(.nav-tabs, .nav-pills) .nav-link:hover,
+body.st-glassy.st-sec-cnf #action-page :is(.nav-tabs, .nav-pills) .nav-link:hover {
+    color: var(--p-text);
+    background: var(--a-tile-hi);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .st-aurora-scope) :is(.nav-tabs, .nav-pills) .nav-link.active,
+body.st-glassy.st-sec-cnf #action-page :is(.nav-tabs, .nav-pills) .nav-link.active {
+    background: var(--a-seg-thumb);
+    color: var(--p-text);
+    box-shadow: var(--a-seg-thumb-shadow);
+}
+
+/* ---------- 7. Conteúdo comum em camadas ---------- */
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .st-aurora-scope) .list-group-item {
+    background: transparent;
+    border-color: var(--p-line);
+    color: var(--p-text);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal, .swal2-popup, .st-aurora-scope) .spinner-border,
+body.st-glassy.st-sec-cnf #action-page .spinner-border {
+    color: var(--c-primary);
+}
+
+body.st-glassy :is(.modal-content, .st-aurora-scope) .progress,
+body.st-glassy.st-sec-cnf #action-page .progress {
+    height: 8px;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: var(--a-well-inset);
+}
+
+body.st-glassy :is(.modal-content, .st-aurora-scope) .progress-bar,
+body.st-glassy.st-sec-cnf #action-page .progress-bar {
+    background: var(--c-gradient-brand);
+    box-shadow: 0 0 10px rgba(214, 51, 108, .5);
+}
+
+/* Barra de upload legada (<progress class="class_bar">, 100px vermelho em <style> inline). */
+body.st-glassy .modal-content progress,
+body.st-glassy .modal-content progress.class_bar {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 10px;
+    border: 0;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    overflow: hidden;
+}
+
+body.st-glassy .modal-content progress::-webkit-progress-bar {
+    background: var(--a-tile);
+    border-radius: var(--g-r-pill);
+}
+
+body.st-glassy .modal-content progress::-webkit-progress-value {
+    background: var(--c-gradient-brand);
+    border-radius: var(--g-r-pill);
+}
+
+body.st-glassy .modal-content progress::-moz-progress-bar {
+    background: var(--c-gradient-brand);
+    border-radius: var(--g-r-pill);
+}
+
+/* Formulário dos cadastros (cnf_modal_shell / cad-usu) */
+body.st-glassy :is(.st-form-section-title, .cnf-form-section-title, .cnf-usu-form-section-title) {
+    color: var(--p-text-2);
+}
+
+body.st-glassy :is(.modal-content, .st-aurora-scope) :is(.st-form-hint, .cnf-usu-form-hint),
+body.st-glassy.st-sec-cnf #action-page :is(.st-form-hint, .cnf-usu-form-hint, .cnf-form-hint) {
+    background: var(--a-tile);
+    color: var(--p-text-2);
+    border-left: 3px solid var(--c-primary);
+}
+
+body.st-glassy :is(.modal-content, .st-aurora-scope) .cnf-usu-form-profile {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+}
+
+body.st-glassy .cnf-usu-avatar {
+    border-color: var(--a-ring-bg);
+    box-shadow: 0 0 0 2px var(--c-primary), 0 0 18px rgba(214, 51, 108, .4);
+}
+
+body.st-glassy .cnf-switch-hint,
+body.st-glassy .switch-text {
+    color: var(--p-text-2);
+}
+
+/* Legado: detalhe do chat (staff/load_hist_pend.php e afins, <style> inline com #EEEEEE). */
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) .class_info {
+    background-color: var(--a-tile);
+    color: var(--p-text);
+    border: 1px solid var(--a-line);
+    border-radius: 8px;
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) .class_mon {
+    background-color: var(--st-online);
+    color: var(--c-navy-deep);
+    border-radius: 8px;
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) :is(.file_chat, .file_chat > a) {
+    color: var(--p-text-2);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) :is(.other, .me) > .text > .paragrafo {
+    border: 1px solid var(--a-line-2);
+    color: var(--p-text);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) .other > .text > .paragrafo {
+    background: var(--a-bubble);
+    border-radius: 16px 16px 16px 4px;
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) .me > .text > .paragrafo {
+    background: var(--a-sheen), var(--c-primary-dark);
+    border-radius: 16px 16px 4px 16px;
+    color: var(--c-white);
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) :is(.dataHora, .text > h5) {
+    color: var(--p-text-2);
+    opacity: 1;
+}
+
+body.st-glassy :is(.modal-content, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .gw-modal) :is(.chat-div, .chat-content, .chat-content-hist, [class^="chat-div_"]) {
+    background: transparent;
+}
+
+/* ---------- 8. TinyMCE (moldura; a skin interna clara é mantida por legibilidade) ---------- */
+body.st-glassy .tox.tox-tinymce {
+    border: 1px solid var(--a-line-2) !important;
+    border-radius: var(--g-r-md) !important;
+    box-shadow: var(--a-shadow-tile), 0 0 0 4px var(--a-tile);
+    overflow: hidden;
+}
+
+body.st-glassy .tox.tox-tinymce:focus-within {
+    border-color: var(--c-primary) !important;
+    box-shadow: var(--a-shadow-tile), 0 0 0 3px var(--a-field-ring);
+}
+
+body.st-glassy .tox .tox-dialog,
+body.st-glassy .tox .tox-menu {
+    border-radius: var(--g-r-md) !important;
+}
+
+/* ---------- 9. SweetAlert2 ---------- */
+body.st-glassy .swal2-popup {
+    padding: 1.4em 1.4em 1.2em;
+}
+
+body.st-glassy .swal2-title {
+    color: var(--p-text);
+    font-weight: 700;
+}
+
+body.st-glassy .swal2-html-container {
+    color: var(--p-text-2);
+}
+
+body.st-glassy .swal2-close {
+    border-radius: 50%;
+    color: var(--p-text-2);
+}
+
+body.st-glassy .swal2-close:hover {
+    background: var(--a-tile-hi);
+    color: var(--p-text);
+}
+
+body.st-glassy .swal2-input,
+body.st-glassy .swal2-textarea,
+body.st-glassy .swal2-select,
+body.st-glassy .swal2-file {
+    background: var(--p-field);
+    border: 1px solid var(--p-field-border);
+    border-radius: var(--g-r-md);
+    color: var(--p-text);
+    box-shadow: none;
+}
+
+body.st-glassy .swal2-input:focus,
+body.st-glassy .swal2-textarea:focus,
+body.st-glassy .swal2-select:focus {
+    border-color: var(--c-primary);
+    box-shadow: var(--p-focus);
+}
+
+body.st-glassy .swal2-validation-message {
+    background: var(--a-tile);
+    color: var(--p-text);
+}
+
+body.st-glassy .swal2-validation-message::before {
+    background-color: var(--c-coral);
+}
+
+body.st-glassy .swal2-actions {
+    gap: 8px;
+}
+
+body.st-glassy .swal2-styled {
+    margin: 0;
+    padding: .55em 1.4em;
+    border-radius: var(--g-r-pill);
+    font-weight: 600;
+}
+
+body.st-glassy .swal2-styled.swal2-confirm {
+    background-image: var(--a-sheen);
+    background-color: var(--c-primary);
+    border: 1px solid rgba(255, 255, 255, .25);
+    color: var(--c-white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 14px rgba(214, 51, 108, .3);
+}
+
+body.st-glassy .swal2-styled.swal2-confirm:hover {
+    background-color: var(--c-primary-dark);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), var(--a-glow-primary);
+}
+
+body.st-glassy .swal2-styled.swal2-cancel,
+body.st-glassy .swal2-styled.swal2-deny {
+    background: var(--p-btn2-bg);
+    border: 1px solid var(--p-btn2-border);
+    color: var(--p-btn2-text);
+    box-shadow: var(--p-btn2-shadow);
+}
+
+body.st-glassy .swal2-styled.swal2-deny {
+    border-color: var(--c-danger);
+}
+
+body.st-glassy .swal2-styled:focus,
+body.st-glassy .swal2-styled:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--p-focus);
+}
+
+body.st-glassy .swal2-timer-progress-bar {
+    background: var(--c-gradient-brand);
+}
+
+body.st-glassy .swal2-footer {
+    border-top-color: var(--a-line);
+    color: var(--p-text-2);
+}
+
+/* Máscaras brancas da animação do ícone de sucesso */
+body.st-glassy .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
+body.st-glassy .swal2-icon.swal2-success .swal2-success-fix {
+    background-color: transparent !important;
+}
+
+body.st-glassy .swal2-popup.swal2-toast {
+    border-radius: var(--g-r-lg);
+    box-shadow: var(--a-shadow-lift);
+}
+
+/* ---------- 10. Toastify ---------- */
+body.st-glassy .toastify {
+    background: var(--a-spec), var(--a-glass-strong);
+    color: var(--a-text);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-md);
+    box-shadow: inset 4px 0 0 var(--c-primary), var(--a-shadow);
+}
+
+/* Toasts de pendência com gradiente vermelho inline (JS legado): vidro + barra coral. */
+body.st-glassy .toastify[style*="178, 0, 0"],
+body.st-glassy .toastify[style*="B20000"] {
+    background: var(--a-spec), var(--a-glass-strong) !important;
+    box-shadow: inset 4px 0 0 var(--c-coral), var(--a-shadow);
+}
+
+body.st-glassy .toastify .toast-close {
+    color: inherit;
+    opacity: .7;
+}
+
+/* ---------- 11. Dropdowns / painel de módulos ---------- */
+body.st-glassy .dropdown-menu {
+    padding: 6px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-spec), var(--a-popover);
+    box-shadow: var(--a-shadow-overlay);
+    color: var(--p-text);
+}
+
+body.st-glassy .dropdown-item {
+    border-radius: var(--g-r-sm);
+    color: var(--p-text);
+}
+
+body.st-glassy .dropdown-item:hover,
+body.st-glassy .dropdown-item:focus {
+    background: var(--a-tile-hi);
+    color: var(--p-text);
+}
+
+body.st-glassy .dropdown-item.active,
+body.st-glassy .dropdown-item:active {
+    background: var(--a-sheen), var(--c-primary);
+    color: var(--c-white);
+}
+
+body.st-glassy .dropdown-divider {
+    border-top-color: var(--a-line);
+}
+
+body.st-glassy .dropdown-header {
+    color: var(--p-text-2);
+}
+
+/* #menu-mosaic fica dentro de #app-topbar (backdrop-filter): sem blur próprio, folha opaca. */
+body.st-glassy #menu-mosaic,
+body.st-glassy .mosaic-panel {
+    padding: 0;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-xl);
+    background: var(--a-spec), var(--a-popover);
+    box-shadow: var(--a-shadow-overlay);
+    color: var(--p-text);
+    overflow: hidden;
+}
+
+body.st-glassy .mosaic-panel-head {
+    background: transparent;
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy .mosaic-panel-title {
+    color: var(--p-text);
+}
+
+body.st-glassy .mosaic-panel-sub {
+    color: var(--p-text-2);
+}
+
+body.st-glassy .mosaic-tile {
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-tile);
+    color: var(--p-text) !important;
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy .mosaic-tile:hover,
+body.st-glassy .mosaic-tile:focus {
+    border-color: rgba(214, 51, 108, .45);
+    background: var(--a-tile-hi);
+    color: var(--p-text) !important;
+    box-shadow: var(--a-shadow-tile-hover), 0 0 18px rgba(214, 51, 108, .22);
+}
+
+body.st-glassy .mosaic-tile-icon {
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 16px rgba(214, 51, 108, .3);
+}
+
+body.st-glassy .mosaic-menu-btn[aria-expanded="true"] {
+    background: var(--a-sheen), var(--c-primary);
+    border-color: rgba(255, 255, 255, .3);
+    color: var(--c-white);
+    box-shadow: var(--a-glow-primary);
+}
+
+/* ---------- 12. Tooltip / popover / offcanvas ---------- */
+body.st-glassy .tooltip.show {
+    opacity: 1;
+}
+
+body.st-glassy .tooltip-inner {
+    padding: 6px 10px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-sm);
+    background: var(--a-popover);
+    color: var(--a-text);
+    font-weight: 600;
+    box-shadow: var(--a-shadow-overlay);
+}
+
+body.st-glassy .bs-tooltip-top .tooltip-arrow::before,
+body.st-glassy .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before { border-top-color: var(--a-popover); }
+body.st-glassy .bs-tooltip-bottom .tooltip-arrow::before,
+body.st-glassy .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before { border-bottom-color: var(--a-popover); }
+body.st-glassy .bs-tooltip-start .tooltip-arrow::before,
+body.st-glassy .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before { border-left-color: var(--a-popover); }
+body.st-glassy .bs-tooltip-end .tooltip-arrow::before,
+body.st-glassy .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before { border-right-color: var(--a-popover); }
+
+body.st-glassy .popover {
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-popover);
+    box-shadow: var(--a-shadow-overlay);
+}
+
+body.st-glassy .popover .popover-arrow {
+    display: none;
+}
+
+body.st-glassy .popover-header {
+    background: transparent;
+    border-bottom: 1px solid var(--a-line);
+    color: var(--p-text);
+}
+
+body.st-glassy .popover-body {
+    color: var(--p-text);
+}
+
+body.st-glassy .offcanvas {
+    border-color: var(--a-line-2);
+}
+
+/* ---------- 13. DataTables DateTime (seletor de data) ---------- */
+body.st-glassy div.dt-datetime {
+    padding: 8px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-spec), var(--a-popover);
+    box-shadow: var(--a-shadow-overlay);
+    color: var(--p-text);
+}
+
+body.st-glassy div.dt-datetime div.dt-datetime-title,
+body.st-glassy div.dt-datetime div.dt-datetime-label,
+body.st-glassy div.dt-datetime table th {
+    color: var(--p-text-2);
+}
+
+body.st-glassy div.dt-datetime div.dt-datetime-label {
+    border-radius: var(--g-r-sm);
+}
+
+body.st-glassy div.dt-datetime div.dt-datetime-label:hover {
+    background: var(--a-tile-hi);
+    border-color: var(--a-line-2);
+}
+
+body.st-glassy div.dt-datetime table td button,
+body.st-glassy div.dt-datetime div.dt-datetime-time table td button {
+    border-radius: var(--g-r-pill);
+    background: transparent;
+    color: var(--p-text);
+}
+
+body.st-glassy div.dt-datetime table td button:hover,
+body.st-glassy div.dt-datetime table td.selected button:hover {
+    background: var(--a-tile-hi);
+    color: var(--p-text);
+}
+
+body.st-glassy div.dt-datetime table td.selected button {
+    background: var(--a-sheen), var(--c-primary);
+    color: var(--c-white);
+    box-shadow: 0 0 10px rgba(214, 51, 108, .45);
+}
+
+body.st-glassy div.dt-datetime table td.now {
+    background: transparent;
+}
+
+body.st-glassy div.dt-datetime table td.now button {
+    box-shadow: inset 0 0 0 1px var(--c-primary);
+}
+
+body.st-glassy div.dt-datetime table td.disabled button,
+body.st-glassy div.dt-datetime table td.empty {
+    background: transparent;
+    color: var(--p-text-2);
+    opacity: .45;
+}
+
+body.st-glassy div.dt-datetime :is(div.dt-datetime-iconLeft, div.dt-datetime-iconRight, div.dt-datetime-iconUp, div.dt-datetime-iconDown) {
+    border-radius: 50%;
+    filter: var(--a-icon-filter);
+}
+
+/* ---------- 14. Loaders / overlays ---------- */
+body.st-glassy .st-chat-open__panel {
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-xl);
+    background: var(--a-spec), var(--a-sheet);
+    box-shadow: var(--a-shadow-lift);
+}
+
+body.st-glassy .st-chat-open__spinner {
+    border-color: var(--a-line-2);
+    border-top-color: var(--c-primary);
+    filter: drop-shadow(0 0 6px rgba(214, 51, 108, .6));
+}
+
+body.st-glassy .st-chat-open__title {
+    color: var(--a-text);
+}
+
+body.st-glassy .st-chat-open__sub {
+    color: var(--a-text-2);
+}
+
+/* ---------- 15. Vidro (blur) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy .modal-backdrop,
+    body.st-glassy .gw-modal-fundo,
+    body.st-glassy .swal2-container.swal2-backdrop-show:not(:has(> .swal2-toast)) {
+        -webkit-backdrop-filter: var(--g-blur-scrim);
+        backdrop-filter: var(--g-blur-scrim);
+    }
+
+    body.st-glassy .modal-content,
+    body.st-glassy .offcanvas {
+        -webkit-backdrop-filter: var(--g-blur-overlay);
+        backdrop-filter: var(--g-blur-overlay);
+    }
+}
+
+/* ---------- 16. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy .modal.fade .modal-dialog,
+    body.st-glassy .modal.show .modal-dialog {
+        transform: none;
+        transition: none;
+    }
+
+    body.st-glassy .gw-modal,
+    body.st-glassy .gw-modal-small,
+    body.st-glassy .gw-modal-large,
+    body.st-glassy .gw-modal-egg,
+    body.st-glassy .swal2-popup.swal2-show,
+    body.st-glassy .swal2-popup.swal2-hide {
+        animation: none;
+    }
+
+    body.st-glassy :is(.modal-content, .offcanvas, .st-aurora-scope) .btn-close,
+    body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) .close,
+    body.st-glassy .mosaic-tile {
+        transition: none;
+    }
+
+    body.st-glassy :is(.modal-content, .offcanvas, .st-aurora-scope) .btn-close:hover,
+    body.st-glassy.st-sec-cnf #action-page .btn-close:hover,
+    body.st-glassy :is(.gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg) .close:hover,
+    body.st-glassy .mosaic-tile:hover {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy .modal-content::before,
+    body.st-glassy .swal2-popup::before {
+        display: none;
+    }
+
+    body.st-glassy .gw-modal,
+    body.st-glassy .gw-modal-egg,
+    body.st-glassy .dropdown-menu,
+    body.st-glassy .tooltip-inner,
+    body.st-glassy .popover,
+    body.st-glassy div.dt-datetime,
+    body.st-glassy .toastify,
+    body.st-glassy .mosaic-tile,
+    body.st-glassy .btn-close,
+    body.st-glassy .close {
+        border: 1px solid CanvasText !important;
+    }
+
+    body.st-glassy .btn-close {
+        background: none;
+        forced-color-adjust: none;
+        color: CanvasText;
+    }
+
+    body.st-glassy .btn-close::after {
+        content: "×";
+        display: block;
+        font-size: 16px;
+        line-height: 14px;
+        text-align: center;
+    }
+}

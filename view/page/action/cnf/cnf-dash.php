@@ -369,7 +369,22 @@ $dataAtual = date('d/m/Y H:i');
     var chartChats  = <?= json_encode($chartChats, JSON_UNESCAPED_UNICODE) ?>;
     var chartOps    = <?= json_encode($chartOpsHoje, JSON_UNESCAPED_UNICODE) ?>;
 
-    var colors = ['#28285E', '#D6336C', '#FA5252', '#5ba4c4', '#C1E7F5', '#2FAB4E', '#e67700'];
+    function palette() {
+        var dark = document.documentElement.getAttribute('data-st-theme') !== 'light';
+        return dark ? {
+            series: ['#31CAF0', '#D6336C', '#FA5252', '#5ba4c4', '#C1E7F5', '#2FAB4E', '#e67700'],
+            ops: ['#31CAF0', '#D6336C', '#2FAB4E', '#FA5252'],
+            text: '#ffffff', muted: '#C1E7F5', grid: '#3d3b6e', base: '#5c5a8a', slice: '#1a1840'
+        } : {
+            series: ['#28285E', '#D6336C', '#FA5252', '#5ba4c4', '#C1E7F5', '#2FAB4E', '#e67700'],
+            ops: ['#28285E', '#D6336C', '#2FAB4E', '#FA5252'],
+            text: '#28285E', muted: '#5A6378', grid: '#e8f0f8', base: '#c9d6e6', slice: '#ffffff'
+        };
+    }
+
+    function axis(p) {
+        return { textStyle: { color: p.muted, fontSize: 11 }, gridlines: { color: p.grid }, baselineColor: p.base };
+    }
 
     function emptyRow(msg) {
         return [['—', 0], [msg, 0.0001]];
@@ -382,12 +397,15 @@ $dataAtual = date('d/m/Y H:i');
         var dataRows = rows.length ? rows : emptyRow('Sem dados');
         var data = google.visualization.arrayToDataTable([['Item', 'Qtd']].concat(dataRows));
         var chart = new google.visualization.PieChart(document.getElementById(elId));
+        var p = palette();
         chart.draw(data, {
             title: title,
+            titleTextStyle: { color: p.text },
             pieHole: 0.42,
-            colors: colors,
+            colors: p.series,
+            pieSliceBorderColor: p.slice,
             chartArea: { width: '88%', height: '72%' },
-            legend: { position: 'bottom', maxLines: 2 },
+            legend: { position: 'bottom', maxLines: 2, textStyle: { color: p.muted } },
             fontName: 'Inter, Segoe UI, sans-serif',
             backgroundColor: 'transparent'
         });
@@ -397,15 +415,19 @@ $dataAtual = date('d/m/Y H:i');
         var dataRows = rows.length ? rows : [['—', 0]];
         var data = google.visualization.arrayToDataTable([['Período', 'Qtd']].concat(dataRows));
         var chart = new google.visualization.ColumnChart(document.getElementById(elId));
+        var p = palette();
+        var vAxis = axis(p);
+        vAxis.minValue = 0;
         chart.draw(data, {
             title: title,
+            titleTextStyle: { color: p.text },
             colors: ['#D6336C'],
             chartArea: { width: '82%', height: '68%' },
             legend: { position: 'none' },
             fontName: 'Inter, Segoe UI, sans-serif',
             backgroundColor: 'transparent',
-            hAxis: { textStyle: { fontSize: 11 } },
-            vAxis: { minValue: 0, gridlines: { color: '#e8f0f8' } }
+            hAxis: axis(p),
+            vAxis: vAxis
         });
     }
 
@@ -413,13 +435,17 @@ $dataAtual = date('d/m/Y H:i');
         var dataRows = rows.length ? rows : [['—', 0]];
         var data = google.visualization.arrayToDataTable([['Situação', 'Qtd']].concat(dataRows));
         var chart = new google.visualization.BarChart(document.getElementById(elId));
+        var p = palette();
         chart.draw(data, {
             title: title,
-            colors: ['#28285E', '#D6336C', '#2FAB4E', '#FA5252'],
+            titleTextStyle: { color: p.text },
+            colors: p.ops,
             chartArea: { width: '70%', height: '65%' },
             legend: { position: 'none' },
             fontName: 'Inter, Segoe UI, sans-serif',
-            backgroundColor: 'transparent'
+            backgroundColor: 'transparent',
+            hAxis: axis(p),
+            vAxis: axis(p)
         });
     }
 
@@ -432,6 +458,16 @@ $dataAtual = date('d/m/Y H:i');
     }
 
     window.addEventListener('resize', function () {
+        if (typeof google !== 'undefined' && google.visualization) {
+            drawAll();
+        }
+    });
+
+    document.addEventListener('st-glassy-themechange', function onTheme() {
+        if (!document.getElementById('cnfChartNivel')) {
+            document.removeEventListener('st-glassy-themechange', onTheme);
+            return;
+        }
         if (typeof google !== 'undefined' && google.visualization) {
             drawAll();
         }

@@ -1,0 +1,902 @@
+/* =========================================================
+   SolveTask Glassy — Pós-atendimento do backoffice (staff/load_pos_bko.php)
+   Carregado após glassy-chat-ui.css e antes de glassy-glass.css.
+   Cards translúcidos, borda fina, sem sombra e sem degradê; claro e escuro via tokens.
+   >= 1200px: duas colunas (contexto + questionário | fechamento sticky).
+   <  1200px: uma coluna com barra de ação sticky no rodapé da aba.
+   ========================================================= */
+
+/* ---------- 1. Moldura: a aba rola, o formulário usa toda a largura ---------- */
+body.st-glassy #action-page #principal > [id^="div-"].show:has(.st-pos-page) {
+    padding: 4px 6px 18px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.st-glassy #action-page #principal > [id^="div-"] .st-pos-page {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    align-self: stretch;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page [hidden] {
+    display: none !important;
+}
+
+/* ---------- 2. Cabeçalho ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    margin: 0;
+    padding: 16px 22px;
+    border-radius: var(--g-r-lg);
+    background: var(--a-glass);
+    box-shadow: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header .cnf-title {
+    margin: 0;
+    font-size: 19px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header .cnf-title::before {
+    display: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header .cnf-title :is(i, svg) {
+    color: var(--c-primary);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header .cnf-sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-header__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 6px 13px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    color: var(--a-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-chip :is(i, svg) {
+    color: var(--a-text-2);
+    font-size: 12px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-timer :is(i, svg) {
+    color: var(--c-primary);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-timer__val {
+    min-width: 5ch;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-chip--pend {
+    border-color: rgba(214, 51, 108, .35);
+    background: rgba(214, 51, 108, .12);
+    color: var(--a-pink-text);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-chip--pend :is(i, svg) {
+    color: var(--a-pink-text);
+}
+
+/* ---------- 3. Grade principal ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+body.st-glassy[class] #action-page .st-pos-page :is(.st-pos-main, .st-pos-aside) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+@media (min-width: 1200px) {
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-body {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+        align-items: start;
+        gap: 18px;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-aside {
+        position: sticky;
+        top: 4px;
+    }
+
+    /* Coluna mais alta que a aba (classe aplicada pelo script): rola junto e só a ação fica presa. */
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-aside.is-tall {
+        position: static;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-aside.is-tall .st-pos-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        background: var(--a-glass-strong);
+    }
+}
+
+/* ---------- 4. Cards de vidro ---------- */
+body.st-glassy[class] #action-page .st-pos-page :is(.st-pos-context, .st-pos-body .st-form-section, .st-pos-actions) {
+    margin: 0;
+    padding: 20px 22px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-glass);
+    box-shadow: none;
+    color: var(--a-text);
+    -webkit-backdrop-filter: var(--g-blur-card, none);
+    backdrop-filter: var(--g-blur-card, none);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-body .st-form-section-title {
+    margin: 0 0 4px;
+    color: var(--a-text);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-body .st-form-grid {
+    gap: 14px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-aside .st-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Dica da seção: texto auxiliar logo abaixo do título (sem caixa nem borda). */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-intro.cnf-form-hint {
+    grid-column: 1 / -1;
+    margin: 0 0 2px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--a-text-2);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-label {
+    margin-bottom: 8px;
+    color: var(--a-text);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-field :is(select, textarea, input:not([type="radio"]):not([type="checkbox"])) {
+    width: 100%;
+}
+
+/* ---------- 5. Contexto do atendimento ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-context {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-meta__item {
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+}
+
+/* O tempo desde o encerramento já aparece no chip "Tempo em pós" do cabeçalho. */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-meta__item--elapsed {
+    display: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-meta dt {
+    margin: 0 0 4px;
+    color: var(--a-text-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-meta dd {
+    margin: 0;
+    color: var(--a-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-motivo {
+    padding: 12px 16px;
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-row-stripe);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-motivo__label {
+    display: block;
+    color: var(--a-pink-text);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-motivo__text {
+    margin: 4px 0 0;
+    color: var(--a-text);
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+/* Resumo da conversa (recolhível) */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript {
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-row-stripe);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-radius: inherit;
+    color: var(--a-text);
+    font-size: 13px;
+    font-weight: 600;
+    list-style: none;
+    cursor: pointer;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript > summary::-webkit-details-marker {
+    display: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript > summary::after {
+    content: "";
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin: -3px 2px 0 4px;
+    border-right: 2px solid var(--a-text-2);
+    border-bottom: 2px solid var(--a-text-2);
+    transform: rotate(45deg);
+    transition: transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript[open] > summary::after {
+    margin-top: 3px;
+    transform: rotate(-135deg);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript > summary:hover {
+    background: var(--a-row-hover);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript > summary:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript__title :is(i, svg) {
+    color: var(--c-primary);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript__count {
+    margin-left: auto;
+    color: var(--a-text-2);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-transcript__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 16px 16px;
+    list-style: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    column-gap: 10px;
+    max-width: min(82%, 640px);
+    padding: 8px 12px;
+    border: 1px solid var(--a-line-2);
+    border-radius: 14px;
+    font-size: 13px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg__author {
+    color: var(--a-text);
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg__time {
+    justify-self: end;
+    color: var(--a-text-3);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg__text {
+    grid-column: 1 / -1;
+    margin: 3px 0 0;
+    color: var(--a-text);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg--sol {
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    background: var(--a-tile);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg--bko {
+    align-self: flex-end;
+    border-color: rgba(214, 51, 108, .24);
+    border-bottom-right-radius: 4px;
+    background: rgba(214, 51, 108, .10);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg--sys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px 8px;
+    align-self: center;
+    max-width: 92%;
+    padding: 4px 14px;
+    border-style: dashed;
+    border-radius: var(--g-r-pill);
+    background: transparent;
+    text-align: center;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg--sys .st-pos-msg__author {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-msg--sys .st-pos-msg__text {
+    margin: 0;
+    color: var(--a-text-2);
+    font-size: 12px;
+}
+
+/* ---------- 6. Perguntas ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-questions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+    gap: 14px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+    box-shadow: none;
+    transition: border-color var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 14px 16px 0;
+    border: 0;
+    background: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question__badge {
+    order: 1;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--g-r-pill);
+    background: var(--a-row-hover);
+    color: var(--a-text-2);
+    font-size: 10.5px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question__required {
+    order: 2;
+    margin-left: auto;
+    padding: 3px 10px;
+    border-radius: var(--g-r-pill);
+    background: rgba(214, 51, 108, .10);
+    color: var(--a-pink-text);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question__title {
+    order: 3;
+    flex: 1 1 100%;
+    color: var(--a-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question__answers {
+    gap: 10px;
+    padding: 12px 16px 16px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question.is-answered {
+    border-color: rgba(47, 171, 78, .45);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question.is-answered .st-pos-question__badge {
+    background: rgba(47, 171, 78, .16);
+    color: var(--a-ok-text);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question.is-answered .st-pos-question__badge::before {
+    content: "\2713";
+    font-size: 11px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question.is-invalid {
+    border-color: rgba(250, 82, 82, .65);
+}
+
+/* Opções em cartões selecionáveis */
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option {
+    min-height: 46px;
+    padding: 12px 14px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-sm);
+    background: var(--a-tile);
+    box-shadow: none;
+    color: var(--a-text);
+    font-weight: 500;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option:hover {
+    border-color: var(--a-line-hover);
+    background: var(--a-tile-hi);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option:has(input:checked) {
+    border-color: var(--c-primary);
+    background: rgba(214, 51, 108, .10);
+    box-shadow: none;
+    font-weight: 600;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option:has(input:focus-visible) {
+    box-shadow: var(--a-focus-shell);
+}
+
+/* style-materialize.css esconde todo input[type=radio] (display:none), o que tira o foco por teclado. */
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option input[type="radio"] {
+    display: inline-block;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    border: 1.5px solid var(--a-line-hover);
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option input[type="radio"]:checked {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    box-shadow: inset 0 0 0 3px var(--a-solid);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-radio-option input[type="radio"]:focus-visible {
+    outline: 2px solid transparent;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question.is-invalid .st-radio-option {
+    border-color: rgba(250, 82, 82, .45);
+}
+
+/* ---------- 7. Encerramento: situação, motivo e pausa ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-closure-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-closure-card {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-closure-card .st-field {
+    position: relative;
+    margin: 0;
+}
+
+/* Select nativo continua no DOM (o script e o save leem dele), apenas fora da tela. */
+body.st-glassy[class] #action-page .st-pos-page select.st-pos-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 68px;
+    margin: 0;
+    padding: 10px 8px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+    box-shadow: none;
+    color: var(--a-text-2);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--g-dur) var(--g-ease), background-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg--2 .st-pos-seg__btn {
+    flex-direction: row;
+    min-height: 48px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn :is(i, svg) {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    color: var(--a-text-2);
+    font-size: 16px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn:hover {
+    border-color: var(--a-line-hover);
+    background: var(--a-tile-hi);
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn[aria-checked="true"] {
+    border-color: var(--c-primary);
+    background: rgba(214, 51, 108, .12);
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn[aria-checked="true"] :is(i, svg) {
+    color: var(--c-primary);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-closure-card.is-invalid .st-pos-seg__btn {
+    border-color: rgba(250, 82, 82, .55);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-motivo-field textarea {
+    display: block;
+    width: 100%;
+    min-height: 88px;
+    height: auto;
+    padding: 10px 12px;
+    border-width: 1px;
+    border-style: solid;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-counter {
+    margin: 6px 0 0;
+    color: var(--a-text-3);
+    font-size: 11.5px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy[class] #action-page .st-pos-page [id^="feed_pausa_"]:empty {
+    display: none;
+}
+
+/* ---------- 8. Validação inline ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 0;
+    color: var(--a-off-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-error :is(i, svg) {
+    flex: 0 0 auto;
+    width: 13px;
+    height: 13px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-question > .st-pos-error {
+    margin: -6px 16px 14px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .is-invalid :is(select:not(.st-pos-native), textarea, input:not([type="radio"]):not([type="checkbox"])) {
+    border-color: var(--c-coral) !important;
+}
+
+/* ---------- 9. Ação: progresso + gravar ---------- */
+body.st-glassy[class] #action-page .st-pos-page .st-pos-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress__track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: var(--g-r-pill);
+    background: var(--a-line-2);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress__fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--c-primary);
+    transition: width .3s var(--g-ease), background-color .3s var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress.is-complete .st-pos-progress__fill {
+    background: var(--c-success);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress__text {
+    margin: 0;
+    color: var(--a-text-2);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-progress__text strong {
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-draft-note {
+    margin: 0;
+    color: var(--a-text-3);
+    font-size: 12px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-feed {
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 12.5px;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-feed:empty {
+    display: none;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 46px;
+    font-weight: 700;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-save:disabled {
+    cursor: progress;
+    opacity: .8;
+}
+
+body.st-glassy[class] #action-page .st-pos-page .st-pos-save__icon {
+    display: inline-flex;
+}
+
+/* ---------- 10. Uma coluna: barra de ação fixa no rodapé da aba ---------- */
+@media (max-width: 1199.98px) {
+    /* Sem a caixa do aside, a barra vira item da grade do formulário e acompanha toda a rolagem. */
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-aside {
+        display: contents;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 18px;
+        padding: 14px 18px;
+        background: var(--a-glass-strong);
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-progress {
+        flex: 1 1 220px;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-feed {
+        order: 3;
+        flex: 1 1 100%;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-save {
+        flex: 0 0 auto;
+        width: auto;
+        padding-inline: 24px;
+    }
+}
+
+/* Abaixo de 992px a página inteira rola (a aba cresce com o conteúdo). overflow:hidden nos ancestrais
+   cria contêineres de rolagem que prenderiam o sticky; clip recorta igual sem criar contêiner.
+   !important porque style.css fixa overflow:hidden !important em #dashboard e no layout do BKO. */
+@media (max-width: 991.98px) {
+    body.st-glassy #action-page:has(#principal > [id^="div-"].show .st-pos-page),
+    body.st-glassy #action-page:has(#principal > [id^="div-"].show .st-pos-page) :is(.action-workspace, #dashboard, #content-bko, #principal),
+    body.st-glassy #action-page #principal > [id^="div-"].show:has(.st-pos-page) {
+        overflow: clip !important;
+    }
+
+    /* A barra gruda acima da tab bar flutuante (#perfil) do tema nesta largura. */
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-actions {
+        bottom: var(--shell-footer-h, 88px);
+    }
+
+    body.st-glassy #action-page #principal > [id^="div-"] .st-pos-page {
+        padding-bottom: var(--shell-footer-h, 88px);
+    }
+}
+
+@media (max-width: 575.98px) {
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-header {
+        padding: 14px 16px;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page :is(.st-pos-context, .st-pos-body .st-form-section, .st-pos-actions) {
+        padding: 16px;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-save {
+        flex: 1 1 100%;
+    }
+
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-msg {
+        max-width: 92%;
+    }
+}
+
+/* ---------- 11. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy[class] #action-page .st-pos-page :is(.st-pos-question, .st-pos-seg__btn, .st-pos-progress__fill, .st-pos-transcript > summary::after) {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy[class] #action-page .st-pos-page .st-pos-seg__btn[aria-checked="true"],
+    body.st-glassy[class] #action-page .st-pos-page .st-radio-option:has(input:checked) {
+        outline: 2px solid Highlight;
+    }
+}

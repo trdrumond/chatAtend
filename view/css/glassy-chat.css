@@ -1,0 +1,282 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: CHAT NO CONTEÚDO
+   Carregado após glassy-components.css. Cobre o chat renderizado em #action-page:
+   workspace do atendente/backoffice (chat-ate, chat-bko, chat_ind.php), solicitante
+   (chat-fila), comunicados (chat_com*.php), histórico (load_hist*.php) e o
+   acompanhamento no dashboard (.st-dash-acomp-chat). O painel lateral #chat fica na
+   seção 10 de glassy-theme.css; chat legado dentro de modais em glassy-modals.css.
+   As folhas chat/assets/css/style*.css entram depois via AJAX, mas usam seletores
+   só de classe: os seletores abaixo (body.st-glassy #action-page ...) vencem por peso.
+   Sem backdrop-filter: bolhas e linhas se repetem.
+   ========================================================= */
+
+/* ---------- 1. Área de mensagens ---------- */
+body.st-glassy #action-page :is(.chat-div, .chat-div-meio, [class^="chat-div_"], [class*=" chat-div_"]) {
+    background: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-chat-workspace, .dash-fila-workspace .chat_info) .chat-content,
+body.st-glassy #action-page :is(.chat-content, .chat-content-hist) {
+    background: transparent;
+    color: var(--a-text);
+}
+
+/* ---------- 2. Bolhas ---------- */
+body.st-glassy #action-page .other > .text > .paragrafo {
+    background: var(--a-bubble);
+    border: 1px solid var(--a-line-2);
+    border-radius: 14px 14px 14px 4px;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .me > .text > .paragrafo {
+    background: color-mix(in srgb, var(--st-online) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--st-online) 42%, transparent);
+    border-radius: 14px 14px 4px 14px;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .sys > .text > .paragrafo {
+    background: var(--a-tile);
+    border: 1px solid var(--a-line);
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page :is(.other, .me, .sys) > .text > .paragrafo :is(p, span, li, td) {
+    color: inherit;
+}
+
+body.st-glassy #action-page :is(.other, .me, .sys) > .text > .paragrafo a {
+    color: var(--a-link);
+}
+
+body.st-glassy #action-page :is(.other, .me, .sys) > .text > :is(h5, .dataHora),
+body.st-glassy #action-page .sys > .text > h5 {
+    color: var(--a-text-2);
+    opacity: 1;
+}
+
+/* Acompanhamento no dashboard: style.css usa !important com peso maior. */
+body.st-glassy #action-page .dash-fila-workspace .chat_info .st-dash-acomp-chat .other > .text > .paragrafo {
+    background: var(--a-bubble) !important;
+    border: 1px solid var(--a-line-2) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .chat_info .st-dash-acomp-chat .me > .text > .paragrafo {
+    background: color-mix(in srgb, var(--st-online) 22%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--st-online) 42%, transparent) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .chat_info .st-dash-acomp-chat .sys > .text > .paragrafo {
+    background: var(--a-tile) !important;
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy #action-page .dash-fila-workspace .chat_info .st-dash-acomp-chat :is(.other, .me) > .text > h5,
+body.st-glassy #action-page .dash-fila-workspace .chat_info .st-dash-acomp-chat :is(.other, .me, .sys) > .text > .dataHora {
+    color: var(--a-text-2) !important;
+    opacity: 1;
+}
+
+/* Motivo / anexos / contadores */
+body.st-glassy #action-page .motivo {
+    background: color-mix(in srgb, var(--c-warning) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c-warning) 40%, transparent);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.dig, #countCaracter, .file_chat, .file_chat > a) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page .linkFile {
+    color: var(--a-link) !important;
+}
+
+/* ---------- 3. Cabeçalho, agente, timers e abas laterais ---------- */
+body.st-glassy #action-page .st-chat-agent {
+    background: var(--a-row-stripe);
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy #action-page .st-chat-agent__mail,
+body.st-glassy #action-page .st-chat-timer--ta {
+    color: var(--a-pink-text);
+}
+
+body.st-glassy #action-page .st-chat-timer {
+    background: var(--a-tile);
+    border-color: var(--a-line-2);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .st-chat-tabs {
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy #action-page .st-chat-tabs .nav-link {
+    border-color: transparent !important;
+    border-radius: var(--g-r-pill) !important;
+    background: transparent !important;
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy #action-page .st-chat-tabs .nav-link:hover {
+    background: var(--a-tile) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy #action-page .st-chat-tabs .nav-link.active {
+    background: var(--a-chip-active) !important;
+    color: var(--a-text) !important;
+    box-shadow: var(--a-chip-active-shadow);
+}
+
+body.st-glassy #action-page .st-chat-pane__title {
+    color: var(--a-text);
+}
+
+/* ---------- 4. Composer ---------- */
+body.st-glassy #action-page .st-chat-workspace .msg_textarea .st-chat-composer-visual {
+    background: var(--p-field);
+    border-color: var(--a-line-2) !important;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(.st-chat-composer-offline textarea, .st-chat-composer-offline select) {
+    background-color: var(--a-row-stripe);
+    color: var(--a-text-3);
+}
+
+body.st-glassy #action-page .st-chat-ws-banner {
+    background: color-mix(in srgb, var(--c-coral) 16%, transparent);
+    border-color: color-mix(in srgb, var(--c-coral) 45%, transparent);
+    color: var(--a-off-text);
+}
+
+/* Botões legados do chat (chat/assets/css: cinza #CCC / navy #252159). */
+body.st-glassy #action-page :is(.btn-chat, .btn-bko) {
+    background: var(--p-btn2-bg) !important;
+    border: 1px solid var(--p-btn2-border) !important;
+    color: var(--p-btn2-text) !important;
+}
+
+body.st-glassy #action-page :is(.btn-chat, .btn-bko):hover {
+    background: var(--p-btn2-hover) !important;
+}
+
+/* Barra de upload legada (<progress class="class_bar">, #FF0000 em <style> inline). */
+body.st-glassy #action-page progress.class_bar,
+body.st-glassy #action-page .class_bar {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    border: 0;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    overflow: hidden;
+}
+
+body.st-glassy #action-page progress.class_bar::-webkit-progress-bar {
+    background: var(--a-tile);
+    border-radius: var(--g-r-pill);
+}
+
+body.st-glassy #action-page progress.class_bar::-webkit-progress-value {
+    background: var(--c-gradient-brand);
+    border-radius: var(--g-r-pill);
+}
+
+body.st-glassy #action-page progress.class_bar::-moz-progress-bar {
+    background: var(--c-gradient-brand);
+    border-radius: var(--g-r-pill);
+}
+
+/* Avaliação por estrelas */
+body.st-glassy #action-page .star-dis {
+    color: var(--a-text-3);
+}
+
+/* ---------- 5. Comunicados (com-idx / com-idx-list + load_com*.php) ----------
+   <style> inline: #content-com(-hist) / .tab / .active-tab / .group / #bl_title brancos. */
+body.st-glassy #action-page :is(#content-com, #content-com-hist, #bl_content) {
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page #bl_title {
+    border-radius: var(--g-r-sm);
+    background: var(--a-row-stripe);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page #bl_title .sub_title {
+    color: var(--a-text-2);
+}
+
+body.st-glassy #action-page :is(#menu-com, #menu-com-hist) :is(.tab, .tab-pesq) {
+    background: transparent;
+    border-bottom-color: var(--a-line);
+    border-left-color: transparent;
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .tab:hover {
+    background: var(--a-row-hover);
+    border-left-color: var(--a-line-hover);
+}
+
+body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .active-tab {
+    background: color-mix(in srgb, var(--c-primary) 18%, transparent);
+    border-left-color: var(--c-primary);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .group {
+    background: var(--a-tile-hi);
+}
+
+body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .blink_me {
+    animation-name: st-com-blink;
+}
+
+@keyframes st-com-blink {
+    50% { background-color: color-mix(in srgb, var(--c-primary) 26%, transparent); }
+}
+
+/* ---------- 6. Histórico (load_hist.php / load_hist_pend.php) ---------- */
+body.st-glassy #action-page .class_info {
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy #action-page .class_mon {
+    background: color-mix(in srgb, var(--st-online) 26%, transparent);
+    color: var(--a-text);
+}
+
+/* ---------- 7. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .blink_me {
+        animation: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy #action-page :is(.other, .me, .sys) > .text > .paragrafo {
+        border: 1px solid CanvasText;
+    }
+
+    body.st-glassy #action-page :is(#menu-com, #menu-com-hist) .active-tab,
+    body.st-glassy #action-page .st-chat-tabs .nav-link.active {
+        forced-color-adjust: none;
+        background: Highlight !important;
+        color: HighlightText !important;
+    }
+}

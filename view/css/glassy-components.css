@@ -1,0 +1,447 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: COMPONENTES GLOBAIS DE CONTEÚDO
+   Carregado após glassy-cnf.css. Vale para qualquer tela (atual ou futura) renderizada
+   em #action-page, no painel #chat e nas camadas (modais, SweetAlert, offcanvas).
+   Ordem de defesa contra o visual legado:
+     1. Paleta --c-* de style.css remapeada para tokens --a-* dentro do conteúdo
+        (cobre toda regra legada que usa var(--c-surface/--c-border/--c-navy/...)).
+     2. Componentes Bootstrap (cards, badges, list-group, progress, paginação, breadcrumb,
+        accordion, abas, utilitários bg-/text-/table-light).
+     3. Regras legadas de style.css com cores literais claras (#fff, #f8fafc...).
+     4. Atributos style="" com cores fixas (JS/PHP legado).
+   Sem backdrop-filter: tudo aqui pode estar dentro de #action-page (que contém modais
+   fixos) ou repetir-se em listas.
+   ========================================================= */
+
+/* ---------- 1. Paleta legada --c-* → tokens do tema ---------- */
+body.st-glassy :is(#action-page, #chat),
+body.st-glassy :is(.modal-content, .gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .swal2-popup, .offcanvas, .st-aurora-scope) {
+    --c-surface: var(--a-tile);
+    --c-bg: var(--a-row-stripe);
+    --c-border: var(--a-line-2);
+    --c-navy: var(--a-text);
+    --c-text: var(--a-text);
+    --c-muted: var(--a-text-2);
+    --c-accent-sky-light: var(--a-tile-hi);
+    --shadow: var(--a-shadow-tile);
+    --shadow-md: var(--a-shadow-tile);
+}
+
+/* Únicos usos de --c-navy como FUNDO em style.css (texto branco por cima). */
+body.st-glassy :is(#action-page, #chat) .st-dash-cha-bot__avatar {
+    background: var(--a-sheen), var(--c-gradient-brand);
+    color: var(--c-white);
+}
+
+body.st-glassy :is(#action-page, #chat) #bloco-bko .tab.active-tab {
+    border-color: var(--a-line-hover);
+}
+
+body.st-glassy :is(#action-page, #chat) .cnf-kpi--navy {
+    border-left-color: var(--c-accent-sky);
+}
+
+/* Preserva o dashboard aprovado (dash-fila) frente às regras globais de .table. */
+body.st-glassy[class] #action-page .dash-fila-table-wrap .table thead th {
+    font-size: 10px;
+    letter-spacing: .04em;
+    border-bottom-color: var(--a-line-2);
+}
+
+/* ---------- 2. Texto genérico ---------- */
+body.st-glassy :is(#action-page, #chat) label {
+    color: inherit;
+}
+
+/* Peso baixo (:where): só substitui o azul do Bootstrap; links com classe própria mantêm a cor. */
+body.st-glassy :where(#action-page, #chat) a:where(:not(.btn, .nav-link, .page-link, .dropdown-item, .list-group-item)) {
+    color: var(--a-link);
+}
+
+body.st-glassy :is(#action-page, #chat) :is(.text-dark, .text-black, .text-body) {
+    color: var(--a-text) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) :is(.text-primary, .text-info) {
+    color: var(--a-link) !important;
+}
+
+body.st-glassy :is(#chat, .modal-content, .st-aurora-scope) .text-success { color: var(--a-ok-text) !important; }
+body.st-glassy :is(#chat, .modal-content, .st-aurora-scope) .text-danger { color: var(--a-off-text) !important; }
+body.st-glassy :is(#chat, .modal-content, .st-aurora-scope) .text-warning { color: var(--a-warn-text) !important; }
+
+body.st-glassy :is(#action-page, #chat) :is(.text-muted, .text-secondary, .small.text-muted) {
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) :is(code, kbd, pre) {
+    color: var(--a-accent-text);
+}
+
+/* ---------- 3. Utilitários Bootstrap claros ---------- */
+body.st-glassy :is(#action-page, #chat) :is(.bg-white, .bg-light, .bg-body) {
+    background-color: var(--a-tile) !important;
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .bg-secondary {
+    background-color: var(--a-tile-hi) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) .bg-dark {
+    background-color: var(--a-solid) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) .border:not([class*="border-"]) {
+    border-color: var(--a-line-2) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) :is(.shadow, .shadow-sm) {
+    box-shadow: var(--a-shadow-tile) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) .table-light,
+body.st-glassy :is(#action-page, #chat) .table-light > :is(th, td) {
+    --bs-table-bg: var(--a-thead);
+    background-color: var(--a-thead);
+    color: var(--a-text);
+    border-color: var(--a-line);
+}
+
+body.st-glassy :is(#action-page, #chat) .table-dark {
+    --bs-table-bg: var(--a-solid);
+    color: var(--a-text);
+    border-color: var(--a-line);
+}
+
+/* style.css: .table tbody tr:hover { background:#f8fafc !important } — em todo o conteúdo. */
+body.st-glassy :is(#action-page, #chat, .modal-content, .gw-modal, .gw-modal-small, .gw-modal-large, .gw-modal-egg, .swal2-popup) .table tbody tr:hover {
+    background: var(--a-row-hover) !important;
+}
+
+/* ---------- 4. Cards ---------- */
+body.st-glassy :is(#chat, .st-aurora-scope) .card {
+    background-color: var(--a-tile);
+    border: 1px solid var(--a-line);
+    border-radius: var(--g-r-md);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) :is(.card-header, .card-footer) {
+    background: var(--a-row-stripe);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .card:is(.border-primary, .border-info) { border-color: color-mix(in srgb, var(--st-online) 60%, transparent) !important; }
+body.st-glassy :is(#action-page, #chat) .card.border-warning { border-color: color-mix(in srgb, var(--c-warning) 70%, transparent) !important; }
+body.st-glassy :is(#action-page, #chat) .card.border-danger { border-color: color-mix(in srgb, var(--c-coral) 70%, transparent) !important; }
+body.st-glassy :is(#action-page, #chat) .card.border-success { border-color: color-mix(in srgb, var(--c-success) 70%, transparent) !important; }
+body.st-glassy :is(#action-page, #chat) .card.border-secondary { border-color: var(--a-line-hover) !important; }
+
+/* ---------- 5. Alertas (complementa a seção 11 de glassy-theme.css) ---------- */
+body.st-glassy :is(#action-page, #chat, .modal-content, .swal2-popup, .st-aurora-scope) :is(.alert-info, .alert-primary) { --al: var(--st-online); }
+body.st-glassy :is(#action-page, #chat, .modal-content, .swal2-popup, .st-aurora-scope) :is(.alert-secondary, .alert-light, .alert-dark) { --al: var(--a-line-hover); }
+
+body.st-glassy :is(#action-page, #chat) .alert .alert-link {
+    color: var(--a-link);
+}
+
+body.st-glassy :is(#action-page, #chat) .alert .btn-close {
+    filter: var(--a-icon-filter);
+}
+
+/* ---------- 6. Badges ---------- */
+body.st-glassy :is(#action-page, #chat) .badge {
+    border-radius: var(--g-r-pill);
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+
+body.st-glassy :is(#action-page, #chat) .badge:is(.bg-light, .bg-white) {
+    background-color: var(--a-tile-hi) !important;
+    color: var(--a-text) !important;
+    box-shadow: inset 0 0 0 1px var(--a-line-2);
+}
+
+body.st-glassy :is(#action-page, #chat) .badge.bg-warning {
+    color: var(--c-navy-deep) !important;
+}
+
+/* ---------- 7. List group ---------- */
+body.st-glassy :is(#action-page, #chat) .list-group-item {
+    background: transparent;
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .list-group-item-action:hover,
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .list-group-item-action:focus {
+    background: var(--a-row-hover);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .list-group-item.active {
+    background: color-mix(in srgb, var(--c-primary) 22%, transparent);
+    border-color: color-mix(in srgb, var(--c-primary) 45%, transparent);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .list-group-item.disabled {
+    background: transparent;
+    color: var(--a-text-3);
+}
+
+/* ---------- 8. Progresso e spinners ---------- */
+body.st-glassy :is(#action-page, #chat) .progress {
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: var(--a-well-inset);
+}
+
+body.st-glassy :is(#action-page, #chat) .progress-bar:not([class*="bg-"]) {
+    background: var(--c-gradient-brand);
+}
+
+body.st-glassy :is(#action-page, #chat) .spinner-border:not([class*="text-"]),
+body.st-glassy :is(#action-page, #chat) .spinner-grow:not([class*="text-"]) {
+    color: var(--c-primary);
+}
+
+/* ---------- 9. Paginação e breadcrumb ---------- */
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .page-link {
+    margin: 0 2px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-sm) !important;
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .page-link:hover {
+    background: var(--a-tile-hi);
+    border-color: var(--a-line-hover);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .page-link:focus {
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .page-item.active .page-link {
+    background: var(--a-sheen), var(--c-primary);
+    border-color: rgba(255, 255, 255, .25);
+    color: var(--c-white);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .page-item.disabled .page-link {
+    background: transparent;
+    border-color: transparent;
+    color: var(--a-text-3);
+}
+
+body.st-glassy :is(#action-page, #chat) .breadcrumb {
+    color: var(--a-text-2);
+}
+
+body.st-glassy :is(#action-page, #chat) .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--a-text-3);
+}
+
+body.st-glassy :is(#action-page, #chat) .breadcrumb-item.active {
+    color: var(--a-text);
+}
+
+/* ---------- 10. Accordion ---------- */
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .accordion-item {
+    background: var(--a-tile);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .accordion-button {
+    background: transparent;
+    color: var(--a-text);
+    font-weight: 600;
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .accordion-button:not(.collapsed) {
+    background: var(--a-tile-hi);
+    color: var(--a-text);
+    box-shadow: inset 0 -1px 0 var(--a-line);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .accordion-button:focus {
+    border-color: transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content, .st-aurora-scope) .accordion-button::after {
+    filter: var(--a-icon-filter);
+}
+
+/* ---------- 11. Abas (nav-tabs / nav-pills): pílulas suaves ----------
+   :where() zera o peso do ID: abas com estilo próprio (dashboard #myTab, #tabChat,
+   st-chat-tabs, segmented control de modais/cnf) continuam vencendo. */
+body.st-glassy :where(#action-page, #chat) :is(.nav-tabs, .nav-pills) {
+    gap: 4px;
+    border-bottom: 1px solid var(--a-line);
+}
+
+body.st-glassy :where(#action-page, #chat) .nav-pills {
+    border-bottom: 0;
+}
+
+body.st-glassy :where(#action-page, #chat) :is(.nav-tabs, .nav-pills) .nav-link {
+    border: 0;
+    border-radius: var(--g-r-pill);
+    background: transparent;
+    color: var(--a-text-2);
+    font-weight: 600;
+    transition: background-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy :where(#action-page, #chat) :is(.nav-tabs, .nav-pills) .nav-link:hover {
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy :where(#action-page, #chat) :is(.nav-tabs, .nav-pills) :is(.nav-link.active, .show > .nav-link) {
+    background: var(--a-chip-active);
+    color: var(--a-text);
+    box-shadow: var(--a-chip-active-shadow);
+}
+
+body.st-glassy :where(#action-page, #chat) .tab-content {
+    color: inherit;
+}
+
+/* ---------- 12. Estruturas legadas de style.css com fundo claro literal ---------- */
+body.st-glassy :is(#action-page, #chat, #indice) :is(.content-7, .content-7-line, .content-3, .content-5, .content-10, .content-10-line, .content-10-input, .content-2_5) {
+    background: transparent;
+    color: inherit;
+}
+
+body.st-glassy :is(#action-page, #chat) :is(.content-2_5-line, .content-2_5-tbl, .content-2_5-input, #bloco-titulo-dem, .tabChat) {
+    background: var(--a-tile);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) #bloco-info-pend {
+    background: color-mix(in srgb, var(--c-warning) 16%, transparent);
+    border-color: color-mix(in srgb, var(--c-warning) 45%, transparent);
+    color: var(--a-warn-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .alert-msg {
+    background: var(--a-tile);
+    border-color: var(--a-line);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .left-men {
+    background: var(--a-bubble);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .right-men {
+    background: color-mix(in srgb, var(--c-primary) 22%, transparent);
+    color: var(--a-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .right-carim {
+    color: var(--a-ok-text);
+}
+
+/* .info1..7 (gradientes pastel + texto escuro): vidro tingido pela cor de acento. */
+body.st-glassy :is(#action-page, #chat) :is(.info1, .info2, .info3, .info4, .info5, .info6, .info7) {
+    --acc: var(--c-accent-sky);
+    --acc-text: var(--a-text);
+    background: var(--a-tile);
+    border: 1px solid color-mix(in srgb, var(--acc) 35%, transparent);
+    color: var(--acc-text);
+}
+
+body.st-glassy :is(#action-page, #chat) .info1 { --acc: var(--st-online); }
+body.st-glassy :is(#action-page, #chat) .info2 { --acc: var(--c-primary); --acc-text: var(--a-pink-text); }
+body.st-glassy :is(#action-page, #chat) .info3 { --acc: var(--c-coral); --acc-text: var(--a-off-text); }
+body.st-glassy :is(#action-page, #chat) .info4 { --acc: var(--c-success); --acc-text: var(--a-ok-text); }
+body.st-glassy :is(#action-page, #chat) .info6 { --acc: var(--c-warning); --acc-text: var(--a-warn-text); }
+body.st-glassy :is(#action-page, #chat) .info7 { --acc: var(--c-accent-sky); --acc-text: var(--a-accent-text); }
+
+/* ---------- 13. Cores fixas em style="" (PHP/JS legado e telas futuras) ----------
+   Flag "i": cobre #fff/#FFF/#FFFFFF. Só fundos claros e textos escuros neutros. */
+body.st-glassy :is(#action-page, #chat) :is(
+    [style*="background-color:#fff" i], [style*="background-color: #fff" i],
+    [style*="background:#fff" i], [style*="background: #fff" i],
+    [style*="background-color:white" i], [style*="background-color: white" i],
+    [style*="background:white" i], [style*="background: white" i],
+    [style*="background-color:#f8f9fa" i], [style*="background-color: #f8f9fa" i],
+    [style*="background-color:#f5f5f5" i], [style*="background-color: #f5f5f5" i],
+    [style*="background-color:#f7f7f7" i], [style*="background-color: #f7f7f7" i],
+    [style*="background-color:#f1f5f9" i], [style*="background-color: #f1f5f9" i],
+    [style*="background-color:#eee" i], [style*="background-color: #eee" i],
+    [style*="background:#eee" i], [style*="background: #eee" i],
+    [style*="background-color:#ddd" i], [style*="background-color: #ddd" i]
+) {
+    background-color: var(--a-tile) !important;
+    background-image: none !important;
+}
+
+body.st-glassy :is(#action-page, #chat) :is(
+    [style*="color:#000" i], [style*="color: #000" i],
+    [style*="color:black" i], [style*="color: black" i],
+    [style*="color:#111" i], [style*="color: #111" i],
+    [style*="color:#222" i], [style*="color: #222" i],
+    [style*="color:#333" i], [style*="color: #333" i],
+    [style*="color:#444" i], [style*="color: #444" i],
+    [style*="color:#555" i], [style*="color: #555" i]
+) {
+    color: var(--a-text) !important;
+}
+
+body.st-glassy :is(#action-page, #chat) :is([style*="color:#666" i], [style*="color: #666" i], [style*="color:#777" i], [style*="color: #777" i]) {
+    color: var(--a-text-2) !important;
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content) :is([style*="color:red" i], [style*="color: red" i]) {
+    color: var(--a-off-text) !important;
+}
+
+body.st-glassy :is(#action-page, #chat, .modal-content) :is([style*="color:green" i], [style*="color: green" i]) {
+    color: var(--a-ok-text) !important;
+}
+
+/* Amarelos de estrela (#D2D200, yellow...) somem no tema claro. */
+html[data-st-theme="light"] body.st-glassy :is(#action-page, #chat) :is([style*="color:#d2d200" i], [style*="color: #d2d200" i], [style*="color:yellow" i], [style*="color: yellow" i], [style*="color:#f9f900" i], [style*="color: #f9f900" i], [style*="color:#c9a100" i], [style*="color: #c9a100" i]) {
+    color: var(--a-warn-text) !important;
+}
+
+/* ---------- 14. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy :where(#action-page, #chat) :is(.nav-tabs, .nav-pills) .nav-link {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy :is(#action-page, #chat) :is(.nav-tabs, .nav-pills) :is(.nav-link.active, .show > .nav-link),
+    body.st-glassy :is(#action-page, #chat) .page-item.active .page-link,
+    body.st-glassy :is(#action-page, #chat) .list-group-item.active {
+        border: 2px solid Highlight;
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+
+    body.st-glassy :is(#action-page, #chat) :is(.card, .list-group-item, .accordion-item, .page-link, .badge, .alert) {
+        border: 1px solid CanvasText;
+    }
+
+    body.st-glassy :is(#action-page, #chat) .progress-bar {
+        forced-color-adjust: none;
+        background: Highlight;
+    }
+}

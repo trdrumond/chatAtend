@@ -1,0 +1,426 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: TELAS DE ACESSO
+   index.php (login), login.php (carregamento), newpass.php (senha), out.php (saída).
+   Tokens --a-* / --g-*, fundo aurora e botão #st-theme-toggle: view/css/glassy-tokens.css
+   (carregado antes; mesmo arquivo do shell). Tema claro/escuro por <html data-st-theme>.
+   Estas telas têm <style> inline legado (fundo cinza, card branco): os seletores abaixo
+   começam por body.st-glassy-login para vencer sem editar esses blocos.
+   ========================================================= */
+
+body.st-glassy-login {
+    box-sizing: border-box;
+    min-height: 100vh;
+    height: auto;
+    margin: 0;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font);
+    color: var(--a-text);
+    color-scheme: var(--a-scheme);
+}
+
+body.st-glassy-login *,
+body.st-glassy-login *::before,
+body.st-glassy-login *::after {
+    box-sizing: border-box;
+}
+
+/* ---------- Botão de tema (mesmo componente do shell) ---------- */
+body.st-glassy-login .st-access-theme {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+}
+
+body.st-glassy-login .st-access-theme:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+/* ---------- Card de vidro ---------- */
+body.st-glassy-login .login-container,
+body.st-glassy-login .loading-screen,
+body.st-glassy-login .st-access-card {
+    position: relative;
+    z-index: 1;
+    width: min(420px, 100%);
+    min-width: 0;
+    max-width: 420px;
+    margin: 0;
+    padding: 36px 34px 30px;
+    border: 0;
+    border-radius: var(--g-r-xl);
+    background: var(--a-spec), var(--a-glass-strong);
+    box-shadow: var(--a-shadow-lift);
+    color: var(--a-text);
+    text-align: left;
+}
+
+/* Rim (borda iluminada); redefine o ::before vazio do <style> inline do login. */
+body.st-glassy-login .login-container::before,
+body.st-glassy-login .loading-screen::before,
+body.st-glassy-login .st-access-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--a-rim-strong);
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+body.st-glassy-login .loading-screen,
+body.st-glassy-login .st-access-card--center {
+    text-align: center;
+}
+
+/* ---------- Logo sobre orbe de luz ---------- */
+body.st-glassy-login .logo,
+body.st-glassy-login .st-access-logo {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin: 0 0 6px;
+    text-align: center !important;
+}
+
+body.st-glassy-login .logo::before,
+body.st-glassy-login .st-access-logo::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -1;
+    width: 180px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(214, 51, 108, .32), rgba(49, 202, 240, .14) 60%, transparent);
+    filter: blur(8px);
+    pointer-events: none;
+}
+
+body.st-glassy-login .imglogin,
+body.st-glassy-login .loading-logo {
+    display: block;
+    width: 150px;
+    max-width: 70%;
+    height: auto;
+    margin: 0 auto;
+    filter: var(--a-logo-filter);
+}
+
+body.st-glassy-login .st-access-title {
+    margin: 18px 0 4px;
+    color: var(--a-text);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    text-align: center;
+}
+
+body.st-glassy-login .st-access-sub,
+body.st-glassy-login .login-subtitle {
+    margin: 0 0 24px;
+    color: var(--a-text-2);
+    font-size: 13px;
+    letter-spacing: .01em;
+    text-align: center;
+}
+
+/* ---------- Campos (style-materialize-new.css usa !important) ---------- */
+body.st-glassy-login .input-container {
+    margin-bottom: 16px;
+    gap: 6px;
+}
+
+body.st-glassy-login .input-container > label {
+    order: -1;
+    color: var(--a-text-2) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: .06em;
+}
+
+body.st-glassy-login .input-container:focus-within > label {
+    color: var(--a-pink-text) !important;
+}
+
+body.st-glassy-login .input-container > input,
+body.st-glassy-login .input-container > select,
+body.st-glassy-login .input-container > textarea {
+    height: 46px !important;
+    padding: 0 16px !important;
+    border: 1px solid var(--a-line-2) !important;
+    border-radius: var(--g-r-md) !important;
+    background: var(--a-tile) !important;
+    color: var(--a-text);
+    font-family: var(--font);
+    font-size: 14px !important;
+    box-shadow: var(--a-well-inset);
+    caret-color: var(--c-primary);
+    transition: border-color var(--g-dur) var(--g-ease), background-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy-login .input-container > select {
+    padding-right: 40px !important;
+    background: var(--a-select-arrow) right 14px center / 14px 14px no-repeat, var(--a-tile) !important;
+}
+
+body.st-glassy-login .input-container > select option {
+    background: var(--a-solid);
+    color: var(--a-text);
+}
+
+body.st-glassy-login .input-container > input:hover,
+body.st-glassy-login .input-container > select:hover {
+    border-color: var(--a-line-hover) !important;
+}
+
+body.st-glassy-login .input-container > input:focus,
+body.st-glassy-login .input-container > select:focus,
+body.st-glassy-login .input-container > textarea:focus {
+    outline: 2px solid transparent;
+    border-color: var(--c-primary) !important;
+    background-color: var(--a-tile-hi) !important;
+    box-shadow: 0 0 0 3px rgba(214, 51, 108, .32), 0 0 18px rgba(214, 51, 108, .25) !important;
+}
+
+/* Autopreenchimento do navegador: sem fundo amarelo sobre o vidro. */
+body.st-glassy-login .input-container > input:-webkit-autofill,
+body.st-glassy-login .input-container > input:-webkit-autofill:hover,
+body.st-glassy-login .input-container > input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--a-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--a-solid) inset !important;
+    box-shadow: 0 0 0 1000px var(--a-solid) inset !important;
+    transition: background-color 9999s ease-out 0s;
+}
+
+/* ---------- Links ---------- */
+body.st-glassy-login a {
+    border-radius: 4px;
+    color: var(--a-text-2);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy-login a:hover {
+    color: var(--a-pink-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+body.st-glassy-login a:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+/* ---------- Botão Entrar: pílula rosa com brilho ---------- */
+body.st-glassy-login .input-container.right {
+    margin: 22px 0 0;
+}
+
+body.st-glassy-login .button {
+    width: 100%;
+    height: 46px;
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: var(--g-r-pill);
+    background: var(--a-sheen), var(--c-primary);
+    color: var(--c-white);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), var(--a-glow-primary);
+    transition: background-color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy-login .button:hover {
+    background: var(--a-sheen), var(--c-primary-dark);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 10px 30px rgba(214, 51, 108, .6);
+    transform: translateY(-1px);
+}
+
+body.st-glassy-login .button:active {
+    transform: translateY(0) scale(.99);
+}
+
+body.st-glassy-login .button:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), var(--a-focus-shell);
+}
+
+body.st-glassy-login .button .icon {
+    border-color: var(--c-white);
+}
+
+/* ---------- Mensagens (?erro=1 etc.): alerta de vidro coral ---------- */
+body.st-glassy-login .alert,
+body.st-glassy-login .alert-danger {
+    position: relative;
+    margin: 0 0 18px;
+    padding: 11px 14px 11px 42px;
+    border: 1px solid rgba(250, 82, 82, .45);
+    border-left: 3px solid var(--c-coral);
+    border-radius: var(--g-r-md);
+    background: linear-gradient(90deg, rgba(250, 82, 82, .22), rgba(250, 82, 82, .06) 70%), var(--a-tile);
+    color: var(--a-text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 0 0 18px rgba(250, 82, 82, .18);
+}
+
+body.st-glassy-login .alert::before {
+    content: "!";
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    width: 20px;
+    height: 20px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: var(--c-coral);
+    color: var(--c-white);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 20px;
+    text-align: center;
+}
+
+/* ---------- Carregamento pós-login (login.php): barra #EE3F60 mantida ---------- */
+body.st-glassy-login .loading-screen .st-access-logo {
+    margin-bottom: 30px;
+}
+
+body.st-glassy-login .progress-track {
+    height: 8px;
+    border-radius: var(--g-r-pill);
+    background: var(--a-tile);
+    box-shadow: var(--a-well-inset);
+    overflow: hidden;
+}
+
+body.st-glassy-login .progress-fill {
+    background: var(--a-sheen), #EE3F60;
+    box-shadow: 0 0 14px rgba(238, 63, 96, .7);
+}
+
+body.st-glassy-login .loading-text {
+    margin-top: 18px;
+    color: var(--a-text-2);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ---------- Saída (out.php) ---------- */
+body.st-glassy-login #load {
+    margin: 22px 0 0 !important;
+    line-height: normal;
+    text-align: center;
+}
+
+body.st-glassy-login #load img {
+    width: 120px;
+    height: auto;
+    filter: var(--a-gif-filter);
+    mix-blend-mode: var(--a-gif-blend);
+}
+
+/* ---------- Vidro (blur) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy-login .login-container,
+    body.st-glassy-login .loading-screen,
+    body.st-glassy-login .st-access-card {
+        -webkit-backdrop-filter: var(--g-blur-overlay);
+        backdrop-filter: var(--g-blur-overlay);
+    }
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 479.98px) {
+    body.st-glassy-login {
+        padding: 72px 12px 16px;
+        align-items: flex-start;
+    }
+
+    body.st-glassy-login .login-container,
+    body.st-glassy-login .loading-screen,
+    body.st-glassy-login .st-access-card {
+        width: 100%;
+        padding: 28px 20px 24px;
+        border-radius: var(--g-r-lg);
+    }
+
+    body.st-glassy-login .st-access-theme {
+        top: 14px;
+        right: 14px;
+    }
+}
+
+/* ---------- Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy-login .button,
+    body.st-glassy-login a,
+    body.st-glassy-login .input-container > input,
+    body.st-glassy-login .input-container > select {
+        transition: none;
+    }
+
+    body.st-glassy-login .button:hover,
+    body.st-glassy-login .button:active {
+        transform: none;
+    }
+
+    body.st-glassy-login .progress-fill {
+        width: 100% !important;
+        animation: none !important;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy-login .login-container::before,
+    body.st-glassy-login .loading-screen::before,
+    body.st-glassy-login .st-access-card::before,
+    body.st-glassy-login .logo::before,
+    body.st-glassy-login .st-access-logo::before,
+    body.st-glassy-login .alert::before {
+        display: none;
+    }
+
+    body.st-glassy-login .login-container,
+    body.st-glassy-login .loading-screen,
+    body.st-glassy-login .st-access-card,
+    body.st-glassy-login .button,
+    body.st-glassy-login .alert,
+    body.st-glassy-login .progress-track,
+    body.st-glassy-login .input-container > input,
+    body.st-glassy-login .input-container > select {
+        border: 1px solid CanvasText !important;
+    }
+
+    body.st-glassy-login .alert {
+        padding-left: 14px;
+    }
+
+    body.st-glassy-login .progress-fill {
+        forced-color-adjust: none;
+        background: Highlight;
+    }
+}

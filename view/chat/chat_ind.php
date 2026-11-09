@@ -265,8 +265,8 @@
                 $selMen = [];
             } ?>
             <?php if($infoUser['nivel_id']==4){ ?>
-            <select name="select_in_chat_<?=$chatId?>" id="select_in_chat_<?=$chatId?>">
-                <option value="">Selecione...</option>
+            <select name="select_in_chat_<?=$chatId?>" id="select_in_chat_<?=$chatId?>" class="st-chat-quick-select" aria-label="Respostas rápidas" title="Respostas rápidas">
+                <option value="">Respostas rápidas...</option>
                 <?php
                             for($m=0;$m < count($selMen);$m++){
                                 echo "<option value='".$selMen[$m]['id_campo']."'>".htmlspecialchars($selMen[$m]['titulo_men'])."</option>";
@@ -293,14 +293,14 @@
                     <?php } ?>
 
                     <button type="button" id="btn_file_responsive_<?=$chatId?>" class="btn-bko btn-send-file"
-                        data-bs-toggle="modal" title="Enviar um arquivo" data-bs-target="#div_file_<?=$chatId?>"><i
-                            class="fas fa-upload"></i></button>
+                        data-bs-toggle="modal" title="Enviar um arquivo" aria-label="Enviar um arquivo" data-bs-target="#div_file_<?=$chatId?>"><i
+                            class="fas fa-paperclip" aria-hidden="true"></i></button>
                     <?php if($infoUser['nivel_id']==4){ ?>
-                    <button id="btn_atent_responsive_<?=$chatId?>" class="btn-chat btn-atent-chat"
-                        title="Chamar Atenção do Solicitante"><i class="fas fa-volume-up"></i></button>
+                    <button type="button" id="btn_atent_responsive_<?=$chatId?>" class="btn-chat btn-atent-chat"
+                        title="Chamar Atenção do Solicitante" aria-label="Chamar atenção do solicitante"><i class="fas fa-bell" aria-hidden="true"></i></button>
                     <?php } ?>
-                    <button id="btn_fin_responsive_<?=$chatId?>" class="btn-finalizar" title="Finalizar atendimento"><i
-                            class="fas fa-times-circle"></i></button>
+                    <button type="button" id="btn_fin_responsive_<?=$chatId?>" class="btn-finalizar" title="Finalizar atendimento" aria-label="Finalizar atendimento"><i
+                            class="fas fa-times-circle" aria-hidden="true"></i></button>
                 </div>
             </div>
         </div>
@@ -308,25 +308,25 @@
 
     <div id="btn-bko">
         <div style="width: 49%; float: left; padding-top: 20px" class="text-msg-area">
-            <button type="button" id="btn1_<?=$chatId?>" class="btn-chat btn-send-chat" title="Enviar mensagem"><i
-                    class="fas fa-paper-plane fa-2x"></i></button>
+            <button type="button" id="btn1_<?=$chatId?>" class="btn-chat btn-send-chat" title="Enviar mensagem" aria-label="Enviar mensagem"><i
+                    class="fas fa-paper-plane fa-2x" aria-hidden="true"></i></button>
         </div>
         <div style="width: 49%; float: left; padding-top: 20px" id="btns-bko-1">
             <?php if($infoUser['nivel_id']==4){ ?>
             <?php if($infoFilas['qtd']>1){ ?>
-            <button type="button" id="trasnferir_<?=$chatId?>" class="btn-bko" data-bs-toggle="modal"
-                title="Transferir Atendimento" data-bs-target="#div_transfer_<?=$chatId?>"><i
-                    class="fas fa-share-square"></i></button>
+            <button type="button" id="trasnferir_<?=$chatId?>" class="btn-bko btn-transfer-chat" data-bs-toggle="modal"
+                title="Transferir Atendimento" aria-label="Transferir atendimento" data-bs-target="#div_transfer_<?=$chatId?>"><i
+                    class="fas fa-share-square" aria-hidden="true"></i><span class="st-chat-btn__label">Transferir</span></button>
             <?php } ?>
             <?php } ?>
             <button type="button" id="btn_file_<?=$chatId?>" class="btn-bko btn-send-file" data-bs-toggle="modal"
-                title="Enviar um arquivo" data-bs-target="#div_file_<?=$chatId?>"><i class="fas fa-upload"></i></button>
+                title="Enviar um arquivo" aria-label="Enviar um arquivo" data-bs-target="#div_file_<?=$chatId?>"><i class="fas fa-paperclip" aria-hidden="true"></i></button>
             <?php if($infoUser['nivel_id']==4){ ?>
-            <button id="btn_atent_<?=$chatId?>" class="btn-chat btn-atent-chat" title="Chamar Atenção do Solicitante"><i
-                    class="fas fa-volume-up"></i></button>
+            <button type="button" id="btn_atent_<?=$chatId?>" class="btn-chat btn-atent-chat" title="Chamar Atenção do Solicitante" aria-label="Chamar atenção do solicitante"><i
+                    class="fas fa-bell" aria-hidden="true"></i><span class="st-chat-btn__label">Chamar atenção</span></button>
             <?php } ?>
-            <button id="btn_fin_<?=$chatId?>" class="btn-finalizar" title="Finalizar atendimento"><i
-                    class="fas fa-times-circle"></i></button>
+            <button type="button" id="btn_fin_<?=$chatId?>" class="btn-finalizar" title="Finalizar atendimento" aria-label="Finalizar atendimento"><i
+                    class="fas fa-times-circle" aria-hidden="true"></i><span class="st-chat-btn__label">Encerrar</span></button>
         </div>
 
 
@@ -344,6 +344,21 @@
 <script>
 userDem_<?=$userDestinatario?> = <?=$userDestinatario?>;
 chatId_<?=$chatId?> = <?=$chatId?>;
+
+(function () {
+    var form = document.getElementById('form_<?=$chatId?>');
+    var ws = form && form.closest ? form.closest('.st-chat-workspace') : null;
+    var slot = ws ? ws.querySelector('[data-st-chat-actions]') : null;
+    if (!slot) {
+        return;
+    }
+    ['trasnferir_', 'btn_atent_', 'btn_fin_'].forEach(function (prefix) {
+        var btn = ws.querySelector('#btns-bko-1 > #' + prefix + '<?=$chatId?>');
+        if (btn) {
+            slot.appendChild(btn);
+        }
+    });
+})();
 </script>
 
 <div id="chat_id_feed"></div>

@@ -84,31 +84,48 @@ if($infFila['id_fila_chat']==''){
     }, 800);
 </script>
 
-<div id="dashboard" class="st-chat-workspace st-chat-workspace--bko">
+<?php
+    $stAteIniciais = '';
+    foreach ([$dados_ate['nome'] ?? '', $dados_ate['sobrenome'] ?? ''] as $stParteNome) {
+        $stParteNome = trim((string) $stParteNome);
+        if ($stParteNome !== '') {
+            $stAteIniciais .= function_exists('mb_substr') ? mb_substr($stParteNome, 0, 1, 'UTF-8') : substr($stParteNome, 0, 1);
+        }
+    }
+    $stAteIniciais = function_exists('mb_strtoupper') ? mb_strtoupper($stAteIniciais, 'UTF-8') : strtoupper($stAteIniciais);
+?>
+<div id="dashboard" class="st-chat-workspace st-chat-workspace--bko st-chat-workspace--actions-top">
     <header id="topo_dash" class="st-chat-bko-header">
         <div id="info" class="st-chat-bko-header__main">
-            <div id="prot" class="st-chat-bko-header__protocol">
-                <i class="fas fa-headset" aria-hidden="true"></i>
-                <span>Protocolo <strong><?= htmlspecialchars($infFila['protocolo']) ?></strong></span>
-            </div>
-            <div class="info st-chat-bko-solicitante">
-                <div class="info-pad st-chat-bko-solicitante__name">
-                    <i class="far fa-user" aria-hidden="true"></i>
-                    <span><?= htmlspecialchars($dados_ate['nome_completo']) ?></span>
+            <span class="st-chat-avatar" aria-hidden="true"><?= htmlspecialchars($stAteIniciais) ?></span>
+            <div class="st-chat-bko-header__identity">
+                <div class="st-chat-bko-header__title">
+                    <div class="info-pad st-chat-bko-solicitante__name">
+                        <span><?= htmlspecialchars($dados_ate['nome_completo']) ?></span>
+                    </div>
+                    <div id="prot" class="st-chat-bko-header__protocol st-chat-proto-chip" title="Protocolo do atendimento">
+                        <span class="st-chat-proto-chip__label">Protocolo</span>
+                        <strong><?= htmlspecialchars($infFila['protocolo']) ?></strong>
+                    </div>
                 </div>
-                <div class="info-pad st-chat-bko-solicitante__mail">
-                    <i class="far fa-envelope" aria-hidden="true"></i>
-                    <a href="mailto:<?= htmlspecialchars($dados_ate['email']) ?>?subject=Solvetask <?= htmlspecialchars($infFila['protocolo']) ?>"><?= htmlspecialchars($dados_ate['email']) ?></a>
-                </div>
-                <div class="info-pad st-chat-bko-solicitante__unit">
-                    <i class="far fa-building" aria-hidden="true"></i>
-                    <span><?= htmlspecialchars($dados_ate['nome_agencia']) ?></span>
+                <div class="info st-chat-bko-solicitante">
+                    <div class="info-pad st-chat-bko-solicitante__mail">
+                        <i class="far fa-envelope" aria-hidden="true"></i>
+                        <a href="mailto:<?= htmlspecialchars($dados_ate['email']) ?>?subject=Solvetask <?= htmlspecialchars($infFila['protocolo']) ?>"><?= htmlspecialchars($dados_ate['email']) ?></a>
+                    </div>
+                    <div class="info-pad st-chat-bko-solicitante__unit">
+                        <i class="far fa-building" aria-hidden="true"></i>
+                        <span><?= htmlspecialchars($dados_ate['nome_agencia']) ?></span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="div_tempo" class="st-chat-bko-timers">
-            <div id="div_te" class="st-chat-timer"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
-            <div id="div_ta" class="st-chat-timer st-chat-timer--ta"></div>
+        <div class="st-chat-bko-header__aside">
+            <div id="div_tempo" class="st-chat-bko-timers" aria-label="Tempos do atendimento">
+                <div id="div_te" class="st-chat-timer" title="Tempo de espera"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
+                <div id="div_ta" class="st-chat-timer st-chat-timer--ta" title="Tempo de atendimento"></div>
+            </div>
+            <div class="st-chat-actions" data-st-chat-actions role="group" aria-label="Ações do atendimento"></div>
         </div>
     </header>
 
@@ -188,11 +205,11 @@ if($infFila['id_fila_chat']==''){
         <aside id="div_info" class="st-chat-side">
             <ul class="nav nav-tabs st-chat-tabs" id="tabChat" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="proc-tab" data-bs-toggle="tab" data-bs-target="#proc" type="button" role="tab" aria-controls="proc" aria-selected="true"><i class="fas fa-bars"></i> Procedimento</button>
+                    <button class="nav-link active" id="proc-tab" data-bs-toggle="tab" data-bs-target="#proc" type="button" role="tab" aria-controls="proc" aria-selected="true"><i class="fas fa-book-open" aria-hidden="true"></i> Procedimento</button>
                 </li>
                 <?php if($infoUser['env_file']==1){ ?>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="false"><i class="fas fa-folder-open"></i> Depósito de arquivos</button>
+                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="false" title="Depósito de arquivos"><i class="fas fa-folder-open" aria-hidden="true"></i> Arquivos</button>
                     </li>
                 <?php } ?>
                 <li class="nav-item" role="presentation">

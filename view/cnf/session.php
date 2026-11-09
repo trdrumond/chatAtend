@@ -101,7 +101,7 @@ session_start();
 
 
   if($infoUser['flag_pass']==1){
-    if(($_GET['sec'] ?? '') !='usu'){
+    if(($_GET['sec'] ?? '') !='usu' && strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) !== 'xmlhttprequest'){
         //echo 'FlagSenha = 1';
         echo "<meta http-equiv=refresh content='0; URL=index.php?sec=usu&op=1';>";
     }

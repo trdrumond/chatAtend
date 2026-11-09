@@ -95,12 +95,15 @@
             letter-spacing: .02em;
         }
     </style>
+<?php include __DIR__ . '/view/content/access/head.php'; ?>
 </head>
-<body>
-    <div class="login-container">
+<body class="st-glassy-login">
+<?php include __DIR__ . '/view/content/access/theme-toggle.php'; ?>
+    <main class="login-container">
         <div class="input-container left logo">
             <img src="imagem/logo.png" class="imglogin" alt="Solvetask">
         </div>
+        <h1 class="st-access-title">Recuperar senha</h1>
         <p class="login-subtitle">Plataforma de atendimento corporativo</p>
 
         <div class="input-container">
@@ -129,6 +132,6 @@
                 Entrar
             </button>
         </div>
-    </div>
+    </main>
 </body>
 </html>

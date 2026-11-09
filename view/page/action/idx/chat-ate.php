@@ -96,13 +96,25 @@
     $('#sair').hide();
 </script>
 
-<div id="dashboard" class="st-chat-workspace st-chat-workspace--sol">
+<div id="dashboard" class="st-chat-workspace st-chat-workspace--sol st-chat-workspace--actions-top">
     <header class="st-chat-header">
-        <div class="st-chat-header__icon" aria-hidden="true"><i class="fas fa-comments"></i></div>
-        <div class="st-chat-header__info">
-            <span class="st-chat-header__label">Atendimento em andamento</span>
-            <strong class="st-chat-header__protocol">Protocolo <?= htmlspecialchars($infFila['protocolo']) ?></strong>
+        <div class="st-chat-header__main">
+            <div class="st-chat-header__icon" aria-hidden="true"><i class="fas fa-comments"></i></div>
+            <div class="st-chat-header__info">
+                <div class="st-chat-header__title">
+                    <strong class="st-chat-header__name">Atendimento em andamento</strong>
+                    <span class="st-chat-header__protocol st-chat-proto-chip" title="Protocolo do atendimento">
+                        <span class="st-chat-proto-chip__label">Protocolo</span>
+                        <strong><?= htmlspecialchars($infFila['protocolo']) ?></strong>
+                    </span>
+                </div>
+                <span class="st-chat-header__label">
+                    <i class="fas fa-headset" aria-hidden="true"></i>
+                    <?= htmlspecialchars($dados_ate['nome_completo'] ?? 'Atendente') ?><?php if (!empty($dados_ate['nome_fila'])) { ?> · <?= htmlspecialchars($dados_ate['nome_fila']) ?><?php } ?>
+                </span>
+            </div>
         </div>
+        <div class="st-chat-actions" data-st-chat-actions role="group" aria-label="Ações do atendimento"></div>
     </header>
 
     <div class="st-chat-bko-body">

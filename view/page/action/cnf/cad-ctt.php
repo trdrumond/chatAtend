@@ -104,10 +104,10 @@ $(document).ready(function() {
     $nomeRoboVal = trim((string) ($dados[$x]['nome_robo'] ?? ''));
     cnf_field_input('nome_robo_' . $id, 'Nome do robô', [
         'value' => $nomeRoboVal,
-        'placeholder' => 'Robô Logos (padrão se vazio)',
+        'placeholder' => 'Logosnildson (padrão se vazio)',
         'maxlength' => 80,
     ]);
-    echo '<p class="st-form-hint cnf-form-hint">Exibido na tela de fila do solicitante. Deixe em branco para usar &quot;Robô Logos&quot;.</p>';
+    echo '<p class="st-form-hint cnf-form-hint">Exibido na tela de fila do solicitante. Deixe em branco para usar &quot;Logosnildson&quot;.</p>';
     echo '<div class="d-flex align-items-center gap-2 mt-2">';
     echo '<button type="button" class="btn btn-solvetask btn-sm" id="save_nome_robo_' . $id . '"><i class="fas fa-save"></i> Salvar nome do robô</button>';
     echo '</div>';

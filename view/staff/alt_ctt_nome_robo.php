@@ -30,5 +30,5 @@ if ($ok) {
 
 echo json_encode([
     'ok' => (bool) $ok,
-    'nome_robo' => $nomeRobo !== '' ? $nomeRobo : 'Robô Logos',
+    'nome_robo' => $nomeRobo !== '' ? $nomeRobo : 'Logosnildson',
 ]);

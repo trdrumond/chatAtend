@@ -10,6 +10,26 @@ $indice = (int) ($_POST['indice'] ?? 0);
 $assunto = (int) ($_POST['assunto'] ?? 0);
 $confirmaAssunto = (int) ($_POST['confirma_assunto'] ?? 0);
 
+function stPosSaveFail()
+{
+    echo '<div class="text-danger">Não foi possível gravar o pós-atendimento. Tente novamente.</div>';
+}
+
+function stPosSaveSuccess($idChat, $indice)
+{
+    $idChat = (int) $idChat;
+    $indice = (int) $indice;
+    ?>
+<script>
+if (window['time_<?= $idChat ?>']) { clearInterval(window['time_<?= $idChat ?>']); }
+setTimeout(function() {
+    fechaAba(<?= $indice ?>);
+    $(document).trigger('stPosSaved', [<?= $idChat ?>, <?= $indice ?>]);
+}, 100);
+</script>
+<?php
+}
+
 if ($pausa === 1) {
     $stmt = $PDO->prepare("INSERT INTO tbl_pause (user_id, hora_in, pause_id) VALUES (?, now(), 1)");
     $stmt->execute([(int) $_SESSION['dados']['id_user']]);
@@ -17,6 +37,7 @@ if ($pausa === 1) {
 }
 
 if ($tokenChat === '') {
+    stPosSaveFail();
     return;
 }
 
@@ -27,6 +48,7 @@ $stmt->execute([$tokenChat]);
 $infoChat = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!is_array($infoChat) || empty($infoChat['fila_chat_id'])) {
+    stPosSaveFail();
     return;
 }
 
@@ -92,26 +114,27 @@ if ((int) $fila['qtd'] < 1) {
 
     $tablePos = 'tbl_in_pos_' . $filaIdPost . '_' . $contratoId;
     if (!preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+        stPosSaveFail();
         return;
     }
 
-    $sqlAlterDados = "INSERT INTO {$tablePos} (data_hora, situacao_id, fila_id, chat_id, tp) VALUES (now(), 4, ?, ?, ?)";
-    $stmt = $PDO->prepare($sqlAlterDados);
-    $resultDados = $stmt->execute([$filaIdPost, $filaChatId, $tp['tp']]);
+    try {
+        $sqlAlterDados = "INSERT INTO {$tablePos} (data_hora, situacao_id, fila_id, chat_id, tp) VALUES (now(), 4, ?, ?, ?)";
+        $stmt = $PDO->prepare($sqlAlterDados);
+        $resultDados = $stmt->execute([$filaIdPost, $filaChatId, $tp['tp']]);
 
-    if ($pausa !== 1) {
-        logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Disponivel');
+        if ($pausa !== 1) {
+            logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Disponivel');
+        }
+    } catch (Throwable $e) {
+        error_log('save_pos: ' . $e->getMessage());
+        $resultDados = false;
     }
 
     if ($resultDados) {
-        ?>
-<script>
-clearInterval(time_<?= $idChat ?>);
-setTimeout(function() {
-    fechaAba(<?= $indice ?>);
-}, 100);
-</script>
-<?php
+        stPosSaveSuccess($idChat, $indice);
+    } else {
+        stPosSaveFail();
     }
 } else {
     $stmt = $PDO->prepare("SELECT nome_campo FROM tbl_forms_pos_input_campo where fila_id=?");
@@ -126,6 +149,7 @@ setTimeout(function() {
 
     $tablePos = 'tbl_in_pos_' . $filaIdPost . '_' . $contratoId;
     if (!preg_match('/^tbl_in_pos_\d+_\d+$/', $tablePos)) {
+        stPosSaveFail();
         return;
     }
 
@@ -147,19 +171,21 @@ setTimeout(function() {
         $sqlAlterDados = 'INSERT INTO ' . $tablePos
             . ' (data_hora, situacao_id, fila_id, chat_id, tp, ' . implode(', ', $colNames) . ')'
             . ' VALUES (now(), 4, ?, ?, ?, ' . implode(', ', $placeholders) . ')';
-        $stmt = $PDO->prepare($sqlAlterDados);
-        $resultDados = $stmt->execute($params);
+        try {
+            $stmt = $PDO->prepare($sqlAlterDados);
+            $resultDados = $stmt->execute($params);
+        } catch (Throwable $e) {
+            error_log('save_pos: ' . $e->getMessage());
+            $resultDados = false;
+        }
 
         if ($resultDados == 1) {
-            ?>
-<script>
-clearInterval(time_<?= $idChat ?>);
-setTimeout(function() {
-    fechaAba(<?= $indice ?>);
-}, 100);
-</script>
-<?php
+            stPosSaveSuccess($idChat, $indice);
+        } else {
+            stPosSaveFail();
         }
+    } else {
+        stPosSaveFail();
     }
 }
 

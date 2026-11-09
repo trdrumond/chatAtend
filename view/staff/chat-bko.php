@@ -188,34 +188,51 @@ if (empty($infoChat['id_chat'])) {
 })(<?= (int)$indDiv ?>);
 </script>
 
-<div id="bko-workspace-<?= (int)$indDiv ?>" class="st-chat-workspace st-chat-workspace--bko"
+<?php
+    $stAteIniciais = '';
+    foreach ([$dados_ate['nome'] ?? '', $dados_ate['sobrenome'] ?? ''] as $stParteNome) {
+        $stParteNome = trim((string) $stParteNome);
+        if ($stParteNome !== '') {
+            $stAteIniciais .= function_exists('mb_substr') ? mb_substr($stParteNome, 0, 1, 'UTF-8') : substr($stParteNome, 0, 1);
+        }
+    }
+    $stAteIniciais = function_exists('mb_strtoupper') ? mb_strtoupper($stAteIniciais, 'UTF-8') : strtoupper($stAteIniciais);
+?>
+<div id="bko-workspace-<?= (int)$indDiv ?>" class="st-chat-workspace st-chat-workspace--bko st-chat-workspace--actions-top"
      data-chat-id="<?= (int)$chatId ?>"
      data-token-chat="<?= htmlspecialchars($tokenChat, ENT_QUOTES, 'UTF-8') ?>"
      data-contrato-id="<?= (int)$infoUser['contrato_id'] ?>">
     <header id="topo_dash" class="st-chat-bko-header">
         <div id="info" class="st-chat-bko-header__main">
-            <div id="prot" class="st-chat-bko-header__protocol">
-                <i class="fas fa-headset" aria-hidden="true"></i>
-                <span>Protocolo <strong><?= htmlspecialchars($infFila['protocolo']) ?></strong></span>
-            </div>
-            <div class="info st-chat-bko-solicitante">
-                <div class="info-pad st-chat-bko-solicitante__name">
-                    <i class="far fa-user" aria-hidden="true"></i>
-                    <span><?= htmlspecialchars($dados_ate['nome_completo']) ?></span>
+            <span class="st-chat-avatar" aria-hidden="true"><?= htmlspecialchars($stAteIniciais) ?></span>
+            <div class="st-chat-bko-header__identity">
+                <div class="st-chat-bko-header__title">
+                    <div class="info-pad st-chat-bko-solicitante__name">
+                        <span><?= htmlspecialchars($dados_ate['nome_completo']) ?></span>
+                    </div>
+                    <div id="prot" class="st-chat-bko-header__protocol st-chat-proto-chip" title="Protocolo do atendimento">
+                        <span class="st-chat-proto-chip__label">Protocolo</span>
+                        <strong><?= htmlspecialchars($infFila['protocolo']) ?></strong>
+                    </div>
                 </div>
-                <div class="info-pad st-chat-bko-solicitante__mail">
-                    <i class="far fa-envelope" aria-hidden="true"></i>
-                    <a href="mailto:<?= htmlspecialchars($dados_ate['email']) ?>?subject=Solvetask <?= htmlspecialchars($infFila['protocolo']) ?>"><?= htmlspecialchars($dados_ate['email']) ?></a>
-                </div>
-                <div class="info-pad st-chat-bko-solicitante__unit">
-                    <i class="far fa-building" aria-hidden="true"></i>
-                    <span><?= htmlspecialchars($dados_ate['nome_empresa']) ?> — <?= htmlspecialchars($dados_ate['nome_agencia']) ?></span>
+                <div class="info st-chat-bko-solicitante">
+                    <div class="info-pad st-chat-bko-solicitante__mail">
+                        <i class="far fa-envelope" aria-hidden="true"></i>
+                        <a href="mailto:<?= htmlspecialchars($dados_ate['email']) ?>?subject=Solvetask <?= htmlspecialchars($infFila['protocolo']) ?>"><?= htmlspecialchars($dados_ate['email']) ?></a>
+                    </div>
+                    <div class="info-pad st-chat-bko-solicitante__unit">
+                        <i class="far fa-building" aria-hidden="true"></i>
+                        <span><?= htmlspecialchars($dados_ate['nome_empresa']) ?> — <?= htmlspecialchars($dados_ate['nome_agencia']) ?></span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="div_tempo_<?=$chatId;?>" class="st-chat-bko-timers div_tempo">
-            <div id="div_te_<?= $indDiv ?>" class="st-chat-timer div_te"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
-            <div id="div_ta_<?=$infoChat['id_chat'];?>" class="st-chat-timer st-chat-timer--ta div_te"></div>
+        <div class="st-chat-bko-header__aside">
+            <div id="div_tempo_<?=$chatId;?>" class="st-chat-bko-timers div_tempo" aria-label="Tempos do atendimento">
+                <div id="div_te_<?= $indDiv ?>" class="st-chat-timer div_te" title="Tempo de espera"><i class="fas fa-history" aria-hidden="true"></i> TE: <?= htmlspecialchars($infFila['te']) ?></div>
+                <div id="div_ta_<?=$infoChat['id_chat'];?>" class="st-chat-timer st-chat-timer--ta div_te" title="Tempo de atendimento"></div>
+            </div>
+            <div class="st-chat-actions" data-st-chat-actions role="group" aria-label="Ações do atendimento"></div>
         </div>
     </header>
 
@@ -229,13 +246,13 @@ if (empty($infoChat['id_chat'])) {
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="proc-tab_<?=$chatId;?>" data-bs-toggle="tab"
                     data-bs-target="#proc_<?=$chatId;?>" type="button" role="tab" aria-controls="proc_<?=$chatId;?>"
-                    aria-selected="true"><i class="fas fa-bars"></i> Procedimento</button>
+                    aria-selected="true"><i class="fas fa-book-open" aria-hidden="true"></i> Procedimento</button>
             </li>
             <?php if(count($infoFaq)>0){ ?>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="faq-tab_<?=$chatId;?>" data-bs-toggle="tab"
                     data-bs-target="#tab_faq_<?=$chatId;?>" type="button" role="tab"
-                    aria-controls="tab_faq_<?=$chatId;?>" aria-selected="false"><i class="fas fa-question-circle"></i>
+                    aria-controls="tab_faq_<?=$chatId;?>" aria-selected="false"><i class="fas fa-question-circle" aria-hidden="true"></i>
                     FAQ</button>
             </li>
             <?php } ?>
@@ -243,15 +260,15 @@ if (empty($infoChat['id_chat'])) {
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="file-tab_<?=$chatId;?>" data-bs-toggle="tab"
                     data-bs-target="#tab_file_<?=$chatId;?>" type="button" role="tab"
-                    aria-controls="tab_file_<?=$chatId;?>" aria-selected="false"><i class="fas fa-folder-open"></i>
-                    Depósito de arquivos</button>
+                    aria-controls="tab_file_<?=$chatId;?>" aria-selected="false" title="Depósito de arquivos"><i class="fas fa-folder-open" aria-hidden="true"></i>
+                    Arquivos</button>
             </li>
             <?php } ?>
 
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="fila_atual-tab_<?=$chatId;?>" data-bs-toggle="tab"
                     data-bs-target="#fila_atual_<?=$chatId;?>" type="button" role="tab"
-                    aria-controls="fila_atual_<?=$chatId;?>" aria-selected="false"><i class="fas fa-bars"></i>
+                    aria-controls="fila_atual_<?=$chatId;?>" aria-selected="false"><i class="fas fa-list-ol" aria-hidden="true"></i>
                     Fila</button>
             </li>
         </ul>
@@ -265,7 +282,7 @@ if (empty($infoChat['id_chat'])) {
                         $stmt = $PDO->prepare($sql);
                         $result = $stmt->execute([(int) $infFila['assunto_id']]);
                         $infoAssunto = $stmt->fetch( PDO::FETCH_ASSOC );
-                        if($infoAssunto['procedimento']==''){$infoAssunto['procedimento'] = '<br><br><center><h6>Sem informações de procedimento no sistema.<h6></center>';}
+                        if($infoAssunto['procedimento']==''){$infoAssunto['procedimento'] = '<div class="st-chat-empty"><i class="fas fa-book-open" aria-hidden="true"></i><p>Sem informações de procedimento no sistema.</p></div>';}
 
                     ?>
                 <h4 class="st-chat-pane__title"><i class="fas fa-book-open" aria-hidden="true"></i> <?= htmlspecialchars($infoAssunto['titulo_assunto']) ?></h4>

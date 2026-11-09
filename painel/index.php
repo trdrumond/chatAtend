@@ -17,6 +17,7 @@ $stCsrf = (string) $_SESSION['st_csrf'];
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script>(function (d) { var t = 'light'; try { var s = window.localStorage.getItem('st-glassy-theme'); if (s === 'light' || s === 'dark') { t = s; } } catch (e) {} d.documentElement.setAttribute('data-st-theme', t); })(document);</script>
     <title>PAINEL SOLVETASK</title>
     <link rel="shortcut icon" href="../imagem/favicon.png">
     <meta http-equiv="refresh" content="1200">
@@ -56,10 +57,17 @@ $stCsrf = (string) $_SESSION['st_csrf'];
         body { background: #f0f4f8; font-family: 'Inter', sans-serif; }
         #body { padding: 16px; min-height: 100vh; }
     </style>
+    <link href="../view/css/glassy-tokens.css?v=<?= @filemtime(dirname(__DIR__) . '/view/css/glassy-tokens.css') ?: 1 ?>" rel="stylesheet">
+    <link href="../view/css/glassy-painel.css?v=<?= @filemtime(dirname(__DIR__) . '/view/css/glassy-painel.css') ?: 1 ?>" rel="stylesheet">
+    <link href="../view/css/glassy-glass.css?v=<?= @filemtime(dirname(__DIR__) . '/view/css/glassy-glass.css') ?: 1 ?>" rel="stylesheet">
 
 </head>
 
-<body>
+<body class="st-glassy-painel">
+    <button type="button" id="st-theme-toggle" class="st-theme-toggle st-painel-theme" aria-label="Tema claro" aria-pressed="false" title="Tema claro">
+        <span class="st-theme-toggle__icon st-theme-toggle__icon--sun" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+        <span class="st-theme-toggle__icon st-theme-toggle__icon--moon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" focusable="false"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+    </button>
     <div id="body">
         <div id="dadosPainel"></div>
         <script>
@@ -107,6 +115,8 @@ $stCsrf = (string) $_SESSION['st_csrf'];
     <script src="<?=$patch?>/js/charts/charts.js"></script>
     <script src="<?=$patch?>/js/charts/frozen.js"></script>
     <script src="<?=$patch?>/js/charts/animated.js"></script>
+    <script src="../view/js/glassy-charts.js?v=<?= @filemtime(dirname(__DIR__) . '/view/js/glassy-charts.js') ?: 1 ?>"></script>
+    <script src="../view/js/glassy-theme-core.js?v=<?= @filemtime(dirname(__DIR__) . '/view/js/glassy-theme-core.js') ?: 1 ?>"></script>
 
 
 </body>

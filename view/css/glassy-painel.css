@@ -1,0 +1,335 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: PAINEL / MONITOR (painel/index.php)
+   <body class="st-glassy-painel">; tokens, fundo aurora e botão de tema vêm de
+   glassy-tokens.css (carregado antes). Conteúdo: staff/load_painel.php (+ painel_load_online,
+   load_dados_dash_ind_painel*), com <style> inline legado e três modos de style.css:
+   padrão, .dash-oper--wall (TV, sem GET) e .dash-oper--geral (?op=geral). Os três passam a
+   seguir o tema claro/escuro; status (anéis/legenda) mantêm as cores operacionais.
+   Vidro (backdrop-filter) só em KPIs e cards de fila — nunca nos tiles repetidos.
+   ========================================================= */
+
+/* ---------- 1. Base ---------- */
+body.st-glassy-painel {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--a-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Paleta legada --c-* remapeada no wrapper (não no body: --a-bg-* derivam de --c-* lá). */
+body.st-glassy-painel #body {
+    --c-surface: var(--a-tile);
+    --c-bg: var(--a-row-stripe);
+    --c-border: var(--a-line-2);
+    --c-navy: var(--a-text);
+    --c-text: var(--a-text);
+    --c-muted: var(--a-text-2);
+    --c-accent-sky-light: var(--a-tile-hi);
+    --shadow: var(--a-shadow-tile);
+    --shadow-md: var(--a-shadow-tile);
+    position: relative;
+    min-height: 100vh;
+    padding: 20px 20px 24px;
+    color: var(--a-text);
+}
+
+body.st-glassy-painel :is(.dash-oper-workspace, .dash-oper--wall, .dash-oper--geral) {
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .st-painel-theme {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 20;
+    width: 38px;
+    height: 38px;
+}
+
+body.st-glassy-painel .st-painel-theme:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--a-focus-shell);
+}
+
+/* ---------- 2. Topo: legenda de status em chips ---------- */
+body.st-glassy-painel .dash-oper-top {
+    gap: 12px;
+    padding-right: 52px;
+}
+
+body.st-glassy-painel #legend.dash-oper-legend {
+    gap: 6px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+body.st-glassy-painel #legend .legend-dash {
+    --st: var(--a-text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    padding: 4px 11px 4px 9px;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background: var(--a-glass-strong);
+    color: var(--a-text);
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy-painel #legend .legend-dash::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--st);
+    box-shadow: 0 0 8px var(--st);
+}
+
+body.st-glassy-painel #legend .leg-online { --st: var(--st-online); }
+body.st-glassy-painel #legend .leg-indisp { --st: var(--st-indisp); }
+body.st-glassy-painel #legend .leg-atendimento { --st: var(--st-atendimento); }
+body.st-glassy-painel #legend .leg-pos { --st: var(--st-pos); }
+body.st-glassy-painel #legend .leg-pausa { --st: var(--st-pausa); }
+body.st-glassy-painel #legend .leg-logout { --st: var(--st-logout); }
+body.st-glassy-painel #legend .leg-offline { --st: var(--st-offline); }
+
+body.st-glassy-painel #legend .leg-hora {
+    background: var(--a-glass-strong);
+    color: var(--a-text);
+}
+
+/* ---------- 3. KPIs gerais (.bloco_info_painel) e por fila (.bloco_info--mini) ---------- */
+body.st-glassy-painel .bloco_info_painel {
+    --kpi: var(--c-accent-sky);
+    position: relative;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-glass);
+    box-shadow: var(--a-shadow);
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .bloco_info_painel::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kpi);
+    box-shadow: 0 0 12px var(--kpi);
+}
+
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info1) { --kpi: var(--st-online); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info2) { --kpi: var(--c-primary); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info3) { --kpi: var(--st-atendimento); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info4) { --kpi: var(--c-success); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info5) { --kpi: var(--c-accent-sky); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info6) { --kpi: var(--c-warning); }
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini):has(.info7) { --kpi: var(--c-coral); }
+
+body.st-glassy-painel :is(.bloco_info_painel, .bloco_info_painel_ind, .bloco_info--mini) .til {
+    color: var(--a-text-2);
+    font-weight: 600;
+    letter-spacing: .06em;
+}
+
+body.st-glassy-painel :is(.bloco_info_painel .inf, .bloco_info_painel_ind .inf_ind) {
+    background: none;
+    color: var(--a-text);
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy-painel .dash-oper-top #indicadores,
+body.st-glassy-painel .dash-oper--wall .dash-oper-top #indicadores,
+body.st-glassy-painel .dash-oper--wall .dash-oper-top #legend,
+body.st-glassy-painel .dash-oper-kpis-fila,
+body.st-glassy-painel .dash-oper--wall .dash-oper-kpis-fila {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+body.st-glassy-painel .dash-oper-kpis-fila .bloco_info--mini,
+body.st-glassy-painel .dash-oper--wall .dash-oper-kpis-fila .bloco_info--mini {
+    --kpi: var(--c-accent-sky);
+    border: 1px solid var(--a-line);
+    border-top: 2px solid color-mix(in srgb, var(--kpi) 70%, transparent);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .dash-oper--wall .bloco_info_painel_ind .til {
+    color: var(--a-text-2);
+}
+
+/* ---------- 4. Cards de fila ---------- */
+body.st-glassy-painel .dash-oper-card .card,
+body.st-glassy-painel :is(.dash-oper--wall, .dash-oper--geral) .dash-oper-card .card {
+    overflow: hidden;
+    border: 1px solid var(--a-line-2) !important;
+    border-radius: var(--g-r-lg);
+    background: var(--a-spec), var(--a-glass);
+    box-shadow: var(--a-shadow);
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .dash-oper-card .card-header,
+body.st-glassy-painel :is(.dash-oper--wall, .dash-oper--geral) .dash-oper-card .card-header {
+    background: var(--a-row-stripe) !important;
+    border-bottom: 1px solid var(--a-line) !important;
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .dash-oper-card .card-header h5 {
+    color: var(--a-text);
+    font-weight: 700;
+}
+
+body.st-glassy-painel .dash-oper-card .card-body,
+body.st-glassy-painel :is(.dash-oper--wall, .dash-oper--geral) .dash-oper-card .card-body {
+    background: transparent !important;
+    color: var(--a-text) !important;
+}
+
+/* ---------- 5. Tiles de atendente (sem blur; podem ser dezenas) ---------- */
+body.st-glassy-painel .dash-users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+body.st-glassy-painel .dash-user-tile.div_user,
+body.st-glassy-painel .dash-oper--wall .dash-user-tile {
+    position: relative;
+    flex: none !important;
+    width: auto !important;
+    padding: 14px 8px 12px;
+    border: 1px solid var(--a-line);
+    border-radius: 18px;
+    background: var(--a-tile);
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy-painel .dash-user-tile__avatar {
+    --st: var(--a-avatar-ring);
+    padding: 3px;
+    border: 2px solid var(--st) !important;
+    background: var(--a-avatar-bg);
+    box-shadow: 0 0 16px -2px var(--st);
+}
+
+body.st-glassy-painel .dash-user-tile__avatar.online { --st: var(--st-online); }
+body.st-glassy-painel .dash-user-tile__avatar.indisp { --st: var(--st-indisp); }
+body.st-glassy-painel .dash-user-tile__avatar.atendimento { --st: var(--st-atendimento); }
+body.st-glassy-painel .dash-user-tile__avatar.pos { --st: var(--st-pos); }
+body.st-glassy-painel .dash-user-tile__avatar.pausa { --st: var(--st-pausa); }
+body.st-glassy-painel .dash-user-tile__avatar.logout { --st: var(--st-logout); }
+body.st-glassy-painel .dash-user-tile__avatar.offline { --st: var(--st-offline); color: var(--a-text-2); }
+body.st-glassy-painel .dash-user-tile__avatar.fila_count { --st: var(--c-success); color: var(--a-text); }
+
+body.st-glassy-painel :is(.dash-user-tile__name, .dash-oper--wall .dash-user-tile__name) {
+    color: var(--a-text);
+    font-weight: 600;
+}
+
+body.st-glassy-painel .dash-user-tile__time {
+    color: var(--a-text-2);
+}
+
+body.st-glassy-painel .dash-user-tile__star {
+    color: var(--a-text);
+}
+
+body.st-glassy-painel .dash-user-tile__star :is(svg, .fa-star) {
+    color: #D2D200;
+    filter: drop-shadow(0 0 4px rgba(210, 210, 0, .6));
+}
+
+html[data-st-theme="light"] body.st-glassy-painel .dash-user-tile__star :is(svg, .fa-star) {
+    color: #b8860b;
+    filter: none;
+}
+
+body.st-glassy-painel .dash-user-tile .badge-count {
+    background: var(--st-atendimento);
+    color: var(--c-navy-deep);
+    box-shadow: 0 0 10px rgba(255, 143, 89, .6);
+}
+
+body.st-glassy-painel .sem_fila {
+    color: var(--a-text-2);
+}
+
+/* ---------- 6. Conteúdo auxiliar (badges, botões, tabelas) ---------- */
+body.st-glassy-painel #body .badge:is(.bg-light, .bg-white) {
+    background: var(--a-tile-hi) !important;
+    color: var(--a-text) !important;
+}
+
+body.st-glassy-painel #body .text-dark {
+    color: var(--a-text) !important;
+}
+
+body.st-glassy-painel #body .btn_atualizar {
+    border: 1px solid var(--a-line-2);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy-painel #body .table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: var(--a-row-stripe);
+    --bs-table-hover-bg: var(--a-row-hover);
+    color: var(--a-text);
+    border-color: var(--a-line);
+}
+
+body.st-glassy-painel #body .table thead th {
+    background: var(--a-thead);
+    color: var(--a-text-2);
+}
+
+body.st-glassy-painel #body .table tbody tr:hover {
+    background: var(--a-row-hover) !important;
+}
+
+body.st-glassy-painel img[src*="loading.gif"] {
+    filter: var(--a-gif-filter);
+    mix-blend-mode: var(--a-gif-blend);
+}
+
+/* ---------- 7. Vidro: só KPIs e cards (poucos, sem fixed dentro) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy-painel :is(.bloco_info_painel, .dash-oper-card .card) {
+        -webkit-backdrop-filter: var(--g-blur);
+        backdrop-filter: var(--g-blur);
+    }
+}
+
+/* ---------- 8. Preferências ---------- */
+@media (prefers-reduced-transparency: reduce) {
+    body.st-glassy-painel :is(.bloco_info_painel, .dash-oper-card .card) {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy-painel :is(.bloco_info_painel, .bloco_info--mini, .dash-oper-card .card, .dash-user-tile, #legend .legend-dash) {
+        border: 1px solid CanvasText !important;
+    }
+
+    body.st-glassy-painel :is(.bloco_info_painel::after, #legend .legend-dash::before) {
+        forced-color-adjust: none;
+    }
+
+    body.st-glassy-painel .dash-user-tile__avatar {
+        forced-color-adjust: none;
+    }
+}

@@ -6,7 +6,10 @@ if (!isset($infoUser) || !is_array($infoUser)) {
     $infoUser = [];
 }
 
-$nomeExibir   = ucwords(strtolower($infoUser['nome_completo'] ?? ''));
+$nomeExibir   = ucwords(strtolower(trim((string) ($infoUser['nome_completo'] ?? ''))));
+$nomePartes   = $nomeExibir !== '' ? preg_split('/\s+/', $nomeExibir) : [];
+$nomePrimeiro = $nomePartes[0] ?? '';
+$nomeResto    = count($nomePartes) > 1 ? end($nomePartes) : '';
 $nivelLabel   = $infoUser['nivel'] ?? '';
 $iconLabel    = $infoUser['icon'] ?? '';
 $imgPerfil    = $infoUser['img_perfil'] ?? 'img/default-avatar.png';
@@ -19,8 +22,18 @@ $imgPerfil    = $infoUser['img_perfil'] ?? 'img/default-avatar.png';
              alt="Foto de perfil"
              onerror="this.src='img/default-avatar.png'">
     </div>
-    <span class="perfil-nome"><?= htmlspecialchars($nomeExibir) ?></span>
-    <span class="perfil-nivel"><?= $iconLabel ?> <?= htmlspecialchars($nivelLabel) ?></span>
+    <span class="perfil-nome" title="<?= htmlspecialchars($nomeExibir) ?>">
+        <span class="perfil-nome__linha"><?= htmlspecialchars($nomePrimeiro) ?></span>
+        <?php if ($nomeResto !== '') { ?>
+        <span class="perfil-nome__linha"><?= htmlspecialchars($nomeResto) ?></span>
+        <?php } ?>
+    </span>
+    <span class="perfil-nivel" title="<?= htmlspecialchars($nivelLabel) ?>">
+        <?php if ($iconLabel !== '') { ?>
+        <span class="perfil-nivel__icone" aria-hidden="true"><?= $iconLabel ?></span>
+        <?php } ?>
+        <span class="perfil-nivel__texto"><?= htmlspecialchars($nivelLabel) ?></span>
+    </span>
 
     <?php if ($_GET['sec'] === 'idx') { ?>
     <div class="bloco_status_server">

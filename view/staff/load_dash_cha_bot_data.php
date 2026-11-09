@@ -11,7 +11,7 @@ if ($nomeUsuario === '') {
     $nomeUsuario = trim((string) ($infoUser['nome_usuario'] ?? 'visitante'));
 }
 
-$nomeRobo = 'Robô Logos';
+$nomeRobo = 'Logosnildson';
 if ($contratoId > 0) {
     $stmtRobo = $PDO->prepare('SELECT nome_robo FROM tbl_contrato WHERE id_contrato = ? LIMIT 1');
     $stmtRobo->execute([$contratoId]);

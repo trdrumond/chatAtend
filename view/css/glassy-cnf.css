@@ -1,0 +1,546 @@
+/* =========================================================
+   SOLVETASK 2.0 — AURORA GLASS: PÁGINAS cnf-* / st_* (_cnf_ui.php)
+   Carregado após glassy-theme.css e glassy-modals.css.
+   Nasceu para ?sec=cnf; vale em todas as seções (idx e usu reutilizam st_page_open,
+   st-form-card, cnf-table...). body.st-glassy[class] mantém a especificidade da antiga
+   classe de seção (.st-sec-cnf), então a ordem/peso das regras não mudou.
+   Os modais dos cadastros são irmãos de .cnf-page dentro de #action-page:
+   nada aqui recebe backdrop-filter, exceto .cnf-header / .cnf-dash-header (sem modais dentro).
+   ========================================================= */
+
+/* ---------- 1. Moldura: sem painel branco, conteúdo direto sobre a aurora ---------- */
+body.st-glassy[class] #action-page {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--a-text);
+}
+
+/* Telas sem wrapper cnf-* (ex.: res-base, carregamento) ganham um painel de vidro. */
+body.st-glassy[class] #action-page:not(:has(.cnf-page, .cnf-usu-page, .cnf-dash)) {
+    background: var(--a-spec), var(--a-glass-strong);
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-xl);
+    box-shadow: var(--a-shadow);
+}
+
+body.st-glassy[class] #action-page hr {
+    border-top-color: var(--a-line);
+}
+
+body.st-glassy[class] #action-page :is(.content-10, .content-10-line, .content-10-input, .tbl-white) {
+    background: transparent;
+}
+
+body.st-glassy[class] #action-page .text-success { color: var(--a-ok-text) !important; }
+body.st-glassy[class] #action-page .text-danger { color: var(--a-off-text) !important; }
+body.st-glassy[class] #action-page .text-warning { color: var(--a-warn-text) !important; }
+
+/* ---------- 2. Cabeçalho de seção ---------- */
+body.st-glassy[class] #action-page :is(.cnf-header, .cnf-usu-header, .cnf-dash-header) {
+    position: relative;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    border: 0;
+    border-radius: var(--g-r-xl);
+    background: var(--a-spec), var(--a-glass);
+    box-shadow: var(--a-shadow-tile), 0 10px 28px rgba(6, 5, 28, .18);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-header, .cnf-usu-header, .cnf-dash-header)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--a-rim);
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-title, .cnf-usu-title, .cnf-dash-title) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 4px;
+    color: var(--a-text);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-title {
+    font-size: 18px;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-title, .cnf-usu-title, .cnf-dash-title)::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c-gradient-brand);
+    box-shadow: 0 0 0 3px rgba(214, 51, 108, .18), 0 0 14px rgba(214, 51, 108, .6);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-sub, .cnf-usu-sub, .cnf-dash-sub) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-dash-badge {
+    border: 1px solid var(--a-line-2);
+    background: var(--a-tile);
+    color: var(--a-text);
+    box-shadow: var(--a-shadow-tile);
+}
+
+body.st-glassy[class] #action-page .cnf-dash-badge svg,
+body.st-glassy[class] #action-page .cnf-dash-badge i {
+    color: var(--c-primary);
+}
+
+/* ---------- 3. Cartões de vidro (sem blur: podem estar ao lado de modais) ---------- */
+body.st-glassy[class] #action-page :is(.cnf-table-wrap, .cnf-usu-table-wrap, .cnf-filter-bar, .cnf-log-panel, .cnf-report-panel, .st-form-card, .cnf-chart-card, .cnf-table-card, .cnf-dash-live, .cnf-live-fila-card) {
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-xl);
+    background: var(--a-spec), var(--a-glass-strong);
+    box-shadow: var(--a-shadow-tile), 0 10px 28px rgba(6, 5, 28, .16);
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-filter-bar, .st-form-card) {
+    border-radius: var(--g-r-lg);
+}
+
+body.st-glassy[class] #action-page .st-form-card--alert {
+    border-color: rgba(250, 82, 82, .45);
+    background: var(--a-glass-strong);
+}
+
+body.st-glassy[class] #action-page :is(.st-form-card-title, .cnf-chart-card h6, .cnf-table-card h6, .cnf-live-fila-card__head h6, .cnf-live-col h6) {
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-chart-card h6, .cnf-table-card h6) :is(svg, i) {
+    margin-right: 4px;
+    color: var(--c-primary);
+}
+
+/* Formulários soltos na página (cnf-ia, filtros) */
+body.st-glassy[class] #action-page :is(.cnf-field, .st-field) > label,
+body.st-glassy[class] #action-page .st-label {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+body.st-glassy[class] #action-page .st-required {
+    color: var(--c-coral);
+}
+
+/* ---------- 4. Toolbar de cadastros (DataTables) ---------- */
+body.st-glassy[class] #action-page .cnf-page .cnf-dt-top {
+    background: transparent;
+    border-bottom: 1px solid var(--a-line);
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-dt-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--a-line);
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page :is(.dataTables_filter input, .dataTables_length select, .cnf-usu-search) {
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-pill);
+    background-color: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page :is(.dataTables_filter input, .dataTables_length select, .cnf-usu-search):focus {
+    border-color: var(--c-primary);
+    background-color: var(--a-tile-hi);
+    box-shadow: var(--a-focus-shell);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-search::placeholder {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-usu-search-icon, .cnf-usu-load-meta) {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-progress {
+    background: var(--a-tile);
+    box-shadow: var(--a-well-inset);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-progress-bar {
+    box-shadow: 0 0 10px rgba(214, 51, 108, .5);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-loading-more {
+    border-top-color: var(--a-line);
+    color: var(--a-text-2);
+}
+
+/* ---------- 5. Tabelas de cadastro ---------- */
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) {
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) thead th,
+body.st-glassy[class] #action-page .cnf-table-wrap .dataTables_scrollHead {
+    background: var(--a-thead);
+    color: var(--a-text-2);
+    border-bottom: 1px solid var(--a-line-2);
+    box-shadow: 0 1px 0 var(--a-line);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) tbody tr {
+    background-color: transparent;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) tbody td {
+    color: var(--a-text);
+    border-color: var(--a-line);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) tbody tr:nth-child(even) {
+    background-color: var(--a-row-stripe);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) tbody tr:hover {
+    background-color: var(--a-row-hover);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) td.dataTables_empty {
+    padding: 36px 12px;
+    color: var(--a-text-2);
+    text-align: center;
+}
+
+/* Estado vazio: orbe da marca */
+body.st-glassy[class] #action-page :is(.cnf-table, .cnf-usu-table) td.dataTables_empty::before,
+body.st-glassy[class] #action-page :is(.cnf-dash-empty, .cnf-live-empty, .cnf-live-fila-empty)::before {
+    content: "";
+    display: block;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 42%), var(--c-gradient-brand);
+    box-shadow: 0 0 0 6px rgba(214, 51, 108, .1), 0 10px 26px rgba(214, 51, 108, .4);
+    opacity: .9;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-dash-empty, .cnf-live-empty, .cnf-live-fila-empty) {
+    color: var(--a-text-2);
+}
+
+/* Configurações de fila em modal (staff/*_config_form.php) */
+body.st-glassy[class] #action-page .tbl-title {
+    background: var(--a-thead);
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .tbl-red {
+    background: rgba(250, 82, 82, .14);
+}
+
+/* ---------- 6. Status, badges e chips ---------- */
+body.st-glassy[class] #action-page :is(.cnf-status, .cnf-usu-badge) {
+    border: 1px solid transparent;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-status--ok, .cnf-usu-badge--ok) {
+    background: rgba(47, 171, 78, .18);
+    border-color: rgba(47, 171, 78, .4);
+    color: var(--a-ok-text);
+    box-shadow: 0 0 10px rgba(47, 171, 78, .18);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-status--off, .cnf-usu-badge--off) {
+    background: rgba(250, 82, 82, .16);
+    border-color: rgba(250, 82, 82, .4);
+    color: var(--a-off-text);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-usu-nivel, .cnf-dash-tag) {
+    border: 1px solid var(--a-line-2);
+    background: var(--a-tile);
+    color: var(--a-text);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-login {
+    border: 1px solid var(--a-line);
+    background: var(--a-tile);
+    color: var(--a-accent-text);
+}
+
+/* Linhas por perfil (cad-usu): tinta translúcida + barra lateral, legível nos dois temas. */
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-0 { --lvl: 167, 139, 250; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-1 { --lvl: 129, 140, 248; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-2 { --lvl: 96, 165, 250; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-3 { --lvl: 34, 211, 238; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-4 { --lvl: 251, 191, 36; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-5 { --lvl: 74, 222, 128; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-nivel-99 { --lvl: 148, 163, 184; }
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-sem-agencia { --lvl: 245, 158, 11; }
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr:is(.cnf-usu-row-nivel-0, .cnf-usu-row-nivel-1, .cnf-usu-row-nivel-2, .cnf-usu-row-nivel-3, .cnf-usu-row-nivel-4, .cnf-usu-row-nivel-5, .cnf-usu-row-nivel-99, .cnf-usu-row-sem-agencia) {
+    background: rgba(var(--lvl), .1) !important;
+    box-shadow: inset 3px 0 0 rgb(var(--lvl));
+    filter: none;
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-sem-agencia {
+    background: rgba(var(--lvl), .16) !important;
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-active:hover > td {
+    background-color: var(--a-row-hover);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-active .cnf-usu-nivel {
+    border: 1px solid rgba(var(--lvl, 148, 163, 184), .5);
+    background: rgba(var(--lvl, 148, 163, 184), .22);
+    color: var(--a-text);
+}
+
+/* Inativos: esmaecidos, sem cinza claro chapado */
+body.st-glassy[class] #action-page .cnf-usu-row-inactive,
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-inactive:hover {
+    background: var(--a-row-stripe) !important;
+    color: var(--a-text-3);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-row-inactive td {
+    color: var(--a-text-3) !important;
+}
+
+body.st-glassy[class] #action-page .cnf-usu-row-inactive .cnf-usu-col-name strong {
+    color: var(--a-text-3) !important;
+    text-decoration-color: var(--a-text-3);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-row-inactive :is(.cnf-usu-login, .cnf-usu-nivel, code) {
+    border-color: transparent;
+    background: var(--a-tile) !important;
+    color: var(--a-text-3) !important;
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-table tbody tr.cnf-usu-row-inactive .cnf-usu-nivel {
+    background: transparent !important;
+}
+
+/* ---------- 7. Botões de ação em pílula/orbe ---------- */
+body.st-glassy[class] #action-page :is(.cnf-icon-btn, .cnf-usu-icon-btn) {
+    border: 1px solid var(--a-line-2);
+    border-radius: 50%;
+    background: var(--a-tile);
+    color: var(--a-text);
+    box-shadow: var(--a-shadow-tile);
+    transition: background-color var(--g-dur) var(--g-ease), border-color var(--g-dur) var(--g-ease), color var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease), transform var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-page .cnf-usu-icon-btn {
+    border-radius: 50%;
+}
+
+body.st-glassy[class] #action-page :is(.cnf-icon-btn, .cnf-usu-icon-btn):hover,
+body.st-glassy[class] #action-page :is(.cnf-icon-btn, .cnf-usu-icon-btn):focus-visible {
+    border-color: rgba(255, 255, 255, .3);
+    background: var(--a-sheen), var(--c-primary);
+    color: var(--c-white);
+    box-shadow: var(--a-glow-primary);
+    transform: translateY(-1px);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-icon-btn--sent {
+    border-color: rgba(214, 51, 108, .5);
+    color: var(--c-primary);
+}
+
+body.st-glassy[class] #action-page .cnf-usu-icon-btn--key:hover {
+    background: var(--a-sheen), var(--c-warning);
+    color: var(--c-navy-deep);
+}
+
+/* ---------- 8. Dashboard de configurações ---------- */
+body.st-glassy[class] #action-page .cnf-dash-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-dash-section-title::before {
+    content: "";
+    width: 18px;
+    height: 3px;
+    border-radius: var(--g-r-pill);
+    background: var(--c-gradient-brand);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi {
+    --k: var(--c-primary);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--a-line-2);
+    border-radius: var(--g-r-lg);
+    background: var(--a-glass-strong);
+    box-shadow: var(--a-shadow-tile), 0 8px 22px rgba(6, 5, 28, .14);
+    transition: transform var(--g-dur) var(--g-ease), box-shadow var(--g-dur) var(--g-ease);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--a-shadow-tile-hover);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--k);
+    box-shadow: 0 0 10px var(--k);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi--navy { --k: var(--st-online); }
+body.st-glassy[class] #action-page .cnf-kpi--magenta { --k: var(--c-primary); }
+body.st-glassy[class] #action-page .cnf-kpi--sky { --k: #5ba4c4; }
+body.st-glassy[class] #action-page .cnf-kpi--coral { --k: var(--c-coral); }
+body.st-glassy[class] #action-page .cnf-kpi--purple { --k: #8b6fd0; }
+body.st-glassy[class] #action-page .cnf-kpi--green { --k: var(--c-success); }
+body.st-glassy[class] #action-page .cnf-kpi--soft { --k: #7c8cf0; }
+body.st-glassy[class] #action-page .cnf-kpi--outline { --k: var(--c-primary); }
+
+body.st-glassy[class] #action-page .cnf-kpi .cnf-kpi-icon {
+    box-sizing: content-box;
+    width: 15px;
+    height: 15px;
+    margin-bottom: 6px;
+    padding: 8px;
+    border-radius: 50%;
+    background: var(--a-sheen), var(--k);
+    color: var(--c-white);
+    opacity: 1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 16px color-mix(in srgb, var(--k) 45%, transparent);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi-value {
+    color: var(--a-text);
+    font-variant-numeric: tabular-nums;
+}
+
+body.st-glassy[class] #action-page .cnf-kpi-label {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-kpi--outline .cnf-kpi-value {
+    background: linear-gradient(120deg, var(--a-text) 15%, var(--c-primary) 120%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+body.st-glassy[class] #action-page .cnf-dash-table thead th {
+    background: transparent;
+    color: var(--a-text-2);
+    border-bottom: 1px solid var(--a-line-2);
+}
+
+body.st-glassy[class] #action-page .cnf-dash-table tbody tr:hover > * {
+    background-color: var(--a-row-hover);
+}
+
+body.st-glassy[class] #action-page .cnf-live-fila-card__head {
+    background: transparent;
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy[class] #action-page :is(.cnf-live-kpis-fila) {
+    border-bottom-color: var(--a-line);
+}
+
+body.st-glassy[class] #action-page .cnf-live-kpi-mini {
+    background: var(--a-tile);
+}
+
+body.st-glassy[class] #action-page .cnf-live-kpi-mini .til,
+body.st-glassy[class] #action-page .cnf-live-fila-card__ctt {
+    color: var(--a-text-2);
+}
+
+body.st-glassy[class] #action-page .cnf-live-kpi-mini .val {
+    color: var(--a-text);
+}
+
+/* ---------- 9. Log de acesso (staff/log_dados.php) e reset de base ---------- */
+body.st-glassy[class] #action-page .cnf-log-panel h3,
+body.st-glassy[class] #action-page > center > h5 {
+    margin: 6px 0 12px;
+    color: var(--a-text);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+body.st-glassy[class] #action-page :is(#table_1, #table_2) {
+    background: transparent;
+}
+
+/* ---------- 10. Vidro (blur só nos cabeçalhos) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.st-glassy[class] #action-page :is(.cnf-header, .cnf-usu-header, .cnf-dash-header) {
+        -webkit-backdrop-filter: var(--g-blur);
+        backdrop-filter: var(--g-blur);
+    }
+}
+
+/* ---------- 11. Preferências ---------- */
+@media (prefers-reduced-motion: reduce) {
+    body.st-glassy[class] #action-page :is(.cnf-kpi, .cnf-icon-btn, .cnf-usu-icon-btn) {
+        transition: none;
+    }
+
+    body.st-glassy[class] #action-page :is(.cnf-kpi, .cnf-icon-btn, .cnf-usu-icon-btn):hover {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    body.st-glassy[class] #action-page :is(.cnf-header, .cnf-usu-header, .cnf-dash-header)::before {
+        display: none;
+    }
+
+    body.st-glassy[class] #action-page :is(.cnf-header, .cnf-usu-header, .cnf-dash-header, .cnf-table-wrap, .cnf-usu-table-wrap, .cnf-filter-bar, .cnf-log-panel, .cnf-report-panel, .st-form-card, .cnf-chart-card, .cnf-table-card, .cnf-kpi, .cnf-status, .cnf-usu-badge, .cnf-icon-btn, .cnf-usu-icon-btn) {
+        border: 1px solid CanvasText !important;
+    }
+
+    body.st-glassy[class] #action-page .cnf-kpi--outline .cnf-kpi-value {
+        background: none;
+        color: CanvasText;
+    }
+}
