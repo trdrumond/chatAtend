@@ -10,12 +10,24 @@ $sql="SELECT user_id, contrato_id, agencia_id, fila_id, data_hora, acao from tbl
 $stmt = $PDO->prepare( $sql );
 $result = $stmt->execute([$userIdPause]);
 $infoLog = $stmt->fetch( PDO::FETCH_ASSOC );
-if($infoLog['acao']!='Pausa'){
+
+$sql="SELECT date_format(hora_in, '%Y-%m-%d %H:%i:%s') as hora_in, date_format(now(), '%Y-%m-%d %H:%i:%s') as server_now from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=? order by hora_in asc limit 1";
+$stmt = $PDO->prepare($sql);
+$result = $stmt->execute([$userIdPause]);
+$pausa = $stmt->fetch( PDO::FETCH_ASSOC );
+$horaInPausaJs = isset($pausa['hora_in']) ? $pausa['hora_in'] : '';
+$serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d H:i:s');
+
+if($horaInPausaJs !== '' && $infoLog['acao']!='Pausa'){
     logAtendimento($PDO, $_SESSION['dados']['id_user'], 'Pausa');
 }
 
-
 ?>
+<script>
+    /* Na tela de pausa, eventos do WebSocket (flagBko) não devem recarregar esta tela */
+    if (typeof loadChatIn !== 'undefined') { loadChatIn = undefined; }
+    if (window._intervalPausa) { clearInterval(window._intervalPausa); window._intervalPausa = null; }
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
@@ -32,23 +44,6 @@ if($infoLog['acao']!='Pausa'){
     }
 
 </script>
-
-<?php
-
-//echo "<br>Teste";
-
-$sql="SELECT date_format(hora_in, '%Y-%m-%d %H:%i:%s') as hora_in, date_format(now(), '%Y-%m-%d %H:%i:%s') as server_now from tbl_pause where date_format(hora_in, '%Y-%m-%d')=curdate() and hora_out is null and user_id=?";
-//echo "<br>".$sql;
-$stmt = $PDO->prepare($sql);
-$result = $stmt->execute([$userIdPause]);
-$pausa = $stmt->fetch( PDO::FETCH_ASSOC );
-//depurador($pausa);
-$horaInPausaJs = isset($pausa['hora_in']) ? $pausa['hora_in'] : '';
-$serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d H:i:s');
-
-
-//echo "<br>Teste";
-?>
 
 <style>
     #feedback {
@@ -93,7 +88,12 @@ $serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d 
         (function() {
             var horaInPausa = '<?php echo addslashes($horaInPausaJs); ?>';
             var serverNowStr = '<?php echo addslashes($serverNowJs); ?>';
-            if (!horaInPausa) return;
+            if (!horaInPausa) {
+                $('#tempo-pausa-label').text('Pausa já finalizada. Retornando aos atendimentos...');
+                $('#fim_pausa').prop('disabled', true);
+                setTimeout(function(){ document.location.reload(true); }, 1500);
+                return;
+            }
 
             var inicioMs = new Date(horaInPausa.replace(' ', 'T')).getTime();
             var serverNowMs = new Date(serverNowStr.replace(' ', 'T')).getTime();
@@ -104,6 +104,12 @@ $serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d 
             }
 
             function atualizarRelogioPausa() {
+                var elTempo = document.getElementById('tempo-pausa');
+                if (!elTempo) {
+                    clearInterval(window._intervalPausa);
+                    window._intervalPausa = null;
+                    return;
+                }
                 var agoraServerMs = Date.now() - offsetMs;
                 var diffMs = Math.max(0, agoraServerMs - inicioMs);
                 var totalSeg = Math.floor(diffMs / 1000);
@@ -112,7 +118,7 @@ $serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d 
                 var min = Math.floor(restoSeg / 60);
                 var seg = restoSeg % 60;
                 var texto = fmtNum(horas) + ':' + fmtNum(min) + ':' + fmtNum(seg);
-                document.getElementById('tempo-pausa').textContent = texto;
+                elTempo.textContent = texto;
             }
 
             atualizarRelogioPausa();
@@ -138,17 +144,28 @@ $serverNowJs = isset($pausa['server_now']) ? $pausa['server_now'] : date('Y-m-d 
             });
 
             function save(){
-                //console.log("script");
-                        var user_id = <?php echo $_SESSION['dados']['id_user']; ?>;
-                        $.post("staff/save_pause.php",
-                            {
-                                user_id
-
-                            },
-                        function (valor) {
-                            $("#feedback").html(valor);
-                        });
-
+                var user_id = <?php echo (int) $_SESSION['dados']['id_user']; ?>;
+                $('#fim_pausa').prop('disabled', true);
+                $.post("staff/save_pause.php",
+                    {
+                        user_id
+                    },
+                function (valor) {
+                    // A tela pode ter sido substituída durante a requisição; o retorno precisa executar mesmo assim
+                    if ($("#feedback").length) {
+                        $("#feedback").html(valor);
+                    } else {
+                        $('body').append(valor);
+                    }
+                    setTimeout(function(){ document.location.reload(true); }, 2000);
+                }).fail(function(){
+                    $('#fim_pausa').prop('disabled', false);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Não foi possível finalizar a pausa',
+                        text: 'Verifique sua conexão e tente novamente. Se persistir, atualize a página (F5).'
+                    });
+                });
             }
 
 
